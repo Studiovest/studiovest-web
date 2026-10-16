@@ -2,25 +2,26 @@
 // Mangler et bilde, vises en beige ramme med beskrivelse i stedet.
 (function () {
   var P = 'assets/photos/';
+  var V = '?v=__V__'; // byttes ut med versjonsnummer ved publisering, så nye bilder vises med en gang
 
   var worlds = [
-    { num: '01', name: 'BOLIG',   tint: '#D9C6B0', img: P + 'hero-bolig.jpg',   label: 'lys stue med fjordutsikt, kveldslys',  exif: 'ƒ/8 · 1/60 · ISO 200 · HDR ×5' },
-    { num: '02', name: 'MENNESKER', tint: '#ECE4D9', img: P + 'hero-bedrift.jpg', label: 'ansatt i kontorlandskap',          exif: 'ƒ/2.8 · 1/250 · ISO 400 · 85 MM' },
-    { num: '03', name: 'SKOLE',     tint: '#E4D5BF', img: P + 'hero-skole.jpg',   label: 'barnehagebarn som ler, utendørs',  exif: 'ƒ/4 · 1/500 · ISO 320 · 50 MM' },
-    { num: '04', name: 'BEDRIFT',   tint: '#CDB89F', img: P + 'hero-bedriftsbygg.jpg', label: 'kontorbygg ved sjøen, skumring', exif: 'ƒ/11 · 1/125 · ISO 100 · 24 MM' }
+    { num: '01', name: 'BOLIG',   tint: '#D9C6B0', img: P + 'hero-bolig.jpg' + V,   label: 'lys stue med fjordutsikt, kveldslys',  exif: 'ƒ/8 · 1/60 · ISO 200 · HDR ×5' },
+    { num: '02', name: 'MENNESKER', tint: '#ECE4D9', img: P + 'hero-bedrift.jpg' + V, label: 'ansatt i kontorlandskap',          exif: 'ƒ/2.8 · 1/250 · ISO 400 · 85 MM' },
+    { num: '03', name: 'SKOLE',     tint: '#E4D5BF', img: P + 'hero-skole.jpg' + V,   label: 'barnehagebarn som ler, utendørs',  exif: 'ƒ/4 · 1/500 · ISO 320 · 50 MM' },
+    { num: '04', name: 'BEDRIFT',   tint: '#CDB89F', img: P + 'hero-bedriftsbygg.jpg' + V, label: 'kontorbygg ved sjøen, skumring', exif: 'ƒ/11 · 1/125 · ISO 100 · 24 MM' }
   ];
 
   var chapters = [
-    { title: 'Bolig', exif: 'ƒ/8 · HDR', tint: '#EDE3D6', img: P + 'kap-bolig.jpg', photo: 'interiør, kjøkken i dagslys',
+    { title: 'Bolig', exif: 'ƒ/8 · HDR', tint: '#EDE3D6', img: P + 'kap-bolig.jpg' + V, photo: 'interiør, kjøkken i dagslys',
       desc: 'Bilder som får visningen fullbooket. Interiør, eksteriør, drone og plantegning i én bestilling — levert til megler neste virkedag.',
       items: ['Interiør og eksteriør', 'Dronefoto', 'Plantegning 2D/3D', 'Video og virtuell visning', 'Digital møblering'] },
-    { title: 'Bedrift', exif: 'ƒ/2.8 · 85MM', tint: '#FFFFFF', img: P + 'kap-bedrift.jpg', photo: 'ansatte i møterom, naturlig lys',
+    { title: 'Bedrift', exif: 'ƒ/2.8 · 85MM', tint: '#FFFFFF', img: P + 'kap-bedrift.jpg' + V, photo: 'ansatte i møterom, naturlig lys',
       desc: 'Portretter, lokaler og folk i arbeid — foto og video som viser hvem dere er, ikke et bildebyrås gjetning.',
       items: ['Ansattportretter', 'Kontor og lokaler', 'Foto og video i arbeid', 'Drone', 'Innhold til sosiale medier'] },
-    { title: 'Skole og\nbarnehage', exif: 'ƒ/4 · 1/500', tint: '#E6D8C6', img: P + 'kap-skole.jpg', photo: 'klassebilde i skolegården',
+    { title: 'Skole og\nbarnehage', exif: 'ƒ/4 · 1/500', tint: '#E6D8C6', img: P + 'kap-skole.jpg' + V, photo: 'klassebilde i skolegården',
       desc: 'Rolig, trygg og effektiv fotodag. Individuelle bilder, gruppebilder og en enkel bestillingsløsning for foreldre.',
       items: ['Individuelle portretter', 'Klasse- og gruppebilder', 'Søskenbilder', 'Bestilling på nett'] },
-    { title: 'Maritim og\nindustri', exif: 'ƒ/11 · DRONE', tint: '#F3ECE2', img: P + 'kap-maritim.jpg', photo: 'mannskap på dekk under operasjon',
+    { title: 'Maritim og\nindustri', exif: 'ƒ/11 · DRONE', tint: '#F3ECE2', img: P + 'kap-maritim.jpg' + V, photo: 'mannskap på dekk under operasjon',
       desc: 'Vi kjenner livet om bord. Dokumentasjon, markedsføring og film fra dekk, verft og anlegg — sikkert og uten å stoppe driften.',
       items: ['Fartøy og verft', 'Operasjoner på dekk', 'Drone over anlegg', 'Bedriftsfilm', 'HMS-dokumentasjon'] }
   ];
@@ -97,7 +98,7 @@
     var card = document.createElement('div');
     card.className = 'reel-card';
     card.innerHTML = '<span>' + String(n).padStart(2, '0') + '</span><span>[FOTO: ' + reelLabels[n - 1] + ']</span>';
-    applyImg(card, P + 'reel-' + String(n).padStart(2, '0') + '.jpg', reelTints[k % 4]);
+    applyImg(card, P + 'reel-' + String(n).padStart(2, '0') + '.jpg' + V, reelTints[k % 4]);
     reel.appendChild(card);
   }
 })();
