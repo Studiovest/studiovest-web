@@ -1,0 +1,3 @@
+# Forhåndsvisning — skal ikke indekseres før lansering på studiovest.no
+User-agent: *
+Disallow: /
