@@ -35,8 +35,7 @@ a:hover{color:var(--accent)}
 .logo{display:flex;align-items:center;gap:12px;font-weight:800;font-size:22px;letter-spacing:-.02em}
 .nav-links{display:flex;gap:36px;font-size:15px;font-weight:500}
 .nav-right{display:flex;align-items:center;gap:20px}
-.rec{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);letter-spacing:.08em;white-space:nowrap}
-@media (max-width:1180px){.rec{display:none}}
+.rec{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);letter-spacing:.08em}
 .rec-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:blink 1.6s steps(1) infinite}
 
 /* Buttons */
