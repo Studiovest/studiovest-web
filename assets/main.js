@@ -12,7 +12,7 @@
   ];
 
   var chapters = [
-    { title: 'Bolig', exif: 'ƒ/8 · HDR', tint: '#EDE3D6', img: P + 'kap-bolig.jpg' + V, photo: 'interiør, kjøkken i dagslys',
+    { title: 'Boligfoto', exif: 'ƒ/8 · HDR', tint: '#EDE3D6', img: P + 'kap-bolig.jpg' + V, photo: 'interiør, kjøkken i dagslys',
       desc: 'Bilder som får visningen fullbooket. Interiør, eksteriør, drone og plantegning i én bestilling — levert til megler neste virkedag.',
       items: ['Interiør og eksteriør', 'Dronefoto', 'Plantegning 2D/3D', 'Video og virtuell visning', 'Digital møblering'] },
     { title: 'Bedrift', exif: 'ƒ/2.8 · 85MM', tint: '#FFFFFF', img: P + 'kap-bedrift.jpg' + V, photo: 'ansatte i møterom, naturlig lys',
