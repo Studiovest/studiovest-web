@@ -5,9 +5,9 @@
 
   var worlds = [
     { num: '01', name: 'BOLIG',   tint: '#D9C6B0', img: P + 'hero-bolig.jpg',   label: 'lys stue med fjordutsikt, kveldslys',  exif: 'ƒ/8 · 1/60 · ISO 200 · HDR ×5' },
-    { num: '02', name: 'BEDRIFT', tint: '#ECE4D9', img: P + 'hero-bedrift.jpg', label: 'portrett av fagarbeider i verkstedet', exif: 'ƒ/2.8 · 1/250 · ISO 400 · 85 MM' },
-    { num: '03', name: 'SKOLE',   tint: '#E4D5BF', img: P + 'hero-skole.jpg',   label: 'barnehagebarn som ler, utendørs',      exif: 'ƒ/4 · 1/500 · ISO 320 · 50 MM' },
-    { num: '04', name: 'MARITIM', tint: '#CDB89F', img: P + 'hero-maritim.jpg', label: 'dronebilde av fartøy i fjorden',       exif: 'ƒ/11 · 1/1000 · ISO 100 · DRONE 120 M' }
+    { num: '02', name: 'MENNESKER', tint: '#ECE4D9', img: P + 'hero-bedrift.jpg', label: 'ansatt i kontorlandskap',          exif: 'ƒ/2.8 · 1/250 · ISO 400 · 85 MM' },
+    { num: '03', name: 'SKOLE',     tint: '#E4D5BF', img: P + 'hero-skole.jpg',   label: 'barnehagebarn som ler, utendørs',  exif: 'ƒ/4 · 1/500 · ISO 320 · 50 MM' },
+    { num: '04', name: 'BEDRIFT',   tint: '#CDB89F', img: P + 'hero-bedriftsbygg.jpg', label: 'kontorbygg ved sjøen, skumring', exif: 'ƒ/11 · 1/125 · ISO 100 · 24 MM' }
   ];
 
   var chapters = [
