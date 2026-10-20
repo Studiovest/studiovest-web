@@ -1,107 +1,153 @@
-// Studiovest forside — konsept «Kontaktarket».
+// Studiovest forside — konsept «Fremkalling».
 (function () {
   var V = '?v=__V__';
   var P = 'assets/photos/';
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var DUR = 4800;
 
-  /* ---------- Hero: ord og bilde bytter i takt ---------- */
+  function photo(file, alt, cls) {
+    var img = new Image();
+    img.src = P + file + V;
+    img.alt = alt || '';
+    img.width = 1168; img.height = 784;
+    if (cls && !reduce) img.className = cls;
+    return img;
+  }
+  // Legger nytt bilde oppå og fjerner det gamle når fremkallingen er ferdig.
+  function swapInto(box, img) {
+    box.appendChild(img);
+    var clean = function () { while (box.children.length > 1) box.removeChild(box.firstChild); };
+    if (reduce) clean(); else img.addEventListener('animationend', clean, { once: true });
+  }
+
+  /* ---------- Hero ---------- */
   var slides = [
     { word: 'hjemmet,',   img: 'bolig-stue.jpg',     alt: 'Stue med peis og store vinduer mot fjorden i kveldslys', cap: 'Boligfoto. Stue med fjordutsikt i blå time.' },
     { word: 'folka,',     img: 'bedrift-kontor.jpg', alt: 'Ansatt ved skrivebord i et lyst kontorlandskap',          cap: 'Bedrift. Hverdag i kontorlandskapet.' },
     { word: 'barna,',     img: 'skole-latter.jpg',   alt: 'Tre barn som ler utendørs',                                 cap: 'Barnehage. Utelek en gråværsdag.' },
     { word: 'bedriften,', img: 'bedrift-bygg.jpg',   alt: 'Kontorbygg ved sjøen i skumring',                           cap: 'Bedrift. Hovedkontor ved sjøen.' }
   ];
-  slides.forEach(function (s) { var i = new Image(); i.src = P + s.img + V; });
+  slides.forEach(function (s) { new Image().src = P + s.img + V; });
 
+  var hero = document.querySelector('.hero');
+  var heroPhoto = document.getElementById('heroPhoto');
   var swap = document.getElementById('swap');
-  var plate = document.getElementById('plate');
-  var cap = document.getElementById('plateCap');
-  var count = document.getElementById('plateCount');
+  var heroCap = document.getElementById('heroCap');
+  var ticks = Array.prototype.slice.call(document.querySelectorAll('#ticks button'));
   var pauseBtn = document.getElementById('pause');
-  var i = 0, timer = null, paused = reduce;
+  var cur = 0, timer = null, paused = reduce;
+  hero.style.setProperty('--dur', DUR + 'ms');
 
+  function setTicks(n) {
+    ticks.forEach(function (t, k) {
+      t.removeAttribute('aria-current');
+      t.classList.toggle('done', k < n);
+    });
+    var t = ticks[n];
+    void t.offsetWidth; // start fremdriftslinjen på nytt
+    t.setAttribute('aria-current', 'true');
+  }
   function show(n) {
+    cur = n;
     var s = slides[n];
     swap.classList.add('out');
-    setTimeout(function () { swap.textContent = s.word; swap.classList.remove('out'); }, 350);
-
-    var img = new Image();
-    img.src = P + s.img + V;
-    img.alt = s.alt;
-    img.width = 1168; img.height = 784;
-    img.className = reduce ? '' : 'incoming';
-    plate.appendChild(img);
-    var done = function () {
-      while (plate.children.length > 1) plate.removeChild(plate.firstChild);
-      img.className = '';
-    };
-    if (reduce) done(); else img.addEventListener('animationend', done, { once: true });
-
-    cap.textContent = s.cap;
-    count.textContent = (n + 1) + ' av ' + slides.length;
+    setTimeout(function () { swap.textContent = s.word; swap.classList.remove('out'); }, 400);
+    swapInto(heroPhoto, photo(s.img, s.alt, 'develop'));
+    heroCap.textContent = s.cap;
+    setTicks(n);
   }
-  function start() { stop(); timer = setInterval(function () { i = (i + 1) % slides.length; show(i); }, 4200); }
+  function start() { stop(); timer = setInterval(function () { show((cur + 1) % slides.length); }, DUR); }
   function stop() { if (timer) clearInterval(timer); timer = null; }
-
-  pauseBtn.addEventListener('click', function () {
-    paused = !paused;
-    pauseBtn.setAttribute('aria-pressed', String(paused));
-    pauseBtn.textContent = paused ? 'Spill av' : 'Pause';
-    if (paused) stop(); else start();
+  function setPaused(p) {
+    paused = p;
+    hero.classList.toggle('paused', p);
+    pauseBtn.setAttribute('aria-pressed', String(p));
+    pauseBtn.textContent = p ? 'Spill av' : 'Pause';
+    if (p) stop(); else start();
+  }
+  ticks.forEach(function (t, k) {
+    t.addEventListener('click', function () { show(k); if (!paused) start(); });
   });
-  if (paused) { pauseBtn.setAttribute('aria-pressed', 'true'); pauseBtn.textContent = 'Spill av'; }
-  else start();
+  pauseBtn.addEventListener('click', function () { setPaused(!paused); });
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) stop(); else if (!paused) start();
   });
+  setPaused(paused);
 
-  /* ---------- Kontaktark: fettstift-sirkel rundt valgt bilde ---------- */
-  // Tre litt ulike håndtegnede sløyfer, så ingen to sirkler blir like.
-  var loops = [
-    'M 9 16 C 30 4, 72 3, 93 9 C 99 34, 98 70, 92 92 C 66 98, 30 98, 8 91 C 2 66, 1 36, 7 13 L 19 7',
-    'M 12 8 C 40 2, 75 4, 94 12 C 99 40, 97 72, 90 94 C 62 99, 28 97, 6 88 C 1 60, 3 30, 10 10 L 24 6',
-    'M 6 12 C 35 3, 70 2, 95 10 C 98 38, 99 68, 93 90 C 68 99, 32 99, 9 93 C 3 64, 2 34, 5 9 L 16 5'
+  /* ---------- Kapitler med bildeviser ---------- */
+  var fields = [
+    [ ['bolig-stue.jpg', 'Stue med fjordutsikt i blå time'], ['bolig-kjokken.jpg', 'Kjøkken i eik med utsikt'], ['bolig-loft.jpg', 'Loftsstue med takvinduer'], ['bolig-tomannsbolig.jpg', 'Tomannsbolig i skumring'], ['bolig-hytte.jpg', 'Hytte på et nes, fra drone'] ],
+    [ ['bedrift-portrett.jpg', 'Portrett av daglig leder'], ['bedrift-kontor.jpg', 'Hverdag i kontorlandskapet'], ['bedrift-bygg.jpg', 'Hovedkontor ved sjøen'] ],
+    [ ['skole-lek.jpg', 'Barnehagebarn på tur i skogen'], ['skole-latter.jpg', 'Tre barn som ler utendørs'], ['skole-klasse.jpg', 'Klassebilde i skolegården'] ],
+    [ ['maritim-sveiser.jpg', 'Sveiser i arbeid på verkstedet'], ['maritim-skip.jpg', 'Offshorefartøy i fjorden'], ['maritim-fiskebat.jpg', 'Fiskebåt ved kai'] ]
   ];
-  var n = 0;
-  var strips = document.querySelectorAll('.strip');
-  strips.forEach(function (strip) {
-    var frames = strip.querySelectorAll('.frame');
-    frames.forEach(function (f) {
-      n++;
-      f.setAttribute('data-n', (7 + Math.ceil(n / 2)) + (n % 2 ? '' : 'A'));
-      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('class', 'mark');
-      svg.setAttribute('viewBox', '0 0 100 100');
-      svg.setAttribute('preserveAspectRatio', 'none');
-      svg.setAttribute('aria-hidden', 'true');
-      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', loops[n % loops.length]);
-      path.setAttribute('pathLength', '1');
-      svg.appendChild(path);
-      f.appendChild(svg);
+  var viewer = document.querySelector('.viewer');
+  var main = document.getElementById('viewerMain');
+  var thumbs = document.getElementById('viewerThumbs');
+  var vcap = document.getElementById('viewerCap');
+  var body = document.querySelector('.ch-body');
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.ch-btn'));
+  var narrow = window.matchMedia('(max-width: 960px)');
+  var field = 0;
 
-      f.addEventListener('click', function () {
-        frames.forEach(function (o) { o.setAttribute('aria-pressed', 'false'); o.classList.remove('drawn'); });
-        f.setAttribute('aria-pressed', 'true');
-        void f.offsetWidth; // start tegningen på nytt
-        f.classList.add('drawn');
-      });
-    });
-  });
-
-  // Sirklene tegnes første gang stripen kommer til syne.
-  function drawIn(strip) {
-    var sel = strip.querySelector('.frame[aria-pressed="true"]');
-    if (sel) sel.classList.add('drawn');
+  function showPhoto(f, k, animate) {
+    var item = fields[f][k];
+    var img = photo(item[0], item[1], animate ? 'develop' : '');
+    if (item[0] === 'bedrift-portrett.jpg') img.style.objectPosition = '50% 25%';
+    swapInto(main, img);
+    vcap.textContent = item[1] + '.';
+    Array.prototype.forEach.call(thumbs.children, function (b, j) { b.setAttribute('aria-pressed', String(j === k)); });
   }
-  if ('IntersectionObserver' in window && !reduce) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { drawIn(e.target); io.unobserve(e.target); }
+  function openField(f, animate) {
+    field = f;
+    btns.forEach(function (b, j) {
+      var open = j === f;
+      b.setAttribute('aria-expanded', String(open));
+      document.getElementById(b.getAttribute('aria-controls')).hidden = !open;
+      b.closest('.ch-item').classList.toggle('is-open', open);
+    });
+    thumbs.innerHTML = '';
+    fields[f].forEach(function (item, k) {
+      var t = document.createElement('button');
+      t.type = 'button';
+      t.setAttribute('aria-label', 'Vis bilde: ' + item[1]);
+      var ti = new Image(); ti.src = P + item[0] + V; ti.alt = ''; ti.loading = 'lazy';
+      t.appendChild(ti);
+      t.addEventListener('click', function () { showPhoto(f, k, true); });
+      thumbs.appendChild(t);
+    });
+    showPhoto(f, 0, animate);
+    placeViewer();
+  }
+  // På mobil flyttes bildeviseren inn i kapitlet som er åpent.
+  function placeViewer() {
+    var target = narrow.matches ? document.getElementById(btns[field].getAttribute('aria-controls')) : body;
+    if (viewer.parentNode !== target) {
+      if (narrow.matches) target.insertBefore(viewer, target.firstChild); else target.appendChild(viewer);
+    }
+  }
+  btns.forEach(function (b, j) { b.addEventListener('click', function () { if (j !== field) openField(j, true); }); });
+  if (narrow.addEventListener) narrow.addEventListener('change', placeViewer);
+  openField(0, false);
+
+  /* ---------- Manifest: linjene lyses opp mens man leser ---------- */
+  var lines = Array.prototype.slice.call(document.querySelectorAll('.credo-line'));
+  if (!reduce && lines.length) {
+    var ticking = false;
+    var light = function () {
+      ticking = false;
+      var vh = window.innerHeight;
+      lines.forEach(function (l) {
+        var r = l.getBoundingClientRect();
+        var mid = r.top + r.height / 2;
+        // Fullt lys når linjen er i nedre del av midten av skjermen, svakt ellers.
+        var d = Math.abs(mid - vh * 0.55) / (vh * 0.45);
+        var lit = Math.max(0.16, Math.min(1, 1.15 - d));
+        l.style.setProperty('--lit', lit.toFixed(3));
       });
-    }, { threshold: 0.5 });
-    strips.forEach(function (s) { io.observe(s); });
-  } else {
-    strips.forEach(drawIn);
+    };
+    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(light); } }, { passive: true });
+    window.addEventListener('resize', light);
+    light();
   }
 })();

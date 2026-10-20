@@ -7,8 +7,9 @@
 <meta name="description" content="Et komplett mediebyrå fra Sunnhordland. Boligfoto, bedrift, skole, barnehage og industri — fanget med samme blikk, levert med samme presisjon.">
 <!-- Forhåndsvisning: skal ikke indekseres før lansering på studiovest.no -->
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#FBFAF7">
-<link rel="preload" href="assets/fonts/schibsted-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<link rel="preload" href="assets/fonts/hanken-grotesk.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/style.css?v=__V__">
 </head>
 <body>
@@ -28,13 +29,16 @@
 <main id="innhold">
 
 <section class="hero" aria-label="Introduksjon">
-  <div class="hero-head">
+  <div class="hero-photo" id="heroPhoto">
+    <img src="assets/photos/bolig-stue.jpg?v=__V__" alt="Stue med peis og store vinduer mot fjorden i kveldslys" class="develop" width="1168" height="784">
+  </div>
+  <div class="hero-text">
     <h1 class="hero-title">
-      <span class="t-line">Vi ser <span class="swap" id="swap" aria-live="off">hjemmet,</span></span>
+      <span class="t-line">Vi ser <span class="swap" id="swap">hjemmet,</span></span>
       <span class="t-line">slik det fortjener</span>
       <span class="t-line">å bli sett.</span>
     </h1>
-    <div class="hero-lead">
+    <div class="hero-side">
       <p>Et komplett mediebyrå fra Sunnhordland. Boligfoto, bedrift, skole, barnehage og industri — fanget med samme blikk, levert med samme presisjon.</p>
       <div class="actions">
         <a href="#tjenester" class="btn">Se hva vi gjør</a>
@@ -42,123 +46,94 @@
       </div>
     </div>
   </div>
-
-  <figure class="plate">
-   <div class="plate-frame">
-    <div class="plate-photo" id="plate">
-      <img src="assets/photos/bolig-stue.jpg?v=__V__" alt="Stue med peis og store vinduer mot fjorden i kveldslys" id="plateImg" width="1168" height="784">
-    </div>
-    <span class="crop crop-tl" aria-hidden="true"><svg viewBox="0 0 80 80"><path pathLength="1" d="M 6 74 C 4.6 52, 4.2 28, 5.4 6.2 C 26 4.6, 49 5, 75 6.8"/></svg></span>
-    <span class="crop crop-tr" aria-hidden="true"><svg viewBox="0 0 80 80"><path pathLength="1" d="M 4 5.4 C 28 4.2, 52 4.8, 74.6 6 C 75.8 27, 75.4 50, 74 73.5"/></svg></span>
-    <span class="crop crop-br" aria-hidden="true"><svg viewBox="0 0 80 80"><path pathLength="1" d="M 74.4 5 C 75.6 29, 75.2 51, 74.2 74.6 C 51 75.6, 28 75, 5.5 73.6"/></svg></span>
-    <span class="crop crop-bl" aria-hidden="true"><svg viewBox="0 0 80 80"><path pathLength="1" d="M 75 74.2 C 51 75.4, 27 75.6, 5.6 74.4 C 4.4 52, 4.8 29, 6.4 5"/></svg></span>
-   </div>
-    <figcaption class="plate-cap">
-      <span id="plateCap">Boligfoto. Stue med fjordutsikt i blå time.</span>
-      <span class="plate-ctrl">
-        <span id="plateCount">1 av 4</span>
-        <button type="button" class="pause" id="pause" aria-pressed="false">Pause</button>
-      </span>
-    </figcaption>
-  </figure>
+  <div class="hero-meta">
+    <ol class="ticks" id="ticks" aria-label="Bilder i toppen">
+      <li><button type="button" aria-label="Vis bilde 1: hjemmet" aria-current="true"></button></li>
+      <li><button type="button" aria-label="Vis bilde 2: folka"></button></li>
+      <li><button type="button" aria-label="Vis bilde 3: barna"></button></li>
+      <li><button type="button" aria-label="Vis bilde 4: bedriften"></button></li>
+    </ol>
+    <span class="hero-cap" id="heroCap">Boligfoto. Stue med fjordutsikt i blå time.</span>
+    <button type="button" class="pause" id="pause" aria-pressed="false">Pause</button>
+  </div>
 </section>
 
-<section class="sheet" id="tjenester" aria-labelledby="tj-h">
-  <div class="sheet-head">
+<section class="chapters" id="tjenester" aria-labelledby="tj-h">
+  <div class="ch-head">
     <h2 id="tj-h">Fire kapitler.<br>Ett blikk.</h2>
-    <p>Hvert felt har egne folk, eget utstyr og egne leveranser — men samme krav til lys, komposisjon og tempo. Trykk på et bilde for å velge det, slik vi gjør når vi går gjennom et oppdrag.</p>
+    <p>Hvert felt har egne folk, eget utstyr og egne leveranser — men samme krav til lys, komposisjon og tempo.</p>
   </div>
 
-  <article class="field" aria-labelledby="f1">
-    <div class="field-text">
-      <h3 id="f1">Boligfoto</h3>
-      <div class="field-body">
-        <p>Bilder som får visningen fullbooket. Interiør, eksteriør, drone og plantegning i én bestilling — levert til megler neste virkedag.</p>
-        <ul><li>Interiør og eksteriør</li><li>Dronefoto</li><li>Plantegning i 2D og 3D</li><li>Video og virtuell visning</li><li>Digital møblering</li></ul>
-      </div>
-    </div>
-    <div class="strip" data-start="1">
-      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bolig-stue.jpg?v=__V__" alt="Stue med fjordutsikt i kveldslys" loading="lazy"></button>
-      <button type="button" class="frame" aria-pressed="true"><img src="assets/photos/bolig-kjokken.jpg?v=__V__" alt="Lyst kjøkken i eik med utsikt" loading="lazy"></button>
-      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bolig-loft.jpg?v=__V__" alt="Loftsstue med takvinduer" loading="lazy"></button>
-      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bolig-tomannsbolig.jpg?v=__V__" alt="Tomannsbolig i skumring" loading="lazy"></button>
-      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bolig-hytte.jpg?v=__V__" alt="Rød hytte på et nes, fotografert med drone" loading="lazy"></button>
-    </div>
-  </article>
+  <div class="ch-body">
+    <ul class="ch-list">
+      <li class="ch-item is-open">
+        <h3><button type="button" class="ch-btn" aria-expanded="true" aria-controls="p1" data-field="0">Boligfoto</button></h3>
+        <div class="ch-panel" id="p1">
+          <p>Bilder som får visningen fullbooket. Interiør, eksteriør, drone og plantegning i én bestilling — levert til megler neste virkedag.</p>
+          <ul class="ch-deliver"><li>Interiør og eksteriør</li><li>Dronefoto</li><li>Plantegning i 2D og 3D</li><li>Video og virtuell visning</li><li>Digital møblering</li></ul>
+        </div>
+      </li>
+      <li class="ch-item">
+        <h3><button type="button" class="ch-btn" aria-expanded="false" aria-controls="p2" data-field="1">Bedrift</button></h3>
+        <div class="ch-panel" id="p2" hidden>
+          <p>Portretter, lokaler og folk i arbeid — foto og video som viser hvem dere er, ikke et bildebyrås gjetning.</p>
+          <ul class="ch-deliver"><li>Ansattportretter</li><li>Kontor og lokaler</li><li>Foto og video i arbeid</li><li>Drone</li><li>Innhold til sosiale medier</li></ul>
+        </div>
+      </li>
+      <li class="ch-item">
+        <h3><button type="button" class="ch-btn" aria-expanded="false" aria-controls="p3" data-field="2">Skole og barnehage</button></h3>
+        <div class="ch-panel" id="p3" hidden>
+          <p>Rolig, trygg og effektiv fotodag. Individuelle bilder, gruppebilder og en enkel bestillingsløsning for foreldre.</p>
+          <ul class="ch-deliver"><li>Individuelle portretter</li><li>Klasse- og gruppebilder</li><li>Søskenbilder</li><li>Bestilling på nett</li></ul>
+        </div>
+      </li>
+      <li class="ch-item">
+        <h3><button type="button" class="ch-btn" aria-expanded="false" aria-controls="p4" data-field="3">Maritim og industri</button></h3>
+        <div class="ch-panel" id="p4" hidden>
+          <p>Vi kjenner livet om bord. Dokumentasjon, markedsføring og film fra dekk, verft og anlegg — sikkert og uten å stoppe driften.</p>
+          <ul class="ch-deliver"><li>Fartøy og verft</li><li>Operasjoner på dekk</li><li>Drone over anlegg</li><li>Bedriftsfilm</li><li>HMS-dokumentasjon</li></ul>
+        </div>
+      </li>
+    </ul>
 
-  <article class="field" aria-labelledby="f2">
-    <div class="field-text">
-      <h3 id="f2">Bedrift</h3>
-      <div class="field-body">
-        <p>Portretter, lokaler og folk i arbeid — foto og video som viser hvem dere er, ikke et bildebyrås gjetning.</p>
-        <ul><li>Ansattportretter</li><li>Kontor og lokaler</li><li>Foto og video i arbeid</li><li>Drone</li><li>Innhold til sosiale medier</li></ul>
-      </div>
+    <div class="viewer">
+      <div class="viewer-main" id="viewerMain"></div>
+      <div class="viewer-thumbs" id="viewerThumbs" role="group" aria-label="Flere bilder fra feltet"></div>
+      <p class="viewer-cap" id="viewerCap" aria-live="polite"></p>
     </div>
-    <div class="strip" data-start="6">
-      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bedrift-kontor.jpg?v=__V__" alt="Ansatt ved skrivebord i et lyst kontorlandskap" loading="lazy"></button>
-      <button type="button" class="frame frame-face" aria-pressed="true"><img src="assets/photos/bedrift-portrett.jpg?v=__V__" alt="Portrett av mann i mørk dressjakke" loading="lazy"></button>
-      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bedrift-bygg.jpg?v=__V__" alt="Kontorbygg ved sjøen i skumring" loading="lazy"></button>
-    </div>
-  </article>
-
-  <article class="field" aria-labelledby="f3">
-    <div class="field-text">
-      <h3 id="f3">Skole og barnehage</h3>
-      <div class="field-body">
-        <p>Rolig, trygg og effektiv fotodag. Individuelle bilder, gruppebilder og en enkel bestillingsløsning for foreldre.</p>
-        <ul><li>Individuelle portretter</li><li>Klasse- og gruppebilder</li><li>Søskenbilder</li><li>Bestilling på nett</li></ul>
-      </div>
-    </div>
-    <div class="strip" data-start="9">
-      <button type="button" class="frame" aria-pressed="true"><img src="assets/photos/skole-lek.jpg?v=__V__" alt="Barnehagebarn som løper i skogen" loading="lazy"></button>
-      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/skole-klasse.jpg?v=__V__" alt="Klassebilde i skolegården" loading="lazy"></button>
-      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/skole-latter.jpg?v=__V__" alt="Tre barn som ler utendørs" loading="lazy"></button>
-    </div>
-  </article>
-
-  <article class="field" aria-labelledby="f4">
-    <div class="field-text">
-      <h3 id="f4">Maritim og industri</h3>
-      <div class="field-body">
-        <p>Vi kjenner livet om bord. Dokumentasjon, markedsføring og film fra dekk, verft og anlegg — sikkert og uten å stoppe driften.</p>
-        <ul><li>Fartøy og verft</li><li>Operasjoner på dekk</li><li>Drone over anlegg</li><li>Bedriftsfilm</li><li>HMS-dokumentasjon</li></ul>
-      </div>
-    </div>
-    <div class="strip" data-start="12">
-      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/maritim-skip.jpg?v=__V__" alt="Offshorefartøy i fjorden" loading="lazy"></button>
-      <button type="button" class="frame" aria-pressed="true"><img src="assets/photos/maritim-sveiser.jpg?v=__V__" alt="Sveiser i arbeid på verkstedet" loading="lazy"></button>
-      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/maritim-fiskebat.jpg?v=__V__" alt="Fiskebåt ved kai" loading="lazy"></button>
-    </div>
-  </article>
+  </div>
 </section>
 
 <section class="credo" aria-label="Hva vi tror på">
-  <p>Et bilde skal gjøre en jobb. Selge et hus. Bygge tillit til et firma. Bevare et skoleår. Vise hva som faktisk skjer ute på dekk.</p>
+  <p class="credo-line">Et bilde skal gjøre en jobb.</p>
+  <p class="credo-line">Selge et hus.</p>
+  <p class="credo-line">Bygge tillit til et firma.</p>
+  <p class="credo-line">Bevare et skoleår.</p>
+  <p class="credo-line">Vise hva som faktisk skjer ute på dekk.</p>
 </section>
+
+<figure class="wide">
+  <img src="assets/photos/maritim-skip.jpg?v=__V__" alt="Offshorefartøy på vei inn fjorden mellom bratte fjell" loading="lazy" width="1168" height="784">
+  <figcaption>Maritim. Offshorefartøy på vei inn fjorden.</figcaption>
+</figure>
 
 <section class="bank" id="timebank" aria-labelledby="tb-h">
   <div class="bank-text">
     <h2 id="tb-h">Timebanken</h2>
     <p>For bedrifter som trenger nytt innhold hver måned. Dere kjøper timer, vi kommer når det skjer noe verdt å vise — til sosiale medier, nettside og blogg. Ubrukte timer [ruller over / regler kommer].</p>
   </div>
-  <div class="bank-table">
-    <table>
-      <caption class="vh">Pakker i timebanken</caption>
-      <thead><tr><th scope="col">Pakke</th><th scope="col">Timer i måneden</th><th scope="col">Pris</th></tr></thead>
-      <tbody>
-        <tr><th scope="row">Liten</th><td>[X]</td><td>[PRIS]</td></tr>
-        <tr><th scope="row">Medium</th><td>[X]</td><td>[PRIS]</td></tr>
-        <tr><th scope="row">Stor</th><td>[X]</td><td>[PRIS]</td></tr>
-      </tbody>
-    </table>
-    <a href="#kontakt" class="btn">Start en timebank</a>
-  </div>
+  <ul class="packs">
+    <li><h3>Liten</h3><p class="hours">[X] timer i måneden</p><p class="price">[PRIS]</p></li>
+    <li><h3>Medium</h3><p class="hours">[X] timer i måneden</p><p class="price">[PRIS]</p></li>
+    <li><h3>Stor</h3><p class="hours">[X] timer i måneden</p><p class="price">[PRIS]</p></li>
+  </ul>
+  <div class="bank-cta"><a href="#kontakt" class="btn">Start en timebank</a></div>
 </section>
 
 </main>
 
 <footer class="foot" id="kontakt">
-  <a href="mailto:kontakt@studiovest.no" class="foot-cta">Fortell oss hva som skal fanges.</a>
+  <a href="mailto:kontakt@studiovest.no" class="foot-cta">Fortell oss hva<br>som skal fanges.</a>
   <dl class="foot-grid">
     <div><dt>Ring</dt><dd><a href="tel:+4792330435">923 30 435</a></dd></div>
     <div><dt>Skriv</dt><dd><a href="mailto:kontakt@studiovest.no">kontakt@studiovest.no</a></dd></div>

@@ -8,15 +8,16 @@ Statisk nettside (HTML, CSS, JS). Ingen WordPress, ingen byggesteg.
 
 ## Design
 
-Konsept «Kontaktarket»: siden leses som en fotografs arbeidsark. Bildene ligger i filmstriper,
-og fotografens fettstift-merker (beskjæringshjørner i hero, sirkler rundt valgte bilder) er eneste fargeinnslag.
+Konsept «Fremkalling»: svart som et mørkerom. Bildene fremkalles fra sort når de vises
+(hero, bildeviseren under «Fire kapitler»), og manifestet lyses opp linje for linje mens man scroller.
+Ingen aksentfarge — all farge kommer fra fotografiene.
 
-- Skrift: Schibsted Grotesk (overskrifter, meny) og Newsreader (brødtekst). Ligger lokalt i `assets/fonts/`, ingen Google Fonts.
+- Skrift: Hanken Grotesk (lette vekter i store titler). Ligger lokalt i `assets/fonts/`, ingen Google Fonts.
 - Farger: se `:root` øverst i `assets/style.css`.
 
 ## Bilder
 
 Alle bilder ligger i `assets/photos/`, navngitt etter felt (`bolig-*`, `bedrift-*`, `skole-*`, `maritim-*`).
-Hero-bildene velges i `assets/main.js` (listen `slides`); filmstripene står i `index.html`.
+Hero-bildene velges i `assets/main.js` (listen `slides`), bildene per kapittel i listen `fields`.
 
 Skole- og barnehagebilder: bare bilder med skriftlig samtykke fra foresatte til markedsføring.
