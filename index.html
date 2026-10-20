@@ -3,118 +3,169 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Studiovest — foto, video og drone i Sunnhordland</title>
-<meta name="description" content="Foto- og videostudio fra Halsnøy. Boligfoto, bedriftsfoto, skole- og barnehagefoto og maritim/industriell foto og film i Sunnhordland, Haugesund og hele Norge.">
+<title>Studiovest — boligfoto, bedrift, skole og industri i Sunnhordland</title>
+<meta name="description" content="Et komplett mediebyrå fra Sunnhordland. Boligfoto, bedrift, skole, barnehage og industri — fanget med samme blikk, levert med samme presisjon.">
 <!-- Forhåndsvisning: skal ikke indekseres før lansering på studiovest.no -->
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#F7F2EA">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#FBFAF7">
+<link rel="preload" href="assets/fonts/schibsted-grotesk.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/style.css?v=__V__">
 </head>
 <body>
 
-<header class="nav wrap">
-  <a href="#top" class="logo" aria-label="Studiovest, til toppen">
-    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" class="breathe"><circle cx="15" cy="15" r="13" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 2 L20 13 M28 15 L17 20 M15 28 L10 17 M2 15 L13 10" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="15" cy="15" r="3" fill="var(--accent)"/></svg>
-    <span>Studiovest</span>
-  </a>
-  <nav class="nav-links" aria-label="Hovedmeny">
-    <a href="#kapitler">Tjenester</a>
-    <a href="#arbeid">Arbeid</a>
+<a class="skip" href="#innhold">Hopp til innholdet</a>
+
+<header class="top">
+  <a href="#" class="wordmark">Studiovest</a>
+  <nav class="menu" aria-label="Hovedmeny">
+    <a href="#tjenester">Tjenester</a>
     <a href="#timebank">Timebank</a>
     <a href="#kontakt">Kontakt</a>
   </nav>
-  <div class="nav-right">
-    <span class="mono rec"><span class="rec-dot"></span>REC · SUNNHORDLAND</span>
-    <a href="#kontakt" class="btn btn-accent">Book en prat</a>
-  </div>
+  <a href="#kontakt" class="book">Book en prat</a>
 </header>
 
-<main>
-<section id="top" class="hero wrap">
-  <div class="hero-text">
-    <h1 class="h1">
-      <span class="line"><span style="animation-delay:.1s">Vi ser</span></span>
-      <span class="line accent word-window"><span style="animation-delay:.25s;display:block">
-        <span class="word-track" id="wordTrack">
-          <span>hjemmet,</span><span>folka,</span><span>barna,</span><span>bedriften,</span>
-        </span>
-      </span></span>
-      <span class="line"><span style="animation-delay:.4s" class="light">slik det fortjener</span></span>
-      <span class="line"><span style="animation-delay:.55s" class="light">å bli sett.</span></span>
+<main id="innhold">
+
+<section class="hero" aria-label="Introduksjon">
+  <div class="hero-head">
+    <h1 class="hero-title">
+      <span class="t-line">Vi ser <span class="swap" id="swap" aria-live="off">hjemmet,</span></span>
+      <span class="t-line">slik det fortjener</span>
+      <span class="t-line">å bli sett.</span>
     </h1>
-    <div class="hero-foot fade" style="animation-delay:.9s">
-      <p class="lead">Et komplett mediebyrå fra Sunnhordland. Boligfoto, bedrift, skole, barnehage og industri — fanget med samme blikk, levert med samme presisjon.</p>
-      <div class="btn-row">
-        <a href="#kapitler" class="btn btn-dark">Se de fire kapitlene</a>
-        <a href="tel:+4792330435" class="btn btn-ghost">923 30 435</a>
+    <div class="hero-lead">
+      <p>Et komplett mediebyrå fra Sunnhordland. Boligfoto, bedrift, skole, barnehage og industri — fanget med samme blikk, levert med samme presisjon.</p>
+      <div class="actions">
+        <a href="#tjenester" class="btn">Se hva vi gjør</a>
+        <a href="tel:+4792330435" class="link">Ring 923 30 435</a>
       </div>
     </div>
   </div>
 
-  <div class="viewfinder fade" style="animation-delay:.35s">
-    <div class="vf-photo" id="vfPhoto">
-      <div class="vf-drift"><span class="mono vf-label" id="vfLabel">[FOTO]</span></div>
-      <div class="vf-scan" aria-hidden="true"></div>
+  <figure class="plate">
+   <div class="plate-frame">
+    <div class="plate-photo" id="plate">
+      <img src="assets/photos/bolig-stue.jpg?v=__V__" alt="Stue med peis og store vinduer mot fjorden i kveldslys" id="plateImg" width="1168" height="784">
     </div>
-    <div class="vf-brackets breathe" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
-    <div class="mono vf-top"><span id="vfNum">KAP. 01 / 04</span><span id="vfName">BOLIG</span></div>
-    <div class="mono vf-bottom"><span id="vfExif"></span><span class="accent">● AF-C</span></div>
+    <span class="crop crop-tl" aria-hidden="true"><svg viewBox="0 0 80 80"><path pathLength="1" d="M 6 74 C 4.6 52, 4.2 28, 5.4 6.2 C 26 4.6, 49 5, 75 6.8"/></svg></span>
+    <span class="crop crop-tr" aria-hidden="true"><svg viewBox="0 0 80 80"><path pathLength="1" d="M 4 5.4 C 28 4.2, 52 4.8, 74.6 6 C 75.8 27, 75.4 50, 74 73.5"/></svg></span>
+    <span class="crop crop-br" aria-hidden="true"><svg viewBox="0 0 80 80"><path pathLength="1" d="M 74.4 5 C 75.6 29, 75.2 51, 74.2 74.6 C 51 75.6, 28 75, 5.5 73.6"/></svg></span>
+    <span class="crop crop-bl" aria-hidden="true"><svg viewBox="0 0 80 80"><path pathLength="1" d="M 75 74.2 C 51 75.4, 27 75.6, 5.6 74.4 C 4.4 52, 4.8 29, 6.4 5"/></svg></span>
+   </div>
+    <figcaption class="plate-cap">
+      <span id="plateCap">Boligfoto. Stue med fjordutsikt i blå time.</span>
+      <span class="plate-ctrl">
+        <span id="plateCount">1 av 4</span>
+        <button type="button" class="pause" id="pause" aria-pressed="false">Pause</button>
+      </span>
+    </figcaption>
+  </figure>
+</section>
+
+<section class="sheet" id="tjenester" aria-labelledby="tj-h">
+  <div class="sheet-head">
+    <h2 id="tj-h">Fire kapitler.<br>Ett blikk.</h2>
+    <p>Hvert felt har egne folk, eget utstyr og egne leveranser — men samme krav til lys, komposisjon og tempo. Trykk på et bilde for å velge det, slik vi gjør når vi går gjennom et oppdrag.</p>
+  </div>
+
+  <article class="field" aria-labelledby="f1">
+    <div class="field-text">
+      <h3 id="f1">Boligfoto</h3>
+      <div class="field-body">
+        <p>Bilder som får visningen fullbooket. Interiør, eksteriør, drone og plantegning i én bestilling — levert til megler neste virkedag.</p>
+        <ul><li>Interiør og eksteriør</li><li>Dronefoto</li><li>Plantegning i 2D og 3D</li><li>Video og virtuell visning</li><li>Digital møblering</li></ul>
+      </div>
+    </div>
+    <div class="strip" data-start="1">
+      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bolig-stue.jpg?v=__V__" alt="Stue med fjordutsikt i kveldslys" loading="lazy"></button>
+      <button type="button" class="frame" aria-pressed="true"><img src="assets/photos/bolig-kjokken.jpg?v=__V__" alt="Lyst kjøkken i eik med utsikt" loading="lazy"></button>
+      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bolig-loft.jpg?v=__V__" alt="Loftsstue med takvinduer" loading="lazy"></button>
+      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bolig-tomannsbolig.jpg?v=__V__" alt="Tomannsbolig i skumring" loading="lazy"></button>
+      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bolig-hytte.jpg?v=__V__" alt="Rød hytte på et nes, fotografert med drone" loading="lazy"></button>
+    </div>
+  </article>
+
+  <article class="field" aria-labelledby="f2">
+    <div class="field-text">
+      <h3 id="f2">Bedrift</h3>
+      <div class="field-body">
+        <p>Portretter, lokaler og folk i arbeid — foto og video som viser hvem dere er, ikke et bildebyrås gjetning.</p>
+        <ul><li>Ansattportretter</li><li>Kontor og lokaler</li><li>Foto og video i arbeid</li><li>Drone</li><li>Innhold til sosiale medier</li></ul>
+      </div>
+    </div>
+    <div class="strip" data-start="6">
+      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bedrift-kontor.jpg?v=__V__" alt="Ansatt ved skrivebord i et lyst kontorlandskap" loading="lazy"></button>
+      <button type="button" class="frame frame-face" aria-pressed="true"><img src="assets/photos/bedrift-portrett.jpg?v=__V__" alt="Portrett av mann i mørk dressjakke" loading="lazy"></button>
+      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/bedrift-bygg.jpg?v=__V__" alt="Kontorbygg ved sjøen i skumring" loading="lazy"></button>
+    </div>
+  </article>
+
+  <article class="field" aria-labelledby="f3">
+    <div class="field-text">
+      <h3 id="f3">Skole og barnehage</h3>
+      <div class="field-body">
+        <p>Rolig, trygg og effektiv fotodag. Individuelle bilder, gruppebilder og en enkel bestillingsløsning for foreldre.</p>
+        <ul><li>Individuelle portretter</li><li>Klasse- og gruppebilder</li><li>Søskenbilder</li><li>Bestilling på nett</li></ul>
+      </div>
+    </div>
+    <div class="strip" data-start="9">
+      <button type="button" class="frame" aria-pressed="true"><img src="assets/photos/skole-lek.jpg?v=__V__" alt="Barnehagebarn som løper i skogen" loading="lazy"></button>
+      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/skole-klasse.jpg?v=__V__" alt="Klassebilde i skolegården" loading="lazy"></button>
+      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/skole-latter.jpg?v=__V__" alt="Tre barn som ler utendørs" loading="lazy"></button>
+    </div>
+  </article>
+
+  <article class="field" aria-labelledby="f4">
+    <div class="field-text">
+      <h3 id="f4">Maritim og industri</h3>
+      <div class="field-body">
+        <p>Vi kjenner livet om bord. Dokumentasjon, markedsføring og film fra dekk, verft og anlegg — sikkert og uten å stoppe driften.</p>
+        <ul><li>Fartøy og verft</li><li>Operasjoner på dekk</li><li>Drone over anlegg</li><li>Bedriftsfilm</li><li>HMS-dokumentasjon</li></ul>
+      </div>
+    </div>
+    <div class="strip" data-start="12">
+      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/maritim-skip.jpg?v=__V__" alt="Offshorefartøy i fjorden" loading="lazy"></button>
+      <button type="button" class="frame" aria-pressed="true"><img src="assets/photos/maritim-sveiser.jpg?v=__V__" alt="Sveiser i arbeid på verkstedet" loading="lazy"></button>
+      <button type="button" class="frame" aria-pressed="false"><img src="assets/photos/maritim-fiskebat.jpg?v=__V__" alt="Fiskebåt ved kai" loading="lazy"></button>
+    </div>
+  </article>
+</section>
+
+<section class="credo" aria-label="Hva vi tror på">
+  <p>Et bilde skal gjøre en jobb. Selge et hus. Bygge tillit til et firma. Bevare et skoleår. Vise hva som faktisk skjer ute på dekk.</p>
+</section>
+
+<section class="bank" id="timebank" aria-labelledby="tb-h">
+  <div class="bank-text">
+    <h2 id="tb-h">Timebanken</h2>
+    <p>For bedrifter som trenger nytt innhold hver måned. Dere kjøper timer, vi kommer når det skjer noe verdt å vise — til sosiale medier, nettside og blogg. Ubrukte timer [ruller over / regler kommer].</p>
+  </div>
+  <div class="bank-table">
+    <table>
+      <caption class="vh">Pakker i timebanken</caption>
+      <thead><tr><th scope="col">Pakke</th><th scope="col">Timer i måneden</th><th scope="col">Pris</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Liten</th><td>[X]</td><td>[PRIS]</td></tr>
+        <tr><th scope="row">Medium</th><td>[X]</td><td>[PRIS]</td></tr>
+        <tr><th scope="row">Stor</th><td>[X]</td><td>[PRIS]</td></tr>
+      </tbody>
+    </table>
+    <a href="#kontakt" class="btn">Start en timebank</a>
   </div>
 </section>
 
-
-<section id="kapitler" class="wrap section">
-  <div class="split head">
-    <h2 class="big">Fire kapitler.<br><span class="light muted">Ett blikk.</span></h2>
-    <p class="sub">Velg et kapittel. Hvert felt har egne folk, eget utstyr og egne leveranser — men samme krav til lys, komposisjon og tempo.</p>
-  </div>
-  <div class="chapters" id="chapters"></div>
-</section>
-
-<section id="arbeid" class="wrap section">
-  <p class="mono kicker">MANIFEST</p>
-  <p class="big sweep">
-    <span style="animation-delay:0s">Et bilde skal gjøre en jobb.</span>
-    <span style="animation-delay:1.5s">Selge et hus.</span>
-    <span style="animation-delay:3s">Bygge tillit til et firma.</span>
-    <span style="animation-delay:4.5s">Bevare et skoleår.</span>
-    <span style="animation-delay:6s">Vise hva som faktisk skjer ute på dekk.</span>
-  </p>
-</section>
-
-<div class="reel" aria-hidden="true"><div class="reel-track" id="reel"></div></div>
-
-<section id="timebank" class="wrap section-tight">
-  <div class="timebank split">
-    <div class="tb-text">
-      <span class="mono kicker light-kicker">FOR BEDRIFTER</span>
-      <h2 class="big">Timebanken.</h2>
-      <p class="lead">Innhold til sosiale medier, nettside og blogg — hver måned. Dere kjøper timer, vi kommer når det skjer noe verdt å vise. Ubrukte timer [ruller over / regler kommer].</p>
-    </div>
-    <div class="tb-list">
-      <div class="tb-row"><span>Liten</span><span class="mono">[X] t/mnd · [PRIS]</span></div>
-      <div class="tb-row"><span>Medium</span><span class="mono">[X] t/mnd · [PRIS]</span></div>
-      <div class="tb-row"><span>Stor</span><span class="mono">[X] t/mnd · [PRIS]</span></div>
-      <a href="#kontakt" class="btn btn-light">Start en timebank →</a>
-    </div>
-  </div>
-</section>
 </main>
 
-<footer id="kontakt" class="footer">
-  <div class="wrap footer-inner">
-    <a href="mailto:kontakt@studiovest.no" class="cta big">Fortell oss hva<br>som skal <span class="accent">fanges.</span></a>
-    <div class="contact split">
-      <div><span class="mono kicker">RING</span><a href="tel:+4792330435">923 30 435</a></div>
-      <div><span class="mono kicker">SKRIV</span><a href="mailto:kontakt@studiovest.no">kontakt@studiovest.no</a></div>
-      <div><span class="mono kicker">BESØK</span><span>Klostervegen 162, 5455 Halsnøy Kloster</span></div>
-      <div><span class="mono kicker">FØLG</span><a href="https://www.instagram.com/studio.vest">Instagram</a><a href="https://www.linkedin.com/company/studiovest/">LinkedIn</a></div>
-    </div>
-    <div class="mono legal"><span>© 2026 STUDIOVEST AS</span><span>SUNNHORDLAND · HAUGESUND · HELE NORGE</span></div>
-  </div>
+<footer class="foot" id="kontakt">
+  <a href="mailto:kontakt@studiovest.no" class="foot-cta">Fortell oss hva som skal fanges.</a>
+  <dl class="foot-grid">
+    <div><dt>Ring</dt><dd><a href="tel:+4792330435">923 30 435</a></dd></div>
+    <div><dt>Skriv</dt><dd><a href="mailto:kontakt@studiovest.no">kontakt@studiovest.no</a></dd></div>
+    <div><dt>Besøk</dt><dd>Klostervegen 162<br>5455 Halsnøy Kloster</dd></div>
+    <div><dt>Følg</dt><dd><a href="https://www.instagram.com/studio.vest">Instagram</a><br><a href="https://www.linkedin.com/company/studiovest/">LinkedIn</a></dd></div>
+  </dl>
+  <p class="foot-legal">© 2026 Studiovest AS. Basert i Sunnhordland, tilgjengelig overalt.</p>
 </footer>
 
 <script src="assets/main.js?v=__V__"></script>

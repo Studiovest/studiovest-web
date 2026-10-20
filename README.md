@@ -6,14 +6,17 @@ Statisk nettside (HTML, CSS, JS). Ingen WordPress, ingen byggesteg.
 - **Produksjon (senere):** studiovest.no på one.com via SFTP, når designet er godkjent.
 - Forhåndsvisningen har `noindex` og `robots.txt` som blokkerer søkemotorer. Fjernes ved lansering.
 
+## Design
+
+Konsept «Kontaktarket»: siden leses som en fotografs arbeidsark. Bildene ligger i filmstriper,
+og fotografens fettstift-merker (beskjæringshjørner i hero, sirkler rundt valgte bilder) er eneste fargeinnslag.
+
+- Skrift: Schibsted Grotesk (overskrifter, meny) og Newsreader (brødtekst). Ligger lokalt i `assets/fonts/`, ingen Google Fonts.
+- Farger: se `:root` øverst i `assets/style.css`.
+
 ## Bilder
 
-Legg bildene i `assets/photos/` med disse navnene (JPG, liggende, ca. 2400 px bredde). Mangler et bilde, vises en beige ramme i stedet.
-
-| Fil | Plass |
-|---|---|
-| `hero-bolig.jpg`, `hero-bedrift.jpg`, `hero-skole.jpg`, `hero-maritim.jpg` | Søkeren øverst, bytter med ordet i overskriften |
-| `kap-bolig.jpg`, `kap-bedrift.jpg`, `kap-skole.jpg`, `kap-maritim.jpg` | De fire kapitlene |
-| `reel-01.jpg` … `reel-10.jpg` | Den glidende bildestripen (stående format fungerer best) |
+Alle bilder ligger i `assets/photos/`, navngitt etter felt (`bolig-*`, `bedrift-*`, `skole-*`, `maritim-*`).
+Hero-bildene velges i `assets/main.js` (listen `slides`); filmstripene står i `index.html`.
 
 Skole- og barnehagebilder: bare bilder med skriftlig samtykke fra foresatte til markedsføring.
