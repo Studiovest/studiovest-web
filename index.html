@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nb">
+<html lang="nb" class="no-js">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,61 +11,69 @@
 <meta name="color-scheme" content="dark">
 <link rel="preload" href="assets/fonts/hanken-grotesk.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/style.css?v=__V__">
+<script>document.documentElement.classList.replace('no-js','js');</script>
 </head>
 <body>
 
 <a class="skip" href="#innhold">Hopp til innholdet</a>
+<div class="progress" aria-hidden="true"><span id="progress"></span></div>
+<div class="cursor" id="cursor" aria-hidden="true"><span id="cursorLabel"></span></div>
 
-<header class="top">
-  <a href="#" class="wordmark">Studiovest</a>
+<header class="top" id="top">
+  <a href="#" class="wordmark"><span class="roll"><span>Studiovest</span></span></a>
   <nav class="menu" aria-label="Hovedmeny">
-    <a href="#tjenester">Tjenester</a>
-    <a href="#timebank">Timebank</a>
-    <a href="#kontakt">Kontakt</a>
+    <a href="#tjenester"><span class="roll"><span>Tjenester</span></span></a>
+    <a href="#arbeid"><span class="roll"><span>Arbeid</span></span></a>
+    <a href="#timebank"><span class="roll"><span>Timebank</span></span></a>
+    <a href="#kontakt"><span class="roll"><span>Kontakt</span></span></a>
   </nav>
-  <a href="#kontakt" class="book">Book en prat</a>
+  <a href="#kontakt" class="book"><span class="roll"><span>Book en prat</span></span></a>
 </header>
 
 <main id="innhold">
 
-<section class="hero" aria-label="Introduksjon">
-  <div class="hero-photo" id="heroPhoto">
+<section class="hero" id="hero" aria-label="Introduksjon">
+  <div class="hero-photo" id="heroPhoto" data-cursor="Neste">
     <img src="assets/photos/bolig-stue.jpg?v=__V__" alt="Stue med peis og store vinduer mot fjorden i kveldslys" class="develop" width="1168" height="784">
   </div>
-  <div class="hero-text">
+  <div class="hero-text" id="heroText">
     <h1 class="hero-title">
-      <span class="t-line">Vi ser <span class="swap" id="swap">hjemmet,</span></span>
-      <span class="t-line">slik det fortjener</span>
-      <span class="t-line">å bli sett.</span>
+      <span class="t-line" data-enter="left">Vi ser <span class="swap-box"><span class="swap" id="swap">hjemmet,</span></span></span>
+      <span class="t-line" data-enter="right">slik det fortjener</span>
+      <span class="t-line" data-enter="up">å bli sett.</span>
     </h1>
-    <div class="hero-side">
+    <div class="hero-side" data-enter="right-late">
       <p>Et komplett mediebyrå fra Sunnhordland. Boligfoto, bedrift, skole, barnehage og industri — fanget med samme blikk, levert med samme presisjon.</p>
       <div class="actions">
-        <a href="#tjenester" class="btn">Se hva vi gjør</a>
+        <a href="#tjenester" class="btn magnet"><span class="roll"><span>Se hva vi gjør</span></span></a>
         <a href="tel:+4792330435" class="link">Ring 923 30 435</a>
       </div>
     </div>
   </div>
-  <div class="hero-meta">
+  <div class="hero-meta" data-enter="down">
     <ol class="ticks" id="ticks" aria-label="Bilder i toppen">
       <li><button type="button" aria-label="Vis bilde 1: hjemmet" aria-current="true"></button></li>
       <li><button type="button" aria-label="Vis bilde 2: folka"></button></li>
       <li><button type="button" aria-label="Vis bilde 3: barna"></button></li>
       <li><button type="button" aria-label="Vis bilde 4: bedriften"></button></li>
     </ol>
-    <span class="hero-cap" id="heroCap">Boligfoto. Stue med fjordutsikt i blå time.</span>
-    <button type="button" class="pause" id="pause" aria-pressed="false">Pause</button>
+    <span class="hero-cap"><span id="heroCap">Boligfoto. Stue med fjordutsikt i blå time.</span></span>
+    <span class="hero-nav">
+      <button type="button" class="arrow" id="heroPrev" aria-label="Forrige bilde"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button type="button" class="arrow" id="heroNext" aria-label="Neste bilde"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button type="button" class="pause" id="pause" aria-pressed="false">Pause</button>
+    </span>
   </div>
 </section>
 
 <section class="chapters" id="tjenester" aria-labelledby="tj-h">
   <div class="ch-head">
-    <h2 id="tj-h">Fire kapitler.<br>Ett blikk.</h2>
-    <p>Hvert felt har egne folk, eget utstyr og egne leveranser — men samme krav til lys, komposisjon og tempo.</p>
+    <h2 id="tj-h" data-split>Fire kapitler. / Ett blikk.</h2>
+    <p data-reveal="right">Hvert felt har egne folk, eget utstyr og egne leveranser — men samme krav til lys, komposisjon og tempo.</p>
   </div>
 
   <div class="ch-body">
-    <ul class="ch-list">
+    <ul class="ch-list" data-stagger="left">
       <li class="ch-item is-open">
         <h3><button type="button" class="ch-btn" aria-expanded="true" aria-controls="p1" data-field="0">Boligfoto</button></h3>
         <div class="ch-panel" id="p1">
@@ -96,51 +104,70 @@
       </li>
     </ul>
 
-    <div class="viewer">
-      <div class="viewer-main" id="viewerMain"></div>
+    <div class="viewer" data-reveal="clip-right">
+      <div class="viewer-main" id="viewerMain" data-cursor="Neste"></div>
       <div class="viewer-thumbs" id="viewerThumbs" role="group" aria-label="Flere bilder fra feltet"></div>
       <p class="viewer-cap" id="viewerCap" aria-live="polite"></p>
     </div>
   </div>
 </section>
 
-<section class="credo" aria-label="Hva vi tror på">
-  <p class="credo-line">Et bilde skal gjøre en jobb.</p>
-  <p class="credo-line">Selge et hus.</p>
-  <p class="credo-line">Bygge tillit til et firma.</p>
-  <p class="credo-line">Bevare et skoleår.</p>
-  <p class="credo-line">Vise hva som faktisk skjer ute på dekk.</p>
+<section class="reel" id="arbeid" aria-labelledby="ar-h">
+  <div class="reel-pin">
+    <div class="reel-head">
+      <h2 id="ar-h" data-split>Utvalgt arbeid</h2>
+      <div class="reel-meta" data-reveal="left">
+        <span class="reel-count"><span id="reelNow">1</span> av <span id="reelTotal">14</span></span>
+        <span class="reel-bar"><span id="reelBar"></span></span>
+        <span class="reel-btns">
+          <button type="button" class="arrow" id="reelPrev" aria-label="Forrige bilde"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <button type="button" class="arrow" id="reelNext" aria-label="Neste bilde"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        </span>
+      </div>
+    </div>
+    <div class="reel-viewport" id="reelViewport" data-cursor="Dra">
+      <ul class="reel-track" id="reelTrack"></ul>
+    </div>
+  </div>
 </section>
 
-<figure class="wide">
-  <img src="assets/photos/maritim-skip.jpg?v=__V__" alt="Offshorefartøy på vei inn fjorden mellom bratte fjell" loading="lazy" width="1168" height="784">
-  <figcaption>Maritim. Offshorefartøy på vei inn fjorden.</figcaption>
+<section class="credo" aria-label="Hva vi tror på">
+  <p class="credo-line" data-reveal="left">Et bilde skal gjøre en jobb.</p>
+  <p class="credo-line" data-reveal="right">Selge et hus.</p>
+  <p class="credo-line" data-reveal="left">Bygge tillit til et firma.</p>
+  <p class="credo-line" data-reveal="right">Bevare et skoleår.</p>
+  <p class="credo-line" data-reveal="up">Vise hva som faktisk skjer ute på dekk.</p>
+</section>
+
+<figure class="wide" data-reveal="clip-up">
+  <div class="wide-inner"><img src="assets/photos/maritim-skip.jpg?v=__V__" alt="Offshorefartøy på vei inn fjorden mellom bratte fjell" loading="lazy" width="1168" height="784" data-parallax="0.18"></div>
+  <figcaption data-reveal="left">Maritim. Offshorefartøy på vei inn fjorden.</figcaption>
 </figure>
 
 <section class="bank" id="timebank" aria-labelledby="tb-h">
   <div class="bank-text">
-    <h2 id="tb-h">Timebanken</h2>
-    <p>For bedrifter som trenger nytt innhold hver måned. Dere kjøper timer, vi kommer når det skjer noe verdt å vise — til sosiale medier, nettside og blogg. Ubrukte timer [ruller over / regler kommer].</p>
+    <h2 id="tb-h" data-split>Timebanken</h2>
+    <p data-reveal="up">For bedrifter som trenger nytt innhold hver måned. Dere kjøper timer, vi kommer når det skjer noe verdt å vise — til sosiale medier, nettside og blogg. Ubrukte timer [ruller over / regler kommer].</p>
   </div>
-  <ul class="packs">
+  <ul class="packs" data-stagger="up">
     <li><h3>Liten</h3><p class="hours">[X] timer i måneden</p><p class="price">[PRIS]</p></li>
     <li><h3>Medium</h3><p class="hours">[X] timer i måneden</p><p class="price">[PRIS]</p></li>
     <li><h3>Stor</h3><p class="hours">[X] timer i måneden</p><p class="price">[PRIS]</p></li>
   </ul>
-  <div class="bank-cta"><a href="#kontakt" class="btn">Start en timebank</a></div>
+  <div class="bank-cta" data-reveal="right"><a href="#kontakt" class="btn magnet"><span class="roll"><span>Start en timebank</span></span></a></div>
 </section>
 
 </main>
 
 <footer class="foot" id="kontakt">
-  <a href="mailto:kontakt@studiovest.no" class="foot-cta">Fortell oss hva<br>som skal fanges.</a>
-  <dl class="foot-grid">
+  <a href="mailto:kontakt@studiovest.no" class="foot-cta" data-split="chars">Fortell oss hva som skal fanges.</a>
+  <dl class="foot-grid" data-stagger="up">
     <div><dt>Ring</dt><dd><a href="tel:+4792330435">923 30 435</a></dd></div>
     <div><dt>Skriv</dt><dd><a href="mailto:kontakt@studiovest.no">kontakt@studiovest.no</a></dd></div>
     <div><dt>Besøk</dt><dd>Klostervegen 162<br>5455 Halsnøy Kloster</dd></div>
     <div><dt>Følg</dt><dd><a href="https://www.instagram.com/studio.vest">Instagram</a><br><a href="https://www.linkedin.com/company/studiovest/">LinkedIn</a></dd></div>
   </dl>
-  <p class="foot-legal">© 2026 Studiovest AS. Basert i Sunnhordland, tilgjengelig overalt.</p>
+  <p class="foot-legal" data-reveal="up">© 2026 Studiovest AS. Basert i Sunnhordland, tilgjengelig overalt.</p>
 </footer>
 
 <script src="assets/main.js?v=__V__"></script>

@@ -8,16 +8,22 @@ Statisk nettside (HTML, CSS, JS). Ingen WordPress, ingen byggesteg.
 
 ## Design
 
-Konsept «Fremkalling»: svart som et mørkerom. Bildene fremkalles fra sort når de vises
-(hero, bildeviseren under «Fire kapitler»), og manifestet lyses opp linje for linje mens man scroller.
-Ingen aksentfarge — all farge kommer fra fotografiene.
+Konsept «Fremkalling», levende versjon: svart som et mørkerom, og siden er i bevegelse hele tiden.
 
-- Skrift: Hanken Grotesk (lette vekter i store titler). Ligger lokalt i `assets/fonts/`, ingen Google Fonts.
-- Farger: se `:root` øverst i `assets/style.css`.
+- **Hero:** fullskjerms bildeslider (pil, sveip, klikk på bildet, autospill med pause). Nye bilder feies inn og fremkalles,
+  ordet i overskriften bytter i takt, linjene glir inn fra venstre, høyre og nedenfra ved sidelast. Parallakse ved scroll.
+- **Kapitler:** listen glir inn fra venstre, bildeviseren avdekkes fra høyre; nye bilder feies inn.
+- **Utvalgt arbeid:** horisontal bildeslider som styres av scroll på PC (kan også dras med musen), og sveipes på mobil.
+- **Manifest:** linjene glir inn vekselvis fra venstre og høyre, og lyses opp mens man leser.
+- **Øvrig:** titler stiger opp ord for ord / bokstav for bokstav, egen markør på PC, magnetiske knapper,
+  toppmeny som gjemmer seg ved scroll ned, fremdriftslinje øverst.
+- Alt slås av for besøkende som har valgt redusert bevegelse i systemet sitt.
+- Markering i HTML: `data-reveal="left|right|up|down|clip-right|clip-up"`, `data-stagger`, `data-split` (` / ` = linjeskift).
+- Skrift: Hanken Grotesk, lokalt i `assets/fonts/`. Farger: `:root` i `assets/style.css`.
 
 ## Bilder
 
 Alle bilder ligger i `assets/photos/`, navngitt etter felt (`bolig-*`, `bedrift-*`, `skole-*`, `maritim-*`).
-Hero-bildene velges i `assets/main.js` (listen `slides`), bildene per kapittel i listen `fields`.
+I `assets/main.js`: hero-bildene i `slides`, bildene per kapittel i `fields`, slideren «Utvalgt arbeid» i `work`.
 
 Skole- og barnehagebilder: bare bilder med skriftlig samtykke fra foresatte til markedsføring.
