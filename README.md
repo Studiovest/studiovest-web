@@ -6,6 +6,13 @@ Statisk nettside (HTML, CSS, JS). Ingen WordPress, ingen byggesteg.
 - **Produksjon (senere):** studiovest.no på one.com via SFTP, når designet er godkjent.
 - Forhåndsvisningen har `noindex` og `robots.txt` som blokkerer søkemotorer. Fjernes ved lansering.
 
+## Versjoner
+
+- **Versjon 1** (godkjent 25.10.2026): commit `57f6a33` på `main`.
+  Fast kopi som alltid kan åpnes: `/versjon-1/` på forhåndsvisningen. Den mappen endres aldri.
+- Rulle tilbake forsiden til versjon 1: `git checkout 57f6a33 -- index.html assets`, commit og push
+  (mappen `versjon-1/` røres ikke).
+
 ## Design
 
 Struktur og bevegelse inspirert av landonorris.com, tilpasset et mediebyrå og med Studiovests egne farger
