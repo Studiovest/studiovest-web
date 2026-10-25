@@ -8,22 +8,27 @@ Statisk nettside (HTML, CSS, JS). Ingen WordPress, ingen byggesteg.
 
 ## Design
 
-Konsept «Fremkalling», levende versjon: svart som et mørkerom, og siden er i bevegelse hele tiden.
+Struktur og bevegelse inspirert av landonorris.com, tilpasset et mediebyrå og med Studiovests egne farger
+(papirhvit #F2EEE8, mørkerom #161412, stein #C9C1B6, sand #D9A866, brun #8B5A3A).
 
-- **Hero:** fullskjerms bildeslider (pil, sveip, klikk på bildet, autospill med pause). Nye bilder feies inn og fremkalles,
-  ordet i overskriften bytter i takt, linjene glir inn fra venstre, høyre og nedenfra ved sidelast. Parallakse ved scroll.
-- **Kapitler:** listen glir inn fra venstre, bildeviseren avdekkes fra høyre; nye bilder feies inn.
-- **Utvalgt arbeid:** horisontal bildeslider som styres av scroll på PC (kan også dras med musen), og sveipes på mobil.
-- **Manifest:** linjene glir inn vekselvis fra venstre og høyre, og lyses opp mens man leser.
-- **Øvrig:** titler stiger opp ord for ord / bokstav for bokstav, egen markør på PC, magnetiske knapper,
-  toppmeny som gjemmer seg ved scroll ned, fremdriftslinje øverst.
-- Alt slås av for besøkende som har valgt redusert bevegelse i systemet sitt.
-- Markering i HTML: `data-reveal="left|right|up|down|clip-right|clip-up"`, `data-stagger`, `data-split` (` / ` = linjeskift).
-- Skrift: Hanken Grotesk, lokalt i `assets/fonts/`. Farger: `:root` i `assets/style.css`.
+- **Laster:** STUDIO/VEST og teller 0–100, gardinen trekkes opp.
+- **Meny:** fullskjerm. 2×2 bildegrid (svart-hvitt) til venstre, store lenker til høyre. Hover gir farge på bildet
+  og håndtegnet strek under lenken. Bildene følger musen. Esc lukker.
+- **Hero:** linse som følger musen og viser ferdig redigert bilde over råfilen. Ordet i tittelen og bildet bytter
+  (med pauseknapp).
+- **Gigantiske linjer:** to rader i hver sin retning, farten følger scrollingen. Portrett med håndtegnet sløyfe.
+- **Manifest:** ord for ord lyses opp mens man scroller.
+- **Kollasj:** spredte bilder i ulik fart (parallakse), bakgrunnen glir fra mørk til stein til lys.
+- **Foto / Film:** bildene glir inn fra skjermkantene.
+- **Fire kapitler:** forskjøvet rutenett, bildene bytter og tekst vises ved hover.
+- **Timebank:** svevende bilder i ulik fart. **Vifte:** kort i bue som roterer og kan dras.
+- **Bunn:** stort mørkt kort med hakk på toppen.
+- Teknikk: GSAP + ScrollTrigger og Lenis (myk scrolling) i `assets/vendor/`. Alt slås av ved redusert bevegelse.
+- Skrift: Hanken Grotesk og Gloock, lokalt i `assets/fonts/`. Kotelinjene er generert, ligger i `index.html` (`#topo`).
 
 ## Bilder
 
 Alle bilder ligger i `assets/photos/`, navngitt etter felt (`bolig-*`, `bedrift-*`, `skole-*`, `maritim-*`).
-I `assets/main.js`: hero-bildene i `slides`, bildene per kapittel i `fields`, slideren «Utvalgt arbeid» i `work`.
+I `assets/main.js`: hero-bildene i `slides`, viften i `fanPhotos`. Kapittelbildene står i `data-photos` i `index.html`.
 
 Skole- og barnehagebilder: bare bilder med skriftlig samtykke fra foresatte til markedsføring.

@@ -1,404 +1,437 @@
-// Studiovest forside — konsept «Fremkalling», levende versjon.
+// Studiovest — bevegelse. GSAP + ScrollTrigger for scroll-animasjoner, Lenis for myk scrolling.
 (function () {
   var V = '?v=__V__';
   var P = 'assets/photos/';
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  var DUR = 5200;
+  var G = window.gsap, ST = window.ScrollTrigger;
+  var motion = !reduce && !!G && !!ST;
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
-  var restart = function (el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
+  var body = document.body;
+  if (motion) G.registerPlugin(ST);
 
-  function photo(file, alt, cls) {
-    var img = new Image();
-    img.src = P + file + V;
-    img.alt = alt || '';
-    img.width = 1168; img.height = 784;
-    if (cls && !reduce) img.className = cls;
-    return img;
+  /* ---------- Myk scrolling ---------- */
+  var lenis = null;
+  if (motion && window.Lenis) {
+    lenis = new window.Lenis({ lerp: 0.09, smoothWheel: true });
+    lenis.on('scroll', ST.update);
+    G.ticker.add(function (t) { lenis.raf(t * 1000); });
+    G.ticker.lagSmoothing(0);
   }
-  // Nytt bilde glir inn over det gamle; det gamle skyves ut og fjernes.
-  function slideInto(box, img, dir) {
-    var old = Array.prototype.slice.call(box.children);
-    if (!reduce) old.forEach(function (o) { o.className = dir < 0 ? 'push-r' : 'push-l'; });
-    box.appendChild(img);
-    setTimeout(function () { old.forEach(function (o) { if (o.parentNode === box) box.removeChild(o); }); }, reduce ? 0 : 1200);
+  function scrollToTarget(target) {
+    if (lenis) lenis.scrollTo(target, { duration: 1.4 });
+    else if (target === 0) window.scrollTo(0, 0);
+    else target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
   }
-
-  /* ---------- Del opp titler i ord eller bokstaver ---------- */
-  $$('[data-split]').forEach(function (el) {
-    var chars = el.getAttribute('data-split') === 'chars';
-    // « / » i teksten betyr linjeskift.
-    var words = el.textContent.trim().split(/[ \t\n]+/);
-    var i = 0;
-    el.setAttribute('aria-label', el.textContent.replace(/\s\/\s/g, ' ').trim());
-    el.textContent = '';
-    words.forEach(function (word, k) {
-      if (word === '/') { el.appendChild(document.createElement('br')); return; }
-      var holder = document.createElement('span');
-      holder.setAttribute('aria-hidden', 'true');
-      if (chars) {
-        holder.style.whiteSpace = 'nowrap';
-        holder.style.display = 'inline-block';
-        word.split('').forEach(function (c) {
-          var w = document.createElement('span'); w.className = 'w';
-          var wi = document.createElement('span'); wi.className = 'wi'; wi.textContent = c; wi.style.setProperty('--i', i++);
-          w.appendChild(wi); holder.appendChild(w);
-        });
-      } else {
-        holder.className = 'w';
-        var wi = document.createElement('span'); wi.className = 'wi'; wi.textContent = word; wi.style.setProperty('--i', i++);
-        holder.appendChild(wi);
-      }
-      el.appendChild(holder);
-      if (k < words.length - 1) el.appendChild(document.createTextNode(' '));
-    });
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var id = a.getAttribute('href');
+    var target = id === '#' ? 0 : document.querySelector(id);
+    if (target === null) return;
+    e.preventDefault();
+    var wasOpen = menuOpen;
+    closeMenu();
+    setTimeout(function () { scrollToTarget(target); }, wasOpen ? 650 : 0);
   });
 
-  /* ---------- Scroll-innganger ---------- */
-  $$('[data-stagger]').forEach(function (g) {
-    Array.prototype.forEach.call(g.children, function (c, i) { c.style.setProperty('--i', i); });
-  });
-  var revealEls = $$('[data-reveal],[data-stagger],[data-split]');
-  if ('IntersectionObserver' in window && !reduce) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  /* ---------- Fargetema som glir mellom seksjonene ---------- */
+  var THEMES = {
+    light: { bg: '#F2EEE8', fg: '#161412', acc: '#8B5A3A', line: 'rgba(22,20,18,0.10)' },
+    dark:  { bg: '#161412', fg: '#F2EEE8', acc: '#D9A866', line: 'rgba(242,238,232,0.07)' },
+    stone: { bg: '#C9C1B6', fg: '#161412', acc: '#5E3B24', line: 'rgba(22,20,18,0.12)' }
+  };
+  var currentTheme = 'light';
+  function setTheme(name) {
+    if (name === currentTheme) return;
+    currentTheme = name;
+    var t = THEMES[name];
+    if (!motion) {
+      body.style.setProperty('--bg', t.bg); body.style.setProperty('--fg', t.fg);
+      body.style.setProperty('--acct', t.acc); body.style.setProperty('--line', t.line);
+      return;
+    }
+    G.to(body, { '--bg': t.bg, '--fg': t.fg, '--acct': t.acc, '--line': t.line, duration: 0.9, ease: 'power2.out', overwrite: true });
+  }
+  var themed = $$('[data-theme]');
+  if (motion) {
+    themed.forEach(function (s) {
+      ST.create({
+        trigger: s, start: 'top 55%', end: 'bottom 55%',
+        onEnter: function () { setTheme(s.dataset.theme); },
+        onEnterBack: function () { setTheme(s.dataset.theme); }
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
-    revealEls.forEach(function (el) { io.observe(el); });
-  } else {
-    revealEls.forEach(function (el) { el.classList.add('in'); });
+    });
+  } else if ('IntersectionObserver' in window) {
+    var tio = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) setTheme(e.target.dataset.theme); });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    themed.forEach(function (s) { tio.observe(s); });
   }
 
-  /* ---------- Hero-slider ---------- */
+  /* ---------- Meny ---------- */
+  var menu = $('#menu'), menuBtn = $('#menuBtn'), menuOpen = false, menuTl = null;
+  var tiles = $$('.menu-tile'), links = $$('.menu-link');
+  function buildMenuTl() {
+    menuTl = G.timeline({ paused: true, defaults: { ease: 'expo.out' } })
+      .fromTo(menu, { clipPath: 'inset(0% 0% 100% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.9, ease: 'expo.inOut' })
+      .fromTo(tiles, { yPercent: 40, opacity: 0, rotate: function (i) { return i % 2 ? 4 : -4; } },
+        { yPercent: 0, opacity: 1, rotate: 0, duration: 1.1, stagger: 0.07 }, 0.35)
+      .fromTo($$('.ml-text', menu), { yPercent: 115 }, { yPercent: 0, duration: 1, stagger: 0.06 }, 0.42)
+      .fromTo([$('.menu-badge'), $('.menu-foot')], { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, stagger: 0.08 }, 0.7);
+  }
+  function openMenu() {
+    if (menuOpen) return;
+    menuOpen = true;
+    menu.hidden = false;
+    body.classList.add('menu-open');
+    menuBtn.classList.add('open');
+    menuBtn.setAttribute('aria-expanded', 'true');
+    if (lenis) lenis.stop();
+    if (motion) { if (!menuTl) buildMenuTl(); menuTl.timeScale(1).play(0); }
+    setTimeout(function () { links[0].focus({ preventScroll: true }); }, motion ? 500 : 0);
+  }
+  function closeMenu() {
+    if (!menuOpen) return;
+    menuOpen = false;
+    menuBtn.classList.remove('open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    if (lenis) lenis.start();
+    body.classList.remove('menu-open');
+    var done = function () { menu.hidden = true; tiles.forEach(function (t) { t.classList.remove('lit'); }); };
+    if (motion && menuTl) { menuTl.timeScale(1.6).reverse(); menuTl.eventCallback('onReverseComplete', done); }
+    else done();
+    menuBtn.focus({ preventScroll: true });
+  }
+  menuBtn.addEventListener('click', function () { if (menuOpen) closeMenu(); else openMenu(); });
+  document.addEventListener('keydown', function (e) {
+    if (!menuOpen) return;
+    if (e.key === 'Escape') closeMenu();
+    if (e.key === 'Tab') { // hold fokus inne i menyen
+      var f = [menuBtn].concat($$('a', menu));
+      var i = f.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+    }
+  });
+  function lightTile(key) { tiles.forEach(function (t) { t.classList.toggle('lit', t.dataset.key === key); }); }
+  links.forEach(function (l) {
+    l.addEventListener('mouseenter', function () { lightTile(l.dataset.key); });
+    l.addEventListener('focus', function () { lightTile(l.dataset.key); });
+  });
+  $('.menu-nav').addEventListener('mouseleave', function () { lightTile(null); });
+  if (motion) {
+    menu.addEventListener('mousemove', function (e) {
+      var nx = e.clientX / window.innerWidth - 0.5, ny = e.clientY / window.innerHeight - 0.5;
+      tiles.forEach(function (t, i) {
+        var depth = [18, 30, 26, 14][i];
+        G.to(t, { x: nx * depth, y: ny * depth, duration: 1.2, ease: 'power3.out', overwrite: 'auto' });
+      });
+    });
+  }
+
+  /* ---------- Hero: linse og bildebytte ---------- */
+  var lens = $('#lens'), raw = $('#lensRaw'), edit = $('#lensEdit'), tag = $('#lensTag');
+  var swap = $('#swap'), pauseBtn = $('#heroPause');
+  var heroReady = false, hovering = false, heroVisible = true;
+  var L = { x: 0.5, y: 0.5, r: 0 }, T = { x: 0.5, y: 0.5, r: 0 };
   var slides = [
-    { word: 'hjemmet,',   img: 'bolig-stue.jpg',     alt: 'Stue med peis og store vinduer mot fjorden i kveldslys', cap: 'Boligfoto. Stue med fjordutsikt i blå time.' },
-    { word: 'folka,',     img: 'bedrift-kontor.jpg', alt: 'Ansatt ved skrivebord i et lyst kontorlandskap',          cap: 'Bedrift. Hverdag i kontorlandskapet.' },
-    { word: 'barna,',     img: 'skole-latter.jpg',   alt: 'Tre barn som ler utendørs',                                 cap: 'Barnehage. Utelek en gråværsdag.' },
-    { word: 'bedriften,', img: 'bedrift-bygg.jpg',   alt: 'Kontorbygg ved sjøen i skumring',                           cap: 'Bedrift. Hovedkontor ved sjøen.' }
+    { img: 'bolig-stue.jpg',     word: 'hjemmet,',   alt: 'Stue med peis og store vinduer mot fjorden i kveldslys' },
+    { img: 'bedrift-kontor.jpg', word: 'folka,',     alt: 'Ansatt ved skrivebord i et lyst kontorlandskap' },
+    { img: 'skole-latter.jpg',   word: 'barna,',     alt: 'Tre barn som ler utendørs' },
+    { img: 'bedrift-bygg.jpg',   word: 'bedriften,', alt: 'Kontorbygg ved sjøen i skumring' }
   ];
   slides.forEach(function (s) { new Image().src = P + s.img + V; });
 
-  var hero = $('#hero');
-  var heroPhoto = $('#heroPhoto');
-  var heroText = $('#heroText');
-  var swap = $('#swap');
-  var heroCap = $('#heroCap');
-  var ticks = $$('#ticks button');
-  var pauseBtn = $('#pause');
-  var cur = 0, timer = null, paused = reduce;
-  hero.style.setProperty('--dur', DUR + 'ms');
-
-  function setTicks(n) {
-    ticks.forEach(function (t, k) { t.removeAttribute('aria-current'); t.classList.toggle('done', k < n); });
-    void ticks[n].offsetWidth;
-    ticks[n].setAttribute('aria-current', 'true');
+  function lensMove(e) {
+    var b = lens.getBoundingClientRect();
+    T.x = (e.clientX - b.left) / b.width;
+    T.y = (e.clientY - b.top) / b.height;
+    T.r = 0.3;
+    hovering = true;
   }
-  function show(n, dir) {
-    if (n === cur) return;
-    dir = dir || (n > cur ? 1 : -1);
-    cur = n;
-    var s = slides[n];
-    if (reduce) { swap.textContent = s.word; }
-    else {
-      swap.classList.add('out');
-      setTimeout(function () {
-        swap.textContent = s.word;
-        swap.classList.remove('out'); swap.classList.add('from');
-        void swap.offsetWidth;
-        swap.classList.remove('from');
-      }, 480);
+  lens.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') lensMove(e); });
+  lens.addEventListener('pointerleave', function () { hovering = false; });
+  lens.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') { lensMove(e); setTimeout(function () { hovering = false; }, 1600); } });
+
+  function lensTick() {
+    if (!heroVisible) return;
+    var t = performance.now() / 1000;
+    if (!hovering) {
+      T.x = 0.5 + 0.26 * Math.sin(t * 0.55);
+      T.y = 0.5 + 0.2 * Math.sin(t * 0.9 + 1.2);
+      T.r = heroReady ? 0.24 : 0;
     }
-    slideInto(heroPhoto, photo(s.img, s.alt, dir < 0 ? 'wipe-l' : 'wipe-r'), dir);
-    heroCap.textContent = s.cap;
-    restart(heroCap, 'cap-in');
-    setTicks(n);
+    L.x += (T.x - L.x) * 0.1; L.y += (T.y - L.y) * 0.1; L.r += (T.r - L.r) * 0.08;
+    edit.style.clipPath = 'circle(' + (L.r * 100).toFixed(2) + '% at ' + (L.x * 100).toFixed(2) + '% ' + (L.y * 100).toFixed(2) + '%)';
+    tag.style.left = (L.x * 100) + '%';
+    tag.style.top = (L.y * 100 + L.r * 100 * 1.05) + '%';
+    tag.style.opacity = L.r > 0.08 ? 1 : 0;
   }
-  function next() { show((cur + 1) % slides.length, 1); }
-  function prev() { show((cur - 1 + slides.length) % slides.length, -1); }
-  function start() { stop(); timer = setInterval(next, DUR); }
-  function stop() { if (timer) clearInterval(timer); timer = null; }
-  function nudge(fn) { fn(); if (!paused) start(); }
-  function setPaused(p) {
-    paused = p;
-    hero.classList.toggle('paused', p);
-    pauseBtn.setAttribute('aria-pressed', String(p));
-    pauseBtn.textContent = p ? 'Spill av' : 'Pause';
-    if (p) stop(); else start();
+  if (!motion) { edit.style.clipPath = 'none'; tag.style.display = 'none'; }
+  if (motion) {
+    G.ticker.add(lensTick);
+    new IntersectionObserver(function (es) { heroVisible = es[0].isIntersecting; }).observe(lens);
   }
-  ticks.forEach(function (t, k) { t.addEventListener('click', function () { nudge(function () { show(k); }); }); });
-  $('#heroNext').addEventListener('click', function () { nudge(next); });
-  $('#heroPrev').addEventListener('click', function () { nudge(prev); });
-  heroPhoto.addEventListener('click', function () { nudge(next); });
-  pauseBtn.addEventListener('click', function () { setPaused(!paused); });
-  document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); else if (!paused) start(); });
-  // Sveip på mobil
-  (function () {
-    var x0 = null, y0 = null;
-    hero.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
-    hero.addEventListener('touchend', function (e) {
-      if (x0 === null) return;
-      var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
-      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) nudge(dx < 0 ? next : prev);
-      x0 = null;
-    }, { passive: true });
-  })();
-  setPaused(paused);
 
-  /* ---------- Kapitler med bildeviser ---------- */
-  var fields = [
-    [ ['bolig-stue.jpg', 'Stue med fjordutsikt i blå time'], ['bolig-kjokken.jpg', 'Kjøkken i eik med utsikt'], ['bolig-loft.jpg', 'Loftsstue med takvinduer'], ['bolig-tomannsbolig.jpg', 'Tomannsbolig i skumring'], ['bolig-hytte.jpg', 'Hytte på et nes, fra drone'] ],
-    [ ['bedrift-portrett.jpg', 'Portrett av daglig leder'], ['bedrift-kontor.jpg', 'Hverdag i kontorlandskapet'], ['bedrift-bygg.jpg', 'Hovedkontor ved sjøen'] ],
-    [ ['skole-lek.jpg', 'Barnehagebarn på tur i skogen'], ['skole-latter.jpg', 'Tre barn som ler utendørs'], ['skole-klasse.jpg', 'Klassebilde i skolegården'] ],
-    [ ['maritim-sveiser.jpg', 'Sveiser i arbeid på verkstedet'], ['maritim-skip.jpg', 'Offshorefartøy i fjorden'], ['maritim-fiskebat.jpg', 'Fiskebåt ved kai'] ]
-  ];
-  var viewer = $('.viewer');
-  var vMain = $('#viewerMain');
-  var thumbs = $('#viewerThumbs');
-  var vcap = $('#viewerCap');
-  var chBody = $('.ch-body');
-  var chBtns = $$('.ch-btn');
-  var narrow = window.matchMedia('(max-width: 960px)');
-  var field = 0, shot = 0;
-
-  function showShot(f, k, dir, animate) {
-    shot = k;
-    var item = fields[f][k];
-    var img = photo(item[0], item[1], animate ? (dir < 0 ? 'wipe-l' : 'wipe-r') : 'kb');
-    if (item[0] === 'bedrift-portrett.jpg') img.style.objectPosition = '50% 25%';
-    if (animate) slideInto(vMain, img, dir); else { vMain.innerHTML = ''; vMain.appendChild(img); }
-    vcap.textContent = item[1] + '.';
-    restart(vcap, 'cap-in');
-    Array.prototype.forEach.call(thumbs.children, function (b, j) { b.setAttribute('aria-pressed', String(j === k)); });
+  var cur = 0, heroTimer = null, heroPaused = reduce;
+  function layerSwap(layer, s, alt) {
+    var img = new Image();
+    img.src = P + s.img + V; img.alt = alt || ''; img.width = 1168; img.height = 784;
+    layer.appendChild(img);
+    var old = $$('img', layer).slice(0, -1);
+    if (!motion) { old.forEach(function (o) { o.remove(); }); return; }
+    G.fromTo(img, { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 1.1, ease: 'power3.out', onComplete: function () { old.forEach(function (o) { o.remove(); }); } });
   }
-  function openField(f, animate) {
-    var dir = f > field ? 1 : -1;
-    field = f;
-    chBtns.forEach(function (b, j) {
-      var open = j === f;
-      var panel = document.getElementById(b.getAttribute('aria-controls'));
-      b.setAttribute('aria-expanded', String(open));
-      panel.hidden = !open;
-      b.closest('.ch-item').classList.toggle('is-open', open);
-      if (open && animate) {
-        $$('.ch-deliver li', panel).forEach(function (li, i) { li.style.setProperty('--i', i); });
-        restart(panel, 'anim');
-      }
-    });
-    thumbs.innerHTML = '';
-    fields[f].forEach(function (item, k) {
-      var t = document.createElement('button');
-      t.type = 'button';
-      t.style.setProperty('--i', k);
-      t.setAttribute('aria-label', 'Vis bilde: ' + item[1]);
-      var ti = new Image(); ti.src = P + item[0] + V; ti.alt = ''; ti.loading = 'lazy';
-      t.appendChild(ti);
-      t.addEventListener('click', function () { if (k !== shot) showShot(f, k, k > shot ? 1 : -1, true); });
-      thumbs.appendChild(t);
-    });
-    placeViewer();
-    showShot(f, 0, dir, animate);
+  function nextSlide() {
+    cur = (cur + 1) % slides.length;
+    var s = slides[cur];
+    layerSwap(raw, s, '');
+    layerSwap(edit, s, s.alt);
+    if (!motion) { swap.textContent = s.word; return; }
+    G.to(swap, { yPercent: -115, duration: 0.45, ease: 'power3.in', onComplete: function () {
+      swap.textContent = s.word;
+      G.fromTo(swap, { yPercent: 115 }, { yPercent: 0, duration: 0.7, ease: 'power3.out' });
+    } });
   }
-  function placeViewer() {
-    var target = narrow.matches ? document.getElementById(chBtns[field].getAttribute('aria-controls')) : chBody;
-    if (viewer.parentNode !== target) {
-      if (narrow.matches) target.insertBefore(viewer, target.firstChild); else target.appendChild(viewer);
-    }
-  }
-  chBtns.forEach(function (b, j) { b.addEventListener('click', function () { if (j !== field) openField(j, true); }); });
-  vMain.addEventListener('click', function () { showShot(field, (shot + 1) % fields[field].length, 1, true); });
-  if (narrow.addEventListener) narrow.addEventListener('change', placeViewer);
-  openField(0, false);
-
-  /* ---------- Utvalgt arbeid: horisontal slider ---------- */
-  var work = [
-    ['bolig-stue.jpg', 'Boligfoto', 'Stue i blå time'],
-    ['maritim-sveiser.jpg', 'Industri', 'Sveiser på verkstedet'],
-    ['bedrift-portrett.jpg', 'Bedrift', 'Portrett, daglig leder', 'tall'],
-    ['bolig-hytte.jpg', 'Boligfoto', 'Hytte fra drone'],
-    ['skole-lek.jpg', 'Barnehage', 'Tur i skogen'],
-    ['maritim-fiskebat.jpg', 'Maritim', 'Fiskebåt ved kai'],
-    ['bolig-kjokken.jpg', 'Boligfoto', 'Kjøkken i eik'],
-    ['bedrift-bygg.jpg', 'Bedrift', 'Hovedkontor ved sjøen'],
-    ['skole-klasse.jpg', 'Skole', 'Klassebilde'],
-    ['bolig-tomannsbolig.jpg', 'Boligfoto', 'Tomannsbolig i skumring'],
-    ['maritim-skip.jpg', 'Maritim', 'Offshorefartøy i fjorden'],
-    ['bedrift-kontor.jpg', 'Bedrift', 'Kontorlandskap'],
-    ['skole-latter.jpg', 'Barnehage', 'Utelek'],
-    ['bolig-loft.jpg', 'Boligfoto', 'Loftsstue']
-  ];
-  var reel = $('#arbeid');
-  var track = $('#reelTrack');
-  var vp = $('#reelViewport');
-  var reelBar = $('#reelBar');
-  var reelNow = $('#reelNow');
-  $('#reelTotal').textContent = work.length;
-  work.forEach(function (w) {
-    var li = document.createElement('li');
-    li.className = 'reel-card' + (w[3] ? ' ' + w[3] : '');
-    li.innerHTML = '<figure style="margin:0"><div class="reel-img"></div><figcaption class="reel-cap"><b></b><span></span></figcaption></figure>';
-    var img = new Image(); img.src = P + w[0] + V; img.alt = w[1] + ': ' + w[2]; img.loading = 'lazy'; img.draggable = false;
-    if (w[0] === 'bedrift-portrett.jpg') img.style.objectPosition = '50% 25%';
-    $('.reel-img', li).appendChild(img);
-    $('b', li).textContent = w[1];
-    $('span', li).textContent = w[2];
-    track.appendChild(li);
+  function startHero() { stopHero(); if (!heroPaused) heroTimer = setInterval(function () { if (heroVisible && !document.hidden) nextSlide(); }, 4600); }
+  function stopHero() { if (heroTimer) clearInterval(heroTimer); heroTimer = null; }
+  pauseBtn.addEventListener('click', function () {
+    heroPaused = !heroPaused;
+    pauseBtn.setAttribute('aria-pressed', String(heroPaused));
+    pauseBtn.textContent = heroPaused ? 'Spill av bildene' : 'Pause bildene';
+    if (heroPaused) stopHero(); else startHero();
   });
-  var cards = $$('.reel-card', track);
-  var SPEED = 0.6; // hvor mye man scroller ned per piksel stripen flytter seg
-  var pinned = false, reelTop = 0, reelDist = 0, reelIdx = 0, padL = 0;
+  if (reduce) { pauseBtn.setAttribute('aria-pressed', 'true'); pauseBtn.textContent = 'Spill av bildene'; }
 
-  function measureReel() {
-    pinned = !reduce && window.innerWidth > 760;
-    padL = parseFloat(getComputedStyle(track).paddingLeft) || 0;
-    reel.classList.toggle('native', !pinned);
-    if (pinned) {
-      track.style.transform = '';
-      reelDist = Math.max(0, track.scrollWidth - window.innerWidth);
-      reel.style.height = (reelDist * SPEED + window.innerHeight) + 'px';
-      reelTop = reel.getBoundingClientRect().top + window.scrollY;
-    } else {
-      reel.style.height = '';
-    }
+  function heroIntro() {
+    heroReady = true;
+    startHero();
+    if (!motion) return;
+    G.timeline({ defaults: { ease: 'expo.out', duration: 1.4 } })
+      .from(lens, { clipPath: 'inset(50% 50% 50% 50% round 6px)', scale: 0.9, duration: 1.5, ease: 'expo.inOut' }, 0)
+      .from('.ht-left .ht-in', { xPercent: -70, opacity: 0 }, 0.35)
+      .from('.ht-right .ht-in', { xPercent: -50, opacity: 0 }, 0.45)
+      .from('.ht-bottom .ht-in', { yPercent: 110, opacity: 0 }, 0.55)
+      .from('.hero-side', { x: 60, opacity: 0 }, 0.7)
+      .from('.hero-card', { x: -60, opacity: 0 }, 0.75)
+      .from('.top > *', { y: -40, opacity: 0, stagger: 0.08, duration: 1 }, 0.3);
+    // Ved scroll: linsen synker, titlene skilles
+    G.to(lens, { yPercent: 14, scale: 0.92, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+    G.to(['.ht-left', '.ht-right'], { xPercent: -18, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+    G.to('.ht-bottom', { xPercent: 10, opacity: 0.2, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+    G.to('.hero-side', { xPercent: 30, opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: '60% top', scrub: true } });
   }
-  function reelProgress() {
-    if (pinned) return reelDist ? clamp((window.scrollY - reelTop) / (reelDist * SPEED), 0, 1) : 0;
-    var max = vp.scrollWidth - vp.clientWidth;
-    return max > 0 ? vp.scrollLeft / max : 0;
+
+  /* ---------- Laster ---------- */
+  var loader = $('#loader');
+  if (!motion) {
+    if (loader) loader.remove();
+    heroIntro();
+  } else {
+    var cnt = { v: 0 }, countEl = $('#loaderCount');
+    var loaded = new Promise(function (res) {
+      if (document.readyState === 'complete') res();
+      else window.addEventListener('load', res);
+      setTimeout(res, 3500);
+    });
+    var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+    G.set('.loader-mark span', { yPercent: 110 });
+    G.to('.loader-mark span', { yPercent: 0, stagger: 0.1, duration: 0.9, ease: 'expo.out', delay: 0.1 });
+    var counting = G.to(cnt, { v: 90, duration: 1.4, ease: 'power2.out', onUpdate: function () { countEl.textContent = Math.round(cnt.v); } });
+    Promise.all([loaded, fonts]).then(function () {
+      counting.kill();
+      G.timeline()
+        .to(cnt, { v: 100, duration: 0.35, ease: 'power1.out', onUpdate: function () { countEl.textContent = Math.round(cnt.v); } })
+        .to(['.loader-mark span', countEl], { yPercent: -110, opacity: 0, stagger: 0.06, duration: 0.55, ease: 'power3.in' })
+        .to(loader, { clipPath: 'inset(0% 0% 100% 0%)', duration: 1, ease: 'expo.inOut' }, '-=0.15')
+        .add(function () { heroIntro(); }, '-=0.6')
+        .add(function () { loader.remove(); ST.refresh(); });
+    });
   }
-  function updateReel() {
-    var p = reelProgress();
-    if (pinned) track.style.transform = 'translate3d(' + (-p * reelDist).toFixed(1) + 'px,0,0)';
-    reelBar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
-    var vw = window.innerWidth, best = 0, bestD = Infinity;
-    cards.forEach(function (c, i) {
-      var r = c.getBoundingClientRect();
-      if (r.left < vw * 0.92) c.classList.add('seen');
-      var d = Math.abs(r.left - padL);
-      if (d < bestD) { bestD = d; best = i; }
-      if (!reduce && r.right > -200 && r.left < vw + 200) {
-        var off = ((r.left + r.width / 2) - vw / 2) / vw;
-        c.querySelector('img').style.transform = 'translate3d(' + (off * -8).toFixed(2) + '%,0,0)';
+
+  if (!motion) {
+    // Uten animasjon: vis alt som er satt opp for å tegnes inn
+    $$('.mq-scribble path, .split-scribble path').forEach(function (p) { p.style.strokeDashoffset = 0; });
+  }
+
+  /* ---------- Titler: fet linje fra venstre, serif fra høyre ---------- */
+  if (motion) {
+    $$('h2').forEach(function (h) {
+      var parts = $$(':scope > span', h);
+      if (!parts.length) parts = $$(':scope > a > span', h);
+      parts.forEach(function (p, i) {
+        G.from(p, { xPercent: i % 2 ? 22 : -22, opacity: 0, duration: 1.3, ease: 'expo.out',
+          scrollTrigger: { trigger: h, start: 'top 85%' } });
+      });
+    });
+  }
+
+  /* ---------- Gigantiske linjer ---------- */
+  if (motion) {
+    var mqTweens = $$('.mq-row').map(function (row) {
+      var track = $('.mq-track', row);
+      var dir = parseFloat(row.dataset.dir);
+      var tw = dir < 0
+        ? G.fromTo(track, { xPercent: 0 }, { xPercent: -50, duration: 26, ease: 'none', repeat: -1 })
+        : G.fromTo(track, { xPercent: -50 }, { xPercent: 0, duration: 26, ease: 'none', repeat: -1 });
+      tw.totalTime(tw.duration() * 500); // så den kan spilles baklengs uten å stoppe
+      return tw;
+    });
+    var mqDir = 1;
+    ST.create({
+      trigger: '.marquee', start: 'top bottom', end: 'bottom top',
+      onUpdate: function (self) {
+        mqDir = self.direction;
+        var boost = Math.min(Math.abs(self.getVelocity()) / 250, 5);
+        mqTweens.forEach(function (t) {
+          G.timeline({ overwrite: true })
+            .to(t, { timeScale: mqDir * (1 + boost), duration: 0.2 })
+            .to(t, { timeScale: mqDir, duration: 1.2, ease: 'power2.out' });
+        });
       }
     });
-    reelIdx = best;
-    reelNow.textContent = best + 1;
+    G.fromTo('.mq-photo', { y: 120, rotate: -5 }, { y: -120, rotate: 4, ease: 'none', scrollTrigger: { trigger: '.marquee', start: 'top bottom', end: 'bottom top', scrub: true } });
+    G.fromTo('.mq-scribble path', { strokeDashoffset: 1.05 }, { strokeDashoffset: 0, ease: 'none', scrollTrigger: { trigger: '.marquee', start: 'top 65%', end: 'center 40%', scrub: 1 } });
   }
-  function goCard(i) {
-    i = clamp(i, 0, cards.length - 1);
-    var left = cards[i].offsetLeft - cards[0].offsetLeft;
-    if (pinned) window.scrollTo({ top: reelTop + Math.min(left, reelDist) * SPEED, behavior: reduce ? 'auto' : 'smooth' });
-    else vp.scrollTo({ left: left, behavior: reduce ? 'auto' : 'smooth' });
-  }
-  $('#reelNext').addEventListener('click', function () { goCard(reelIdx + 1); });
-  $('#reelPrev').addEventListener('click', function () { goCard(reelIdx - 1); });
-  vp.addEventListener('scroll', function () { if (!pinned) requestAnimationFrame(updateReel); }, { passive: true });
-  // Dra med musen
-  (function () {
-    var down = false, lastX = 0, vel = 0, raf = null;
-    vp.addEventListener('pointerdown', function (e) {
-      if (e.pointerType !== 'mouse') return;
-      down = true; lastX = e.clientX; vel = 0;
-      vp.classList.add('dragging'); cursorPress(true);
-      if (raf) cancelAnimationFrame(raf);
+
+  /* ---------- Manifest: ord for ord ---------- */
+  var st = $('#stText');
+  if (st) {
+    var label = st.textContent.replace(/\s+/g, ' ').trim();
+    var frag = document.createDocumentFragment();
+    Array.prototype.slice.call(st.childNodes).forEach(function (n) {
+      var isEm = n.nodeType === 1;
+      n.textContent.split(/(\s+)/).forEach(function (w) {
+        if (!w) return;
+        if (/^\s+$/.test(w)) { frag.appendChild(document.createTextNode(' ')); return; }
+        var s = document.createElement('span');
+        s.className = 'st-w' + (isEm ? ' is-em' : '');
+        s.textContent = w;
+        frag.appendChild(s);
+      });
     });
-    window.addEventListener('pointermove', function (e) {
-      if (!down) return;
-      var dx = e.clientX - lastX; lastX = e.clientX; vel = dx;
-      if (pinned) window.scrollBy(0, -dx * 1.4 * SPEED); else vp.scrollLeft -= dx * 1.4;
-    });
-    window.addEventListener('pointerup', function () {
-      if (!down) return;
-      down = false; vp.classList.remove('dragging'); cursorPress(false);
-      var glide = function () {
-        vel *= 0.92;
-        if (Math.abs(vel) < 0.5) return;
-        if (pinned) window.scrollBy(0, -vel * 1.4 * SPEED); else vp.scrollLeft -= vel * 1.4;
-        raf = requestAnimationFrame(glide);
-      };
-      if (!reduce) raf = requestAnimationFrame(glide);
-    });
-  })();
-
-  /* ---------- Scroll: parallakse, topp, fremdrift, manifest ---------- */
-  var topBar = $('#top');
-  var progress = $('#progress');
-  var credo = $$('.credo-line');
-  var parallax = $$('[data-parallax]');
-  var lastY = window.scrollY, ticking = false;
-
-  function onFrame() {
-    ticking = false;
-    var y = window.scrollY, vh = window.innerHeight;
-    var docH = document.documentElement.scrollHeight - vh;
-    progress.style.transform = 'scaleX(' + (docH > 0 ? y / docH : 0).toFixed(4) + ')';
-
-    topBar.classList.toggle('solid', y > 40);
-    if (y > lastY + 4 && y > 160) topBar.classList.add('hide');
-    else if (y < lastY - 4) topBar.classList.remove('hide');
-    lastY = y;
-
-    if (!reduce && y < vh * 1.3) {
-      heroPhoto.style.transform = 'translate3d(0,' + (y * 0.35).toFixed(1) + 'px,0)';
-      heroText.style.transform = 'translate3d(0,' + (-y * 0.18).toFixed(1) + 'px,0)';
-      heroText.style.opacity = clamp(1 - y / (vh * 0.75), 0, 1).toFixed(3);
+    st.textContent = '';
+    st.appendChild(frag);
+    st.setAttribute('aria-label', label);
+    $$('.st-w', st).forEach(function (w) { w.setAttribute('aria-hidden', 'true'); });
+    if (motion) {
+      G.fromTo($$('.st-w', st), { opacity: 0.12, y: 18 }, { opacity: 1, y: 0, stagger: 0.12, ease: 'none',
+        scrollTrigger: { trigger: st, start: 'top 80%', end: 'bottom 50%', scrub: 0.6 } });
     }
-    if (!reduce) {
-      credo.forEach(function (l) {
-        var r = l.getBoundingClientRect();
-        var d = Math.abs(r.top + r.height / 2 - vh * 0.55) / (vh * 0.45);
-        l.style.setProperty('--lit', Math.max(0.16, Math.min(1, 1.15 - d)).toFixed(3));
+  }
+
+  /* ---------- Kollasj, Timebank-bilder: parallakse ---------- */
+  if (motion) {
+    var mm = G.matchMedia();
+    mm.add('(min-width: 901px)', function () {
+      $$('.collage [data-speed]').forEach(function (el) {
+        var s = parseFloat(el.dataset.speed);
+        var travel = (1 - s) * window.innerHeight * 0.9;
+        G.fromTo(el, { y: -travel }, { y: travel, ease: 'none', scrollTrigger: { trigger: '.collage', start: 'top bottom', end: 'bottom top', scrub: true } });
       });
-      parallax.forEach(function (img) {
-        var r = img.parentNode.getBoundingClientRect();
-        if (r.bottom < -100 || r.top > vh + 100) return;
-        var k = parseFloat(img.getAttribute('data-parallax'));
-        img.style.transform = 'translate3d(0,' + ((r.top + r.height / 2 - vh / 2) * -k).toFixed(1) + 'px,0)';
+      $$('.bank [data-speed]').forEach(function (el) {
+        var s = parseFloat(el.dataset.speed);
+        var travel = (1 - s) * window.innerHeight * 0.7;
+        G.fromTo(el, { y: -travel }, { y: travel, ease: 'none', scrollTrigger: { trigger: '.bank', start: 'top bottom', end: 'bottom top', scrub: true } });
       });
+      // Foto / Film: bildene glir inn fra skjermkantene
+      G.fromTo('.split-img-l', { xPercent: -110, rotate: -8 }, { xPercent: 0, rotate: -2, ease: 'none', scrollTrigger: { trigger: '.split', start: 'top bottom', end: 'center center', scrub: 1 } });
+      G.fromTo('.split-img-r', { xPercent: 110, rotate: 8 }, { xPercent: 0, rotate: 2, ease: 'none', scrollTrigger: { trigger: '.split', start: 'top bottom', end: 'center center', scrub: 1 } });
+    });
+    // Bilder i kollasjen avdekkes nedenfra når de kommer inn
+    $$('.collage figure img').forEach(function (img) {
+      G.fromTo(img, { clipPath: 'inset(100% 0% 0% 0%)', scale: 1.12 }, { clipPath: 'inset(0% 0% 0% 0%)', scale: 1, duration: 1.4, ease: 'expo.out',
+        scrollTrigger: { trigger: img.parentNode, start: 'top 92%' } });
+    });
+    $$('.collage blockquote').forEach(function (q) {
+      G.from(q, { y: 60, opacity: 0, duration: 1.2, ease: 'expo.out', scrollTrigger: { trigger: q, start: 'top 90%' } });
+    });
+    // Foto / Film: kolonnene fra hver sin side, strekene tegnes
+    $$('.split-col').forEach(function (c) {
+      var dx = c.dataset.side === 'l' ? -90 : 90;
+      G.from(c, { x: dx, opacity: 0, duration: 1.3, ease: 'expo.out', scrollTrigger: { trigger: '.split', start: 'top 60%' } });
+      G.fromTo($('.split-scribble path', c), { strokeDashoffset: 1.05 }, { strokeDashoffset: 0, duration: 1.1, ease: 'power2.inOut', delay: 0.5,
+        scrollTrigger: { trigger: '.split', start: 'top 55%' } });
+    });
+    // Fire kapitler: kortene stiger opp
+    G.from('.field', { y: 140, opacity: 0, duration: 1.3, ease: 'expo.out', stagger: 0.12, scrollTrigger: { trigger: '.fields-grid', start: 'top 85%' } });
+    G.from('.fields-cta > *', { y: 40, opacity: 0, duration: 1, ease: 'expo.out', stagger: 0.1, scrollTrigger: { trigger: '.fields-cta', start: 'top 90%' } });
+    // Timebank: pakkene fra høyre, bildene skaleres inn
+    G.from('.packs li', { x: 80, opacity: 0, duration: 1, ease: 'expo.out', stagger: 0.1, scrollTrigger: { trigger: '.packs', start: 'top 85%' } });
+    G.from('.bf img', { scale: 1.3, duration: 1.6, ease: 'expo.out', stagger: 0.15, scrollTrigger: { trigger: '.bank-floats', start: 'top 80%' } });
+    // Bunn: kortet løftes opp
+    G.from('.foot-card', { y: 160, scale: 0.94, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'top 25%', scrub: 1 } });
+    G.from('.foot-photo', { yPercent: 25, rotate: -4, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'center center', scrub: 1 } });
+    G.from('.foot-col', { y: 40, opacity: 0, duration: 1, ease: 'expo.out', stagger: 0.12, scrollTrigger: { trigger: '.foot-cols', start: 'top 85%' } });
+  }
+
+  /* ---------- Fire kapitler: bildene bytter mens du holder over ---------- */
+  $$('.field').forEach(function (f) {
+    var list = f.dataset.photos.split(','), img = $('.field-img img', f), k = 0, iv = null;
+    list.forEach(function (n) { new Image().src = P + n + '.jpg' + V; });
+    function show(n) {
+      img.style.opacity = 0;
+      setTimeout(function () {
+        img.src = P + list[n] + '.jpg' + V;
+        img.classList.toggle('face', list[n] === 'bedrift-portrett');
+        img.style.opacity = 1;
+      }, 180);
     }
-    updateReel();
-  }
-  function requestFrame() { if (!ticking) { ticking = true; requestAnimationFrame(onFrame); } }
-  window.addEventListener('scroll', requestFrame, { passive: true });
-  window.addEventListener('resize', function () { measureReel(); requestFrame(); });
-  window.addEventListener('load', function () { measureReel(); requestFrame(); });
+    function start() { if (reduce || iv) return; iv = setInterval(function () { k = (k + 1) % list.length; show(k); }, 900); }
+    function stop() { clearInterval(iv); iv = null; if (k !== 0) { k = 0; show(0); } }
+    f.addEventListener('mouseenter', start); f.addEventListener('mouseleave', stop);
+    f.addEventListener('focus', start); f.addEventListener('blur', stop);
+  });
 
-  /* ---------- Markør og magnetiske knapper ---------- */
-  var cursor = $('#cursor'), cLabel = $('#cursorLabel');
-  function cursorPress(on) { if (cursor) cursor.classList.toggle('press', on); }
-  if (finePointer && !reduce) {
-    var mx = -100, my = -100, cx = -100, cy = -100, moving = false;
-    var loop = function () {
-      cx += (mx - cx) * 0.2; cy += (my - cy) * 0.2;
-      cursor.style.transform = 'translate3d(' + cx.toFixed(1) + 'px,' + cy.toFixed(1) + 'px,0)';
-      if (Math.abs(mx - cx) > 0.1 || Math.abs(my - cy) > 0.1) requestAnimationFrame(loop); else moving = false;
-    };
-    window.addEventListener('mousemove', function (e) {
-      mx = e.clientX; my = e.clientY; cursor.classList.add('on');
-      if (!moving) { moving = true; requestAnimationFrame(loop); }
-    });
-    document.addEventListener('mouseleave', function () { cursor.classList.remove('on'); });
-    document.addEventListener('mouseover', function (e) {
-      var t = e.target.closest('[data-cursor]');
-      var ctl = e.target.closest('a,button');
-      if (t && !ctl) { cLabel.textContent = t.getAttribute('data-cursor'); cursor.classList.add('big'); }
-      else { cursor.classList.remove('big'); }
-      cursor.classList.toggle('hover', !!ctl);
-    });
-    $$('.magnet').forEach(function (m) {
-      m.addEventListener('mousemove', function (e) {
-        var r = m.getBoundingClientRect();
-        var dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
-        m.style.transform = 'translate(' + (dx * 0.25).toFixed(1) + 'px,' + (dy * 0.35).toFixed(1) + 'px)';
-      });
-      m.addEventListener('mouseleave', function () { m.style.transform = ''; });
+  /* ---------- Vifte med kort ---------- */
+  var fanPhotos = ['bolig-stue', 'skole-latter', 'bedrift-portrett', 'maritim-skip', 'bolig-kjokken', 'skole-lek', 'maritim-sveiser', 'bolig-hytte', 'bedrift-kontor', 'bolig-tomannsbolig', 'maritim-fiskebat'];
+  var fanCards = $('#fanCards'), fanStage = $('#fanStage');
+  var cards = fanPhotos.map(function (n) {
+    var li = document.createElement('li');
+    li.className = 'fan-card';
+    li.setAttribute('aria-hidden', 'true');
+    var im = new Image(); im.src = P + n + '.jpg' + V; im.alt = ''; im.loading = 'lazy'; im.draggable = false;
+    if (n === 'bedrift-portrett') im.style.objectPosition = '50% 22%';
+    li.appendChild(im);
+    fanCards.appendChild(li);
+    return li;
+  });
+  var N = cards.length, fan = { offset: 0, spread: motion ? 0 : 1, vel: motion ? 0.004 : 0 }, fanVisible = false, dragging = false;
+  function fanLayout() {
+    var step = 10 * fan.spread;
+    cards.forEach(function (c, i) {
+      var rel = ((i - fan.offset) % N + N) % N;
+      if (rel > N / 2) rel -= N;
+      var a = rel * step;
+      var sc = 1 + Math.max(0, 1 - Math.abs(rel)) * 0.12;
+      c.style.transform = 'rotate(' + a.toFixed(2) + 'deg) scale(' + sc.toFixed(3) + ')';
+      c.style.zIndex = String(100 - Math.round(Math.abs(rel) * 4));
+      c.style.opacity = Math.abs(rel) > N / 2 - 1 ? Math.max(0, N / 2 - Math.abs(rel)) : 1;
     });
   }
+  fanLayout();
+  if (motion) {
+    G.ticker.add(function () {
+      if (!fanVisible) return;
+      if (!dragging) fan.offset += fan.vel;
+      fanLayout();
+    });
+    ST.create({ trigger: fanStage, start: 'top bottom', end: 'bottom top',
+      onToggle: function (self) { fanVisible = self.isActive; } });
+    ST.create({ trigger: fanStage, start: 'top 75%', once: true,
+      onEnter: function () { G.to(fan, { spread: 1, duration: 1.8, ease: 'expo.out' }); } });
+    var lastX = 0;
+    fanStage.addEventListener('pointerdown', function (e) { dragging = true; lastX = e.clientX; fanStage.classList.add('dragging'); fanStage.setPointerCapture(e.pointerId); });
+    fanStage.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      fan.offset -= (e.clientX - lastX) / 180;
+      lastX = e.clientX;
+    });
+    var endDrag = function () { dragging = false; fanStage.classList.remove('dragging'); };
+    fanStage.addEventListener('pointerup', endDrag);
+    fanStage.addEventListener('pointercancel', endDrag);
+  }
 
-  /* ---------- Start ---------- */
-  measureReel();
-  onFrame();
-  requestAnimationFrame(function () { requestAnimationFrame(function () { document.body.classList.add('loaded'); }); });
+  window.addEventListener('load', function () { if (motion) ST.refresh(); });
 })();
