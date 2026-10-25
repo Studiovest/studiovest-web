@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="nb" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studiovest — versjon 1 (arkiv)</title>
+<meta name="description" content="Et komplett mediebyrå fra Sunnhordland. Boligfoto, bedrift, skole, barnehage og industri — fanget med samme blikk, levert med samme presisjon.">
+<!-- Forhåndsvisning: skal ikke indekseres før lansering på studiovest.no -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#F2EEE8">
+<link rel="preload" href="assets/fonts/hanken-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/gloock.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/style.css?v=__V__">
+<script>document.documentElement.classList.replace('no-js','js');</script>
+</head>
+<body>
+
+<!-- Felles grafikk: kotelinjer (Vestlandet-terreng) og blenderikon -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="topo" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice"><path d="M42 0 L40 5 L36 15 L34 20 L31 30 L29 35 L28 45 L27 55 L27 65 L29 75 L30 80 L34 90 L37 95 L41 101 L45 106 L51 111 L57 116 L65 120 L70 123 L77 126 L85 128 L95 130 L100 131 L110 133 L120 133 L130 133 L140 133 L150 132 L161 131 L166 131 L176 129 L186 127 L194 126 L201 124 L211 122 L216 120 L226 118 L233 116 L241 113 L248 111 L256 108 L262 106 L271 102 L276 100 L286 96 L291 94 L298 90 L306 87 L311 84 L318 80 L326 76 L331 73 L336 70 L344 65 L351 61 L356 57 L361 54 L366 50 L372 45 L378 40 L384 35 L389 30 L394 25 L399 20 L403 15 L407 10 L411 4 M0 228 L10 231 L15 232 L25 234 L35 235 L41 236 L50 237 L60 238 L70 238 L80 238 L90 238 L100 237 L110 237 L116 236 L125 235 L135 234 L145 232 L152 231 L161 230 L171 228 L178 226 L186 224 L196 222 L201 221 L211 218 L219 216 L226 214 L236 211 L241 210 L251 207 L256 205 L266 202 L271 200 L281 197 L286 195 L296 192 L301 190 L311 187 L316 185 L326 181 L331 179 L339 176 L346 173 L351 171 L361 167 L366 165 L375 161 L381 158 L386 156 L396 151 L401 148 L407 146 L416 141 L421 138 L426 136 L435 131 L441 127 L446 124 L452 121 L460 116 L466 112 L471 108 L476 105 L483 101 L489 95 L496 90 L502 86 L507 82 L512 77 L517 73 L522 68 L527 63 L532 58 L537 52 L542 46 L546 40 L550 35 L554 30 L557 25 L562 17 L566 10 L568 5 M0 302 L10 304 L20 305 L30 306 L40 307 L45 307 L55 307 L65 307 L75 307 L85 307 L90 306 L100 306 L110 305 L120 304 L130 303 L139 302 L145 301 L155 299 L166 297 L171 296 L181 294 L191 292 L196 291 L206 289 L216 287 L221 285 L231 283 L237 281 L246 279 L256 276 L261 275 L271 272 L276 271 L286 268 L291 266 L301 263 L308 261 L316 259 L324 256 L331 254 L340 251 L346 249 L355 246 L361 244 L370 241 L376 239 L385 236 L391 234 L399 231 L406 228 L413 226 L421 223 L426 221 L436 217 L441 215 L451 211 L456 209 L463 206 L471 203 L476 200 L486 196 L492 194 L497 191 L507 187 L512 184 L518 181 L527 177 L532 174 L538 171 L547 166 L552 163 L557 160 L564 156 L572 151 L577 148 L582 145 L588 141 L595 136 L602 131 L607 127 L612 123 L617 119 L622 115 L627 111 L633 106 L638 101 L643 95 L648 90 L653 85 L657 80 L662 74 L667 68 L672 61 L676 55 L679 50 L682 45 L687 36 L690 30 L692 25 L696 15 L698 10 L702 0 M0 360 L10 361 L16 362 L25 363 L35 363 L45 364 L55 364 L65 364 L75 364 L85 364 L95 363 L105 363 L115 362 L120 361 L130 361 L140 359 L150 358 L160 357 L166 356 L176 354 L186 353 L192 352 L201 350 L211 348 L218 347 L226 345 L236 343 L242 342 L251 340 L261 338 L266 336 L276 334 L286 332 L291 330 L301 328 L306 327 L316 324 L326 322 L331 320 L341 318 L346 316 L356 314 L364 312 L371 310 L381 307 L386 306 L396 303 L401 301 L411 298 L418 296 L426 294 L436 291 L441 290 L451 287 L456 285 L466 282 L471 281 L482 278 L487 276 L497 273 L502 271 L512 268 L518 266 L527 263 L533 261 L542 259 L548 256 L557 253 L563 251 L572 248 L578 246 L587 243 L592 241 L602 237 L607 236 L617 232 L622 230 L631 226 L637 224 L643 221 L652 217 L657 215 L666 211 L672 208 L677 206 L687 201 L692 198 L697 196 L706 191 L712 187 L717 184 L723 181 L731 176 L737 171 L742 168 L747 164 L752 160 L757 156 L763 151 L768 146 L773 141 L778 136 L782 131 L787 124 L792 118 L797 111 L801 106 L804 101 L808 93 L811 85 L814 80 L818 71 L820 65 L823 57 L825 50 L827 40 L828 35 L830 25 L832 15 L833 8 L833 0 M0 412 L5 413 L15 414 L25 414 L35 415 L45 416 L55 416 L65 416 L75 416 L85 416 L95 416 L105 416 L115 415 L125 415 L135 414 L145 413 L155 412 L161 412 L171 411 L181 409 L191 408 L198 407 L206 406 L216 405 L226 403 L232 402 L241 400 L251 399 L261 397 L266 396 L276 394 L286 392 L291 391 L301 390 L311 388 L316 387 L326 385 L336 383 L341 382 L351 380 L361 378 L366 377 L376 375 L386 373 L391 371 L401 369 L411 367 L416 366 L426 364 L436 362 L441 361 L451 359 L461 357 L466 356 L476 354 L487 352 L492 351 L502 350 L512 348 L517 347 L527 345 L537 343 L545 342 L552 341 L562 339 L572 337 L577 337 L587 335 L597 334 L607 332 L612 332 L622 330 L632 329 L642 328 L652 327 L657 327 L667 326 L677 325 L687 325 L697 324 L707 324 L717 324 L727 324 L737 324 L747 325 L757 326 L766 327 L772 328 L782 329 L792 331 L797 333 L808 335 L813 337 L823 341 L828 343 L835 347 L843 351 L848 355 L853 358 L858 363 L863 367 L868 372 L873 377 L878 384 L883 390 L887 397 L891 402 L894 407 L898 414 L902 422 L905 427 L908 433 L912 442 L914 447 L918 455 L921 462 L924 467 L928 476 L931 482 L933 487 L938 497 L940 503 L943 508 L948 518 L950 523 L953 528 L958 538 L961 543 L964 548 L968 555 L973 563 L976 568 L979 573 L983 579 L988 586 L993 593 L997 598 L1001 603 L1005 608 L1010 613 L1014 618 L1019 623 L1024 628 L1029 633 L1035 638 L1040 643 L1047 648 L1053 653 L1058 657 L1063 661 L1068 664 L1076 668 L1083 672 L1088 675 L1096 678 L1103 682 L1108 684 L1118 687 L1124 688 L1134 691 L1144 692 L1154 693 L1159 694 L1169 694 L1179 693 L1184 693 L1194 692 L1204 690 L1211 688 L1219 686 L1228 683 L1234 681 L1241 678 L1249 675 L1254 673 L1263 668 L1269 665 L1274 663 L1281 658 L1289 653 L1294 650 L1299 647 L1304 643 L1311 638 L1317 633 L1323 628 L1329 623 L1334 619 L1339 614 L1344 609 L1349 604 L1354 599 L1359 594 L1364 588 L1369 583 L1373 578 L1377 573 L1380 568 L1384 562 L1389 555 L1394 548 L1397 543 L1400 538 L1404 529 L1407 523 L1409 518 L1413 508 L1415 503 L1418 492 L1419 487 L1421 477 L1423 467 L1424 457 L1424 447 L1423 437 L1421 427 L1419 418 L1418 412 L1414 402 L1412 397 L1409 391 L1405 382 L1402 377 L1399 372 L1394 366 L1389 359 L1384 354 L1379 348 L1374 343 L1369 338 L1364 334 L1359 330 L1354 326 L1349 322 L1342 317 L1335 312 L1329 308 L1324 305 L1318 302 L1309 297 L1304 294 L1299 291 L1289 287 L1284 284 L1277 281 L1269 278 L1264 276 L1254 272 L1249 270 L1239 266 L1234 265 L1224 261 L1219 259 L1209 256 L1204 254 L1194 251 L1189 250 L1179 247 L1174 245 L1164 242 L1159 240 L1149 237 L1144 235 L1134 232 L1129 230 L1118 226 L1113 225 L1105 221 L1098 218 L1093 216 L1083 211 L1078 209 L1073 206 L1065 201 L1058 196 L1053 193 L1048 188 L1043 184 L1038 179 L1033 174 L1028 167 L1023 161 L1020 156 L1017 151 L1013 144 L1009 136 L1007 131 L1003 121 L1001 116 L998 106 L997 101 L994 90 L992 85 L990 75 L988 68 L986 60 L984 50 L983 45 L981 35 L979 25 L978 20 L976 10 L974 0 M0 462 L10 464 L20 465 L30 466 L40 466 L50 467 L56 467 L65 468 L75 468 L85 468 L95 468 L105 468 L115 468 L125 468 L135 468 L140 467 L150 467 L161 466 L171 466 L181 465 L191 464 L201 463 L210 462 L216 462 L226 461 L236 460 L246 458 L256 457 L261 457 L271 455 L281 454 L291 453 L296 452 L306 451 L316 450 L326 448 L335 447 L341 446 L351 445 L361 444 L371 443 L376 442 L386 441 L396 439 L406 438 L416 437 L421 437 L431 435 L441 434 L451 433 L461 433 L466 432 L476 431 L487 431 L497 430 L507 429 L517 429 L527 429 L537 428 L547 428 L557 428 L567 429 L577 429 L587 430 L597 431 L607 432 L612 432 L622 434 L632 435 L641 437 L647 438 L657 441 L662 442 L672 446 L677 447 L687 451 L692 453 L702 457 L707 460 L712 463 L720 467 L727 472 L732 475 L737 478 L743 482 L749 487 L755 492 L761 497 L767 503 L772 508 L777 513 L781 518 L786 523 L790 528 L794 533 L799 538 L803 543 L808 549 L813 556 L818 562 L821 568 L825 573 L829 578 L833 584 L838 591 L842 598 L846 603 L849 608 L853 614 L858 621 L862 628 L866 633 L869 638 L873 644 L878 651 L882 658 L886 663 L889 668 L893 674 L898 681 L903 688 L907 693 L910 698 L914 704 L918 709 L923 716 L928 723 L932 729 L936 734 L939 739 L943 744 L948 750 L953 757 L958 764 L962 769 L966 774 L969 779 L973 784 L978 790 L983 797 L988 804 L992 809 L996 814 L1000 819 L1003 824 L1008 831 L1013 838 L1017 844 L1020 849 L1024 854 L1028 862 L1033 869 L1035 874 L1038 880 L1042 889 L1044 894 L1047 905 L1048 910 L1050 920 L1049 930 L1048 937 L1047 945 L1043 954 L1041 960 L1038 965 L1033 975 L1030 980 L1027 985 L1023 992 L1018 1000 M1149 1000 L1148 995 L1146 985 L1144 975 L1143 970 L1142 960 L1142 950 L1144 941 L1145 935 L1148 925 L1151 920 L1154 914 L1159 906 L1163 899 L1167 894 L1171 889 L1175 884 L1180 879 L1184 874 L1189 869 L1194 864 L1199 859 L1204 854 L1210 849 L1215 844 L1220 839 L1226 834 L1231 829 L1236 824 L1242 819 L1247 814 L1253 809 L1258 804 L1264 799 L1269 794 L1274 790 L1279 785 L1284 780 L1289 776 L1294 771 L1299 766 L1304 762 L1309 757 L1314 752 L1319 747 L1324 743 L1329 738 L1334 733 L1339 728 L1344 723 L1349 718 L1354 713 L1359 708 L1364 703 L1369 698 L1374 693 L1379 687 L1384 682 L1389 677 L1394 671 L1399 666 L1404 660 L1409 654 L1414 649 L1419 643 L1423 638 L1427 633 L1431 628 L1435 623 L1439 618 L1445 611 L1450 605 L1454 598 L1458 593 L1461 588 L1465 583 L1470 575 L1474 568 L1477 563 L1480 558 L1485 550 L1488 543 L1491 538 L1495 529 L1498 523 L1500 518 L1504 508 L1505 503 L1509 492 L1510 487 L1513 477 L1515 467 L1516 462 L1517 452 L1518 442 L1518 432 L1518 422 L1517 412 L1516 402 L1515 396 L1513 387 L1510 377 L1508 372 L1505 362 L1503 357 L1500 350 L1495 342 L1493 337 L1490 331 L1485 323 L1480 317 L1476 312 L1473 307 L1468 302 L1464 296 L1460 291 L1455 286 L1450 280 L1445 275 L1439 271 L1434 266 L1429 261 L1423 256 L1417 251 L1411 246 L1404 241 L1399 237 L1394 234 L1389 230 L1384 226 L1376 221 L1369 216 L1364 213 L1359 210 L1354 206 L1346 201 L1339 197 L1334 194 L1329 191 L1321 186 L1314 182 L1309 179 L1304 175 L1297 171 L1289 166 L1284 163 L1279 160 L1272 156 L1265 151 L1259 147 L1254 144 L1249 140 L1242 136 L1236 131 L1229 126 L1224 122 L1219 118 L1214 114 L1209 109 L1204 105 L1199 100 L1193 95 L1188 90 L1184 85 L1179 80 L1174 74 L1169 68 L1164 62 L1159 55 L1155 50 L1151 45 L1148 40 L1144 33 L1139 25 L1136 20 L1133 15 L1129 6 L1126 0 M1600 350 L1598 342 L1595 334 L1592 327 L1590 321 L1586 312 L1584 307 L1580 299 L1576 291 L1573 286 L1569 281 L1565 274 L1560 267 L1556 261 L1552 256 L1548 251 L1544 246 L1540 241 L1535 236 L1530 230 L1525 225 L1520 219 L1515 214 L1510 209 L1505 204 L1500 199 L1495 195 L1490 190 L1485 185 L1480 181 L1474 176 L1468 171 L1462 166 L1456 161 L1450 156 L1445 151 L1439 147 L1434 143 L1429 139 L1424 134 L1419 130 L1414 126 L1408 121 L1402 116 L1396 111 L1390 106 L1384 101 L1379 96 L1374 92 L1369 88 L1364 83 L1359 78 L1354 74 L1349 69 L1344 64 L1339 59 L1334 54 L1329 48 L1324 43 L1319 37 L1314 31 L1309 25 L1305 20 L1302 15 L1298 10 L1294 5 M0 515 L10 516 L20 517 L25 518 L35 519 L45 520 L55 521 L65 521 L75 522 L85 523 L90 523 L100 523 L110 523 L120 524 L130 524 L140 524 L150 524 L161 523 L171 523 L181 523 L191 523 L196 522 L206 522 L216 522 L226 521 L236 521 L246 520 L256 520 L266 519 L276 518 L286 518 L291 518 L301 517 L311 516 L321 516 L331 515 L341 515 L351 514 L361 514 L371 513 L381 513 L391 513 L401 513 L406 512 L416 512 L426 512 L436 512 L442 513 L451 513 L461 513 L471 514 L482 514 L492 515 L502 516 L512 517 L517 518 L527 519 L537 521 L544 523 L552 524 L562 527 L567 528 L577 531 L583 533 L592 536 L597 538 L607 541 L612 544 L621 548 L627 551 L632 553 L640 558 L647 562 L652 565 L657 568 L663 573 L670 578 L677 583 L682 587 L687 592 L692 596 L697 601 L702 606 L707 611 L712 616 L717 621 L722 627 L727 633 L732 638 L736 643 L740 648 L744 653 L748 658 L752 665 L757 672 L762 678 L766 683 L769 688 L772 694 L777 702 L782 709 L785 714 L788 719 L792 726 L797 734 L800 739 L803 744 L808 753 L810 759 L813 764 L818 773 L820 779 L823 784 L827 794 L829 799 L833 807 L835 814 L838 821 L840 829 L843 836 L845 844 L848 854 L849 859 L851 869 L853 878 L854 884 L855 894 L856 905 L856 915 L857 925 L857 935 L856 945 L855 955 L854 965 L853 975 L853 980 L851 990 L849 1000 M1300 1000 L1301 990 L1302 980 L1304 970 L1305 965 L1306 955 L1309 945 L1310 940 L1313 930 L1314 924 L1317 915 L1319 909 L1323 899 L1325 894 L1329 884 L1331 879 L1334 873 L1338 864 L1341 859 L1344 853 L1349 844 L1352 839 L1355 834 L1359 828 L1364 820 L1368 814 L1371 809 L1375 804 L1379 798 L1384 791 L1389 784 L1393 779 L1397 774 L1400 769 L1404 764 L1409 757 L1414 751 L1419 744 L1424 739 L1428 734 L1432 729 L1436 724 L1440 719 L1445 713 L1450 706 L1455 700 L1460 694 L1464 688 L1468 683 L1472 678 L1476 673 L1480 668 L1485 662 L1490 656 L1495 650 L1500 643 L1503 638 L1507 633 L1511 628 L1515 623 L1520 616 L1525 609 L1529 603 L1532 598 L1536 593 L1540 587 L1545 579 L1549 573 L1552 568 L1555 563 L1560 554 L1564 548 L1566 543 L1570 536 L1574 528 L1577 523 L1580 515 L1583 508 L1586 503 L1589 492 L1591 487 L1595 477 L1596 472 L1599 462 M1600 135 L1595 129 L1590 124 L1585 119 L1580 114 L1575 109 L1570 103 L1565 98 L1560 93 L1555 87 L1550 82 L1545 77 L1540 71 L1535 66 L1530 60 L1526 55 L1521 50 L1517 45 L1513 40 L1509 35 L1505 30 L1500 23 L1495 16 L1490 10 L1487 5 L1484 0 M0 574 L10 575 L20 577 L29 578 L35 579 L45 580 L55 581 L65 582 L75 583 L80 583 L90 584 L100 584 L110 585 L120 585 L130 586 L140 586 L150 587 L161 587 L171 587 L181 587 L191 587 L201 587 L211 587 L221 587 L231 587 L241 587 L251 587 L261 587 L271 587 L281 587 L291 587 L301 587 L311 588 L321 588 L330 588 L336 588 L346 588 L356 589 L366 589 L376 590 L386 591 L396 591 L406 592 L413 593 L421 594 L431 595 L441 597 L449 598 L456 599 L466 601 L475 603 L482 605 L492 607 L497 609 L507 611 L512 613 L522 617 L527 618 L537 622 L542 624 L550 628 L557 631 L562 634 L570 638 L577 642 L582 645 L587 648 L594 653 L602 658 L607 662 L612 666 L617 670 L622 674 L627 678 L632 683 L638 688 L643 693 L648 698 L653 704 L657 709 L662 714 L667 720 L672 726 L677 733 L682 739 L685 744 L689 749 L692 754 L697 762 L702 769 L705 774 L708 779 L712 787 L716 794 L718 799 L722 807 L725 814 L728 819 L732 829 L734 834 L737 844 L739 849 L742 859 L744 864 L746 874 L748 879 L750 889 L752 899 L753 905 L754 915 L755 925 L756 935 L757 945 L757 955 L757 965 L757 975 L756 985 L756 995 M1385 1000 L1386 990 L1387 980 L1389 970 L1390 965 L1392 955 L1394 945 L1395 940 L1398 930 L1399 924 L1402 915 L1404 908 L1407 899 L1409 894 L1413 884 L1415 879 L1419 870 L1422 864 L1424 859 L1429 849 L1432 844 L1434 839 L1439 830 L1443 824 L1445 819 L1450 812 L1455 804 L1458 799 L1461 794 L1465 788 L1470 781 L1474 774 L1478 769 L1481 764 L1485 759 L1490 752 L1495 745 L1500 739 L1503 734 L1507 729 L1511 724 L1515 719 L1520 712 L1525 706 L1530 699 L1534 693 L1538 688 L1542 683 L1546 678 L1550 673 L1555 667 L1560 661 L1565 655 L1570 648 L1574 643 L1578 638 L1582 633 L1586 628 L1590 623 L1595 616 L1600 610 M0 649 L10 651 L20 652 L30 653 L35 654 L45 655 L55 656 L65 657 L75 657 L85 658 L90 658 L100 659 L110 659 L120 660 L130 660 L140 661 L150 661 L161 661 L171 661 L181 661 L191 661 L201 661 L211 661 L221 661 L231 662 L241 662 L251 662 L261 662 L271 662 L281 662 L291 662 L301 663 L311 663 L320 663 L326 664 L336 664 L346 665 L356 666 L366 667 L376 668 L381 669 L391 670 L401 672 L410 673 L416 675 L426 677 L433 678 L441 680 L451 683 L456 685 L466 688 L471 690 L482 693 L487 695 L494 698 L502 702 L507 704 L516 709 L522 712 L527 715 L534 719 L542 724 L547 727 L552 730 L557 734 L563 739 L569 744 L576 749 L581 754 L587 759 L592 764 L597 769 L602 774 L606 779 L611 784 L615 789 L619 794 L623 799 L627 805 L632 812 L637 819 L640 824 L643 829 L647 836 L651 844 L654 849 L657 856 L661 864 L663 869 L667 879 L669 884 L672 894 L674 899 L676 910 L678 915 L680 925 L682 935 L683 940 L684 950 L685 960 L686 970 L686 980 L687 990 L686 1000 M1457 1000 L1458 990 L1460 981 L1460 975 L1462 965 L1464 955 L1465 950 L1467 940 L1470 931 L1471 925 L1474 915 L1476 910 L1479 899 L1481 894 L1485 886 L1487 879 L1490 873 L1494 864 L1496 859 L1500 852 L1503 844 L1506 839 L1510 832 L1514 824 L1517 819 L1520 814 L1525 807 L1530 799 L1533 794 L1536 789 L1540 784 L1545 776 L1550 769 L1554 764 L1557 759 L1561 754 L1565 749 L1570 742 L1575 736 L1580 729 L1585 724 L1589 719 L1593 714 L1597 709 M0 784 L10 781 L16 779 L25 777 L35 774 L40 773 L50 771 L60 769 L65 768 L75 766 L85 764 L90 763 L100 761 L110 759 L115 758 L125 757 L135 755 L141 754 L150 752 L161 751 L171 749 L176 748 L186 747 L196 745 L206 744 L211 743 L221 742 L231 741 L241 739 L247 739 L256 738 L266 737 L276 736 L286 736 L296 735 L306 735 L316 735 L326 735 L336 735 L346 736 L356 736 L366 737 L376 738 L381 739 L391 740 L401 742 L409 744 L416 745 L426 748 L431 749 L441 752 L446 754 L456 757 L461 759 L471 764 L476 766 L483 769 L492 773 L497 776 L502 779 L510 784 L517 788 L522 792 L527 795 L532 799 L538 804 L544 809 L549 814 L554 819 L559 824 L564 829 L569 834 L573 839 L577 844 L582 851 L587 858 L591 864 L594 869 L597 874 L602 882 L605 889 L608 894 L612 904 L614 910 L617 916 L620 925 L622 932 L624 940 L626 950 L627 955 L629 965 L631 975 L632 985 L632 991 L632 1000 M1528 1000 L1529 990 L1530 980 L1531 975 L1532 965 L1534 955 L1535 950 L1538 940 L1540 931 L1542 925 L1545 915 L1546 910 L1550 900 L1552 894 L1555 887 L1558 879 L1560 874 L1565 865 L1568 859 L1570 854 L1575 846 L1578 839 L1581 834 L1585 828 L1590 820 L1594 814 L1597 809 M72 1000 L73 990 L75 981 L77 975 L80 965 L81 960 L85 950 L87 945 L90 937 L94 930 L96 925 L100 918 L105 910 L109 905 L113 899 L117 894 L121 889 L125 884 L130 879 L135 874 L141 869 L147 864 L153 859 L160 854 L166 850 L171 847 L176 844 L183 839 L191 835 L196 833 L203 829 L211 825 L216 823 L226 819 L231 817 L239 814 L246 812 L255 809 L261 808 L271 805 L276 804 L286 802 L296 800 L302 799 L311 798 L321 797 L331 796 L341 796 L351 796 L361 796 L371 796 L381 797 L391 799 L396 800 L406 801 L416 804 L421 805 L431 808 L436 810 L446 813 L451 815 L460 819 L466 822 L471 825 L480 829 L487 833 L492 837 L497 840 L502 844 L509 849 L514 854 L520 859 L525 864 L530 869 L534 874 L539 879 L543 884 L547 890 L552 897 L556 905 L559 910 L562 915 L567 924 L569 930 L572 936 L575 945 L577 950 L580 960 L582 970 L583 975 L584 985 L586 995 M163 1000 L165 990 L167 985 L170 975 L172 970 L176 963 L179 955 L182 950 L186 944 L191 936 L195 930 L199 925 L203 920 L207 915 L212 910 L217 905 L223 899 L229 894 L235 889 L241 885 L246 882 L251 879 L259 874 L266 871 L271 868 L280 864 L286 862 L293 859 L301 857 L310 854 L316 853 L326 851 L336 849 L341 849 L351 848 L361 848 L371 848 L381 848 L388 849 L396 850 L406 852 L414 854 L421 856 L430 859 L436 862 L442 864 L451 869 L456 871 L462 874 L470 879 L476 884 L482 888 L487 892 L492 897 L497 902 L502 907 L507 913 L511 920 L515 925 L518 930 L522 935 L527 945 L529 950 L532 956 L535 965 L537 971 L539 980 L541 990 L542 995 M233 1000 L236 991 L238 985 L241 979 L245 970 L248 965 L252 960 L256 954 L261 948 L266 942 L271 937 L276 933 L281 929 L286 925 L294 920 L301 916 L306 913 L313 910 L321 906 L327 905 L336 902 L346 900 L351 899 L361 898 L371 898 L381 898 L391 899 L396 900 L406 903 L413 905 L421 908 L426 910 L436 915 L441 918 L446 921 L451 925 L457 930 L463 935 L468 940 L472 945 L476 951 L482 958 L485 965 L488 970 L492 979 L494 985 L496 995 L497 1000 M307 1000 L311 993 L316 986 L321 980 L326 976 L331 972 L336 969 L344 965 L351 962 L359 960 L366 959 L376 958 L386 959 L391 960 L401 963 L406 966 L413 970 L420 975 L425 980 L429 985 L433 990 L436 996" fill="none" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke"/></symbol>
+  <symbol id="ap" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 2.5 L27 17 M37.5 20 L23 27 M20 37.5 L13 23 M2.5 20 L17 13 M32.4 7.6 L25.5 20.5 M7.6 32.4 L14.5 19.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<a class="skip" href="#innhold">Hopp til innholdet</a>
+
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader-mark"><span class="serif">STUDIO</span><span class="bold">VEST</span></div>
+  <span class="loader-count" id="loaderCount">0</span>
+</div>
+
+<header class="top" id="top">
+  <a href="#" class="logo" aria-label="Studiovest, til toppen"><span class="serif">STUDIO</span><span class="bold">VEST</span></a>
+  <svg class="top-mark" aria-hidden="true"><use href="#ap"/></svg>
+  <div class="top-right">
+    <a href="#kontakt" class="btn btn-acc top-book">Book en prat</a>
+    <button type="button" class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menu"><span class="mb-l"></span><span class="mb-l"></span><span class="vh">Meny</span></button>
+  </div>
+</header>
+
+<div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Meny" hidden>
+  <svg class="topo"><use href="#topo"/></svg>
+  <div class="menu-grid" aria-hidden="true">
+    <figure class="menu-tile" data-key="0"><img src="assets/photos/bolig-kjokken.jpg?v=__V__" alt=""></figure>
+    <figure class="menu-tile" data-key="1"><img src="assets/photos/maritim-sveiser.jpg?v=__V__" alt=""></figure>
+    <figure class="menu-tile" data-key="2"><img src="assets/photos/bedrift-kontor.jpg?v=__V__" alt=""></figure>
+    <figure class="menu-tile" data-key="3"><img src="assets/photos/skole-latter.jpg?v=__V__" alt=""></figure>
+  </div>
+  <nav class="menu-nav" aria-label="Hovedmeny">
+    <ul>
+      <li><a href="#tjenester" class="menu-link" data-key="0"><span class="ml-mask"><span class="ml-text">Tjenester</span></span><svg class="squiggle" viewBox="0 0 270 26" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 15 C 30 3, 58 24, 88 12 S 146 2, 178 14 S 236 24, 268 9"/></svg></a></li>
+      <li><a href="#arbeid" class="menu-link" data-key="1"><span class="ml-mask"><span class="ml-text">Arbeid</span></span><svg class="squiggle" viewBox="0 0 270 26" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 12 C 34 22, 62 2, 94 13 S 150 24, 182 11 S 240 3, 268 15"/></svg></a></li>
+      <li><a href="#timebank" class="menu-link" data-key="2"><span class="ml-mask"><span class="ml-text">Timebank</span></span><svg class="squiggle" viewBox="0 0 270 26" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 14 C 28 4, 60 22, 92 11 S 152 3, 186 15 S 238 22, 268 10"/></svg></a></li>
+      <li><a href="#kontakt" class="menu-link" data-key="3"><span class="ml-mask"><span class="ml-text">Kontakt</span></span><svg class="squiggle" viewBox="0 0 270 26" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 11 C 32 21, 64 4, 96 14 S 154 22, 184 10 S 240 4, 268 14"/></svg></a></li>
+    </ul>
+    <div class="menu-badge"><svg aria-hidden="true"><use href="#ap"/></svg><span>Basert i Sunnhordland</span></div>
+  </nav>
+  <div class="menu-foot">
+    <a href="mailto:kontakt@studiovest.no" class="menu-mail">kontakt@studiovest.no</a>
+    <ul class="menu-social">
+      <li><a href="tel:+4792330435">923 30 435</a></li>
+      <li><a href="https://www.instagram.com/studio.vest">Instagram</a></li>
+      <li><a href="https://www.linkedin.com/company/studiovest/">LinkedIn</a></li>
+    </ul>
+  </div>
+</div>
+
+<main id="innhold">
+
+<!-- 1. Hero: linse som viser ferdig redigert bilde over det rå -->
+<section class="hero" data-theme="light" aria-label="Introduksjon">
+  <svg class="topo" aria-hidden="true"><use href="#topo"/></svg>
+  <h1 class="hero-title">
+    <span class="ht ht-left"><span class="ht-in">Vi ser</span></span>
+    <span class="ht ht-right"><span class="ht-in serif"><span class="swap" id="swap">hjemmet,</span></span></span>
+    <span class="ht ht-bottom"><span class="ht-in">slik det fortjener å bli sett.</span></span>
+  </h1>
+  <div class="lens" id="lens">
+    <div class="lens-layer raw" id="lensRaw"><img src="assets/photos/bolig-stue.jpg?v=__V__" alt="" width="1168" height="784"></div>
+    <div class="lens-layer edit" id="lensEdit"><img src="assets/photos/bolig-stue.jpg?v=__V__" alt="Stue med peis og store vinduer mot fjorden i kveldslys" width="1168" height="784"></div>
+    <span class="lens-tag" id="lensTag" aria-hidden="true">Ferdig redigert</span>
+  </div>
+  <div class="hero-card" aria-hidden="true">
+    <span>Basert i</span>
+    <svg><use href="#ap"/></svg>
+    <b>Sunnhordland</b>
+    <i></i>
+    <span>Tilgjengelig overalt</span>
+  </div>
+  <div class="hero-side">
+    <p class="hero-hint">Før musen over bildet. Utenfor linsen ser du råfilen, innenfor ser du bildet slik vi leverer det.</p>
+    <button type="button" class="hero-pause" id="heroPause" aria-pressed="false">Pause bildene</button>
+  </div>
+</section>
+
+<!-- 2. Gigantiske linjer i hver sin retning -->
+<section class="marquee" data-theme="dark" aria-label="Fanget med samme blikk, levert med samme presisjon">
+  <p class="mq-label" aria-hidden="true">Fra Studiovest</p>
+  <div class="mq-row" data-dir="-1" aria-hidden="true"><div class="mq-track">
+    <span class="serif acc">Fanget med samme blikk</span><svg class="mq-ap"><use href="#ap"/></svg><span class="serif acc">Fanget med samme blikk</span><svg class="mq-ap"><use href="#ap"/></svg>
+  </div></div>
+  <div class="mq-row" data-dir="1" aria-hidden="true"><div class="mq-track">
+    <span>Levert med samme presisjon</span><svg class="mq-ap"><use href="#ap"/></svg><span>Levert med samme presisjon</span><svg class="mq-ap"><use href="#ap"/></svg>
+  </div></div>
+  <figure class="mq-photo">
+    <img src="assets/photos/bedrift-portrett.jpg?v=__V__" alt="Portrett av mann i mørk dressjakke" loading="lazy">
+    <svg class="mq-scribble" viewBox="0 0 400 300" aria-hidden="true"><path pathLength="1" d="M 64 190 C 28 112, 120 40, 230 34 C 336 28, 392 96, 364 170 C 336 246, 220 290, 128 264 C 52 242, 34 170, 96 118 C 150 74, 262 70, 318 104"/></svg>
+  </figure>
+</section>
+
+<!-- 3. Manifest der ordene lyses opp -->
+<section class="statement" data-theme="dark" aria-label="Hva vi tror på">
+  <p class="st-text" id="stText">Et bilde skal gjøre en <em>jobb.</em> Selge et hus. Bygge tillit til et firma. Bevare et skoleår. Vise hva som faktisk skjer ute på <em>dekk.</em></p>
+</section>
+
+<!-- 4. Kollasj med parallakse -->
+<section class="collage" id="arbeid" data-theme="stone" aria-label="Utvalgt arbeid">
+  <figure class="cl cl-1" data-speed="0.75"><figcaption>Boligfoto, kveldslys</figcaption><img src="assets/photos/bolig-tomannsbolig.jpg?v=__V__" alt="Tomannsbolig i skumring" loading="lazy"></figure>
+  <blockquote class="cl cl-q1" data-speed="1.1"><p>Et komplett mediebyrå fra Sunnhordland. Boligfoto, bedrift, skole, barnehage og industri — fanget med samme blikk, levert med samme presisjon.</p><svg aria-hidden="true"><use href="#ap"/></svg></blockquote>
+  <figure class="cl cl-2" data-speed="1.25"><figcaption>Industri, verksted</figcaption><img src="assets/photos/maritim-sveiser.jpg?v=__V__" alt="Sveiser i arbeid på verkstedet" loading="lazy"></figure>
+  <figure class="cl cl-3" data-speed="0.9"><figcaption>Bedrift, kontorlandskap</figcaption><img src="assets/photos/bedrift-kontor.jpg?v=__V__" alt="Ansatt ved skrivebord i et lyst kontorlandskap" loading="lazy"></figure>
+  <figure class="cl cl-4 big" data-speed="1"><figcaption>Maritim, offshorefartøy</figcaption><img src="assets/photos/maritim-skip.jpg?v=__V__" alt="Offshorefartøy i fjorden" loading="lazy"></figure>
+  <figure class="cl cl-5" data-speed="1.35"><figcaption>Boligfoto, drone</figcaption><img src="assets/photos/bolig-hytte.jpg?v=__V__" alt="Rød hytte på et nes, fotografert med drone" loading="lazy"></figure>
+  <figure class="cl cl-6" data-speed="0.8"><figcaption>Barnehage, tur</figcaption><img src="assets/photos/skole-lek.jpg?v=__V__" alt="Barnehagebarn som løper i skogen" loading="lazy"></figure>
+  <blockquote class="cl cl-q2" data-speed="1.15"><p>Hvert felt har egne folk, eget utstyr og egne leveranser — men samme krav til lys, komposisjon og tempo.</p><svg aria-hidden="true"><use href="#ap"/></svg></blockquote>
+  <figure class="cl cl-7" data-speed="1.2"><figcaption>Boligfoto, loft</figcaption><img src="assets/photos/bolig-loft.jpg?v=__V__" alt="Loftsstue med takvinduer" loading="lazy"></figure>
+  <figure class="cl cl-8" data-speed="0.85"><figcaption>Maritim, kai</figcaption><img src="assets/photos/maritim-fiskebat.jpg?v=__V__" alt="Fiskebåt ved kai" loading="lazy"></figure>
+</section>
+
+<!-- 5. Foto / Film — bildene glir inn fra kantene -->
+<section class="split" data-theme="light" aria-label="Foto og film">
+  <svg class="topo" aria-hidden="true"><use href="#topo"/></svg>
+  <div class="split-img split-img-l" aria-hidden="true"><img src="assets/photos/bolig-kjokken.jpg?v=__V__" alt="" loading="lazy"></div>
+  <div class="split-img split-img-r" aria-hidden="true"><img src="assets/photos/bedrift-bygg.jpg?v=__V__" alt="" loading="lazy"></div>
+  <div class="split-cols">
+    <div class="split-col" data-side="l">
+      <h2><span class="serif">Foto</span><span class="bold">og drone</span></h2>
+      <svg class="split-scribble" viewBox="0 0 270 26" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 15 C 30 3, 58 24, 88 12 S 146 2, 178 14 S 236 24, 268 9"/></svg>
+      <p>Bolig, portretter, lokaler og folk i arbeid — fra bakkenivå og fra luften.</p>
+      <a href="#tjenester" class="sq-btn" aria-label="Se fotoarbeid"><svg aria-hidden="true"><use href="#arrow"/></svg></a>
+    </div>
+    <div class="split-col" data-side="r">
+      <h2><span class="serif">Film</span><span class="bold">og video</span></h2>
+      <svg class="split-scribble" viewBox="0 0 270 26" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 12 C 34 22, 62 2, 94 13 S 150 24, 182 11 S 240 3, 268 15"/></svg>
+      <p>Bedriftsfilm, boligvideo og innhold til sosiale medier.</p>
+      <a href="#tjenester" class="sq-btn" aria-label="Se filmarbeid"><svg aria-hidden="true"><use href="#arrow"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Fire kapitler som rutenett -->
+<section class="fields" id="tjenester" data-theme="dark" aria-labelledby="tj-h">
+  <div class="fields-head">
+    <h2 id="tj-h"><span class="bold">Fire kapitler</span><span class="serif acc">Ett blikk</span></h2>
+    <p>Hvert felt har egne folk, eget utstyr og egne leveranser — men samme krav til lys, komposisjon og tempo.</p>
+  </div>
+  <ul class="fields-grid">
+    <li class="field" data-photos="bolig-stue,bolig-kjokken,bolig-loft,bolig-tomannsbolig,bolig-hytte" tabindex="0">
+      <div class="field-img"><img src="assets/photos/bolig-stue.jpg?v=__V__" alt="Eksempel på boligfoto" loading="lazy"></div>
+      <div class="field-info"><h3>Boligfoto</h3><span class="field-n">5 bilder</span></div>
+      <div class="field-more"><p>Bilder som får visningen fullbooket. Interiør, eksteriør, drone og plantegning i én bestilling — levert til megler neste virkedag.</p><ul><li>Interiør og eksteriør</li><li>Dronefoto</li><li>Plantegning i 2D og 3D</li><li>Video og virtuell visning</li><li>Digital møblering</li></ul></div>
+    </li>
+    <li class="field" data-photos="bedrift-portrett,bedrift-kontor,bedrift-bygg" tabindex="0">
+      <div class="field-img"><img src="assets/photos/bedrift-portrett.jpg?v=__V__" alt="Eksempel på bedriftsfoto" loading="lazy" class="face"></div>
+      <div class="field-info"><h3>Bedrift</h3><span class="field-n">3 bilder</span></div>
+      <div class="field-more"><p>Portretter, lokaler og folk i arbeid — foto og video som viser hvem dere er, ikke et bildebyrås gjetning.</p><ul><li>Ansattportretter</li><li>Kontor og lokaler</li><li>Foto og video i arbeid</li><li>Drone</li><li>Innhold til sosiale medier</li></ul></div>
+    </li>
+    <li class="field" data-photos="skole-lek,skole-latter,skole-klasse" tabindex="0">
+      <div class="field-img"><img src="assets/photos/skole-lek.jpg?v=__V__" alt="Eksempel på barnehagefoto" loading="lazy"></div>
+      <div class="field-info"><h3>Skole og barnehage</h3><span class="field-n">3 bilder</span></div>
+      <div class="field-more"><p>Rolig, trygg og effektiv fotodag. Individuelle bilder, gruppebilder og en enkel bestillingsløsning for foreldre.</p><ul><li>Individuelle portretter</li><li>Klasse- og gruppebilder</li><li>Søskenbilder</li><li>Bestilling på nett</li></ul></div>
+    </li>
+    <li class="field" data-photos="maritim-sveiser,maritim-skip,maritim-fiskebat" tabindex="0">
+      <div class="field-img"><img src="assets/photos/maritim-sveiser.jpg?v=__V__" alt="Eksempel på industrifoto" loading="lazy"></div>
+      <div class="field-info"><h3>Maritim og industri</h3><span class="field-n">3 bilder</span></div>
+      <div class="field-more"><p>Vi kjenner livet om bord. Dokumentasjon, markedsføring og film fra dekk, verft og anlegg — sikkert og uten å stoppe driften.</p><ul><li>Fartøy og verft</li><li>Operasjoner på dekk</li><li>Drone over anlegg</li><li>Bedriftsfilm</li><li>HMS-dokumentasjon</li></ul></div>
+    </li>
+  </ul>
+  <div class="fields-cta">
+    <p>Fortell oss om oppdraget, så viser vi eksempler som ligner.</p>
+    <a href="#kontakt" class="btn btn-acc">Ta kontakt</a>
+  </div>
+</section>
+
+<!-- 7. Timebanken med svevende bilder -->
+<section class="bank" id="timebank" data-theme="light" aria-labelledby="tb-h">
+  <svg class="topo" aria-hidden="true"><use href="#topo"/></svg>
+  <div class="bank-text">
+    <h2 id="tb-h"><span class="bold">Timebanken</span><span class="serif acc">For bedrifter</span></h2>
+    <p>For bedrifter som trenger nytt innhold hver måned. Dere kjøper timer, vi kommer når det skjer noe verdt å vise — til sosiale medier, nettside og blogg. Ubrukte timer [ruller over / regler kommer].</p>
+    <ul class="packs">
+      <li><b>Liten</b><span>[X] timer i måneden</span><span>[PRIS]</span></li>
+      <li><b>Medium</b><span>[X] timer i måneden</span><span>[PRIS]</span></li>
+      <li><b>Stor</b><span>[X] timer i måneden</span><span>[PRIS]</span></li>
+    </ul>
+    <a href="#kontakt" class="btn btn-acc">Start en timebank</a>
+  </div>
+  <div class="bank-floats" aria-hidden="true">
+    <figure class="bf bf-1" data-speed="0.8"><img src="assets/photos/bedrift-kontor.jpg?v=__V__" alt="" loading="lazy"></figure>
+    <figure class="bf bf-2" data-speed="1.2"><img src="assets/photos/bedrift-portrett.jpg?v=__V__" alt="" loading="lazy"></figure>
+    <figure class="bf bf-3" data-speed="1.05"><img src="assets/photos/maritim-skip.jpg?v=__V__" alt="" loading="lazy"></figure>
+  </div>
+</section>
+
+<!-- 8. Vifte med kort -->
+<section class="fan" data-theme="light" aria-labelledby="fan-h">
+  <svg class="fan-ap" aria-hidden="true"><use href="#ap"/></svg>
+  <h2 id="fan-h"><span class="bold">Følg oss</span><span class="serif">på Instagram</span></h2>
+  <div class="fan-stage" id="fanStage">
+    <ul class="fan-cards" id="fanCards"></ul>
+  </div>
+  <div class="fan-links">
+    <a href="https://www.instagram.com/studio.vest" class="btn btn-acc">Instagram</a>
+    <a href="https://www.linkedin.com/company/studiovest/" class="btn btn-ghost">LinkedIn</a>
+  </div>
+</section>
+
+</main>
+
+<!-- 9. Bunn: stort kort -->
+<footer class="foot" id="kontakt" data-theme="light">
+  <div class="foot-card">
+    <svg class="topo" aria-hidden="true"><use href="#topo"/></svg>
+    <h2 class="foot-title"><a href="mailto:kontakt@studiovest.no"><span class="bold">Fortell oss hva</span><span class="serif acc">som skal fanges.</span></a></h2>
+    <div class="foot-cols">
+      <div class="foot-col">
+        <p class="foot-label">Sider</p>
+        <ul><li><a href="#tjenester">Tjenester</a></li><li><a href="#arbeid">Arbeid</a></li><li><a href="#timebank">Timebank</a></li><li><a href="#kontakt">Kontakt</a></li></ul>
+      </div>
+      <figure class="foot-photo"><img src="assets/photos/bolig-stue.jpg?v=__V__" alt="" loading="lazy"></figure>
+      <div class="foot-col">
+        <p class="foot-label">Følg</p>
+        <ul><li><a href="https://www.instagram.com/studio.vest">Instagram</a></li><li><a href="https://www.linkedin.com/company/studiovest/">LinkedIn</a></li></ul>
+      </div>
+    </div>
+    <div class="foot-contact">
+      <a href="tel:+4792330435">923 30 435</a>
+      <a href="mailto:kontakt@studiovest.no" class="btn btn-acc">kontakt@studiovest.no</a>
+      <span>Klostervegen 162, 5455 Halsnøy Kloster</span>
+    </div>
+  </div>
+  <div class="foot-legal">
+    <span>© 2026 Studiovest AS</span>
+    <span>Basert i Sunnhordland, tilgjengelig overalt</span>
+  </div>
+</footer>
+
+<script src="assets/vendor/gsap.min.js"></script>
+<script src="assets/vendor/ScrollTrigger.min.js"></script>
+<script src="assets/vendor/lenis.min.js"></script>
+<script src="assets/main.js?v=__V__"></script>
+</body>
+</html>
