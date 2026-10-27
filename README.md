@@ -21,8 +21,13 @@ Struktur og bevegelse inspirert av landonorris.com, tilpasset et mediebyrå og m
 - **Laster:** STUDIO/VEST og teller 0–100, gardinen trekkes opp.
 - **Meny:** fullskjerm. 2×2 bildegrid (svart-hvitt) til venstre, store lenker til høyre. Hover gir farge på bildet
   og håndtegnet strek under lenken. Bildene følger musen. Esc lukker.
-- **Hero:** linse som følger musen og viser ferdig redigert bilde over råfilen. Ordet i tittelen og bildet bytter
-  (med pauseknapp).
+- **Hero (fra versjon 2, inspirert av for-living.it):** fullskjerm, bildene tonet i brunt med korn og vinduslys som
+  glir sakte. En plantegning lyser opp rundt musen. Håndskrift «Fra Sunnhordland», serif-tittel med gradient,
+  ordet bytter i takt med bildet (med pauseknapp).
+- **Fire felt (ny, mellom hero og gigantiske linjer):** fire kort stiger opp i ulik fart mens bakgrunnen mørkner.
+  Hover: «STUDIO [FELT] VEST».
+- **Book en prat:** brun pille (samme farge som ordet i tittelen). Hover inspirert av lusion.co: sand fylles inn fra
+  musepekeren, pil glir inn, prikken forsvinner.
 - **Gigantiske linjer:** to rader i hver sin retning, farten følger scrollingen. Portrett med håndtegnet sløyfe.
 - **Manifest:** ord for ord lyses opp mens man scroller.
 - **Kollasj:** spredte bilder i ulik fart (parallakse), bakgrunnen glir fra mørk til stein til lys.
@@ -31,7 +36,7 @@ Struktur og bevegelse inspirert av landonorris.com, tilpasset et mediebyrå og m
 - **Timebank:** svevende bilder i ulik fart. **Vifte:** kort i bue som roterer og kan dras.
 - **Bunn:** stort mørkt kort med hakk på toppen.
 - Teknikk: GSAP + ScrollTrigger og Lenis (myk scrolling) i `assets/vendor/`. Alt slås av ved redusert bevegelse.
-- Skrift: Hanken Grotesk og Gloock, lokalt i `assets/fonts/`. Kotelinjene er generert, ligger i `index.html` (`#topo`).
+- Skrift: Hanken Grotesk, Gloock og Ms Madi (håndskrift), lokalt i `assets/fonts/`. Kotelinjene er generert, ligger i `index.html` (`#topo`).
 
 ## Bilder
 

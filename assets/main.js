@@ -41,7 +41,7 @@
     dark:  { bg: '#161412', fg: '#F2EEE8', acc: '#D9A866', line: 'rgba(242,238,232,0.07)' },
     stone: { bg: '#C9C1B6', fg: '#161412', acc: '#5E3B24', line: 'rgba(22,20,18,0.12)' }
   };
-  var currentTheme = 'light';
+  var currentTheme = 'dark';
   function setTheme(name) {
     if (name === currentTheme) return;
     currentTheme = name;
@@ -130,68 +130,55 @@
     });
   }
 
-  /* ---------- Hero: linse og bildebytte ---------- */
-  var lens = $('#lens'), raw = $('#lensRaw'), edit = $('#lensEdit'), tag = $('#lensTag');
+  /* ---------- Hero: tonet bakgrunn, plantegning rundt musen, bildebytte ---------- */
+  var intro = $('#intro'), introBg = $('#introBg'), ibPhoto = $('#ibPhoto'), ibDark = $('#ibDark'), heroCenter = $('#heroCenter');
   var swap = $('#swap'), pauseBtn = $('#heroPause');
-  var heroReady = false, hovering = false, heroVisible = true;
-  var L = { x: 0.5, y: 0.5, r: 0 }, T = { x: 0.5, y: 0.5, r: 0 };
+  var heroVisible = true, pointerActive = false;
+  var M = { x: 0.5, y: 0.45 }, MT = { x: 0.5, y: 0.45 };
   var slides = [
-    { img: 'bolig-stue.jpg',     word: 'hjemmet,',   alt: 'Stue med peis og store vinduer mot fjorden i kveldslys' },
-    { img: 'bedrift-kontor.jpg', word: 'folka,',     alt: 'Ansatt ved skrivebord i et lyst kontorlandskap' },
-    { img: 'skole-latter.jpg',   word: 'barna,',     alt: 'Tre barn som ler utendørs' },
-    { img: 'bedrift-bygg.jpg',   word: 'bedriften,', alt: 'Kontorbygg ved sjøen i skumring' }
+    { img: 'bolig-stue.jpg',     word: 'hjemmet,' },
+    { img: 'bedrift-kontor.jpg', word: 'folka,' },
+    { img: 'skole-latter.jpg',   word: 'barna,' },
+    { img: 'bedrift-bygg.jpg',   word: 'bedriften,' }
   ];
   slides.forEach(function (s) { new Image().src = P + s.img + V; });
 
-  function lensMove(e) {
-    var b = lens.getBoundingClientRect();
-    T.x = (e.clientX - b.left) / b.width;
-    T.y = (e.clientY - b.top) / b.height;
-    T.r = 0.3;
-    hovering = true;
-  }
-  lens.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') lensMove(e); });
-  lens.addEventListener('pointerleave', function () { hovering = false; });
-  lens.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') { lensMove(e); setTimeout(function () { hovering = false; }, 1600); } });
-
-  function lensTick() {
+  intro.addEventListener('pointermove', function (e) {
+    if (e.pointerType !== 'mouse') return;
+    MT.x = e.clientX / window.innerWidth; MT.y = e.clientY / window.innerHeight; pointerActive = true;
+  });
+  intro.addEventListener('pointerleave', function () { pointerActive = false; });
+  function planTick() {
     if (!heroVisible) return;
-    var t = performance.now() / 1000;
-    if (!hovering) {
-      T.x = 0.5 + 0.26 * Math.sin(t * 0.55);
-      T.y = 0.5 + 0.2 * Math.sin(t * 0.9 + 1.2);
-      T.r = heroReady ? 0.24 : 0;
+    if (!pointerActive) { // uten mus: lyset vandrer rolig over plantegningen
+      var t = performance.now() / 1000;
+      MT.x = 0.5 + 0.3 * Math.sin(t * 0.32); MT.y = 0.46 + 0.22 * Math.sin(t * 0.47 + 1);
     }
-    L.x += (T.x - L.x) * 0.1; L.y += (T.y - L.y) * 0.1; L.r += (T.r - L.r) * 0.08;
-    edit.style.clipPath = 'circle(' + (L.r * 100).toFixed(2) + '% at ' + (L.x * 100).toFixed(2) + '% ' + (L.y * 100).toFixed(2) + '%)';
-    tag.style.left = (L.x * 100) + '%';
-    tag.style.top = (L.y * 100 + L.r * 100 * 1.05) + '%';
-    tag.style.opacity = L.r > 0.08 ? 1 : 0;
+    M.x += (MT.x - M.x) * 0.07; M.y += (MT.y - M.y) * 0.07;
+    introBg.style.setProperty('--mx', (M.x * 100).toFixed(2) + '%');
+    introBg.style.setProperty('--my', (M.y * 100).toFixed(2) + '%');
   }
-  if (!motion) { edit.style.clipPath = 'none'; tag.style.display = 'none'; }
   if (motion) {
-    G.ticker.add(lensTick);
-    new IntersectionObserver(function (es) { heroVisible = es[0].isIntersecting; }).observe(lens);
+    G.ticker.add(planTick);
+    new IntersectionObserver(function (es) { heroVisible = es[0].isIntersecting; }).observe(introBg);
   }
 
   var cur = 0, heroTimer = null, heroPaused = reduce;
-  function layerSwap(layer, s, alt) {
-    var img = new Image();
-    img.src = P + s.img + V; img.alt = alt || ''; img.width = 1168; img.height = 784;
-    layer.appendChild(img);
-    var old = $$('img', layer).slice(0, -1);
-    if (!motion) { old.forEach(function (o) { o.remove(); }); return; }
-    G.fromTo(img, { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 1.1, ease: 'power3.out', onComplete: function () { old.forEach(function (o) { o.remove(); }); } });
-  }
   function nextSlide() {
     cur = (cur + 1) % slides.length;
     var s = slides[cur];
-    layerSwap(raw, s, '');
-    layerSwap(edit, s, s.alt);
-    if (!motion) { swap.textContent = s.word; return; }
+    var img = new Image();
+    img.src = P + s.img + V; img.alt = ''; img.width = 1168; img.height = 784;
+    ibPhoto.appendChild(img);
+    var old = $$('img', ibPhoto).slice(0, -1);
+    if (!motion) {
+      img.style.opacity = 1; old.forEach(function (o) { o.remove(); });
+      swap.textContent = s.word; return;
+    }
+    G.fromTo(img, { opacity: 0, scale: 1.06 }, { opacity: 1, scale: 1, duration: 1.6, ease: 'power2.out', onComplete: function () { old.forEach(function (o) { o.remove(); }); } });
     G.to(swap, { yPercent: -115, duration: 0.45, ease: 'power3.in', onComplete: function () {
       swap.textContent = s.word;
-      G.fromTo(swap, { yPercent: 115 }, { yPercent: 0, duration: 0.7, ease: 'power3.out' });
+      G.fromTo(swap, { yPercent: 115 }, { yPercent: 0, duration: 0.75, ease: 'power3.out' });
     } });
   }
   function startHero() { stopHero(); if (!heroPaused) heroTimer = setInterval(function () { if (heroVisible && !document.hidden) nextSlide(); }, 4600); }
@@ -205,23 +192,47 @@
   if (reduce) { pauseBtn.setAttribute('aria-pressed', 'true'); pauseBtn.textContent = 'Spill av bildene'; }
 
   function heroIntro() {
-    heroReady = true;
     startHero();
     if (!motion) return;
     G.timeline({ defaults: { ease: 'expo.out', duration: 1.4 } })
-      .from(lens, { clipPath: 'inset(50% 50% 50% 50% round 6px)', scale: 0.9, duration: 1.5, ease: 'expo.inOut' }, 0)
-      .from('.ht-left .ht-in', { xPercent: -70, opacity: 0 }, 0.35)
-      .from('.ht-right .ht-in', { xPercent: -50, opacity: 0 }, 0.45)
-      .from('.ht-bottom .ht-in', { yPercent: 110, opacity: 0 }, 0.55)
-      .from('.hero-side', { x: 60, opacity: 0 }, 0.7)
-      .from('.hero-card', { x: -60, opacity: 0 }, 0.75)
-      .from('.top > *', { y: -40, opacity: 0, stagger: 0.08, duration: 1 }, 0.3);
-    // Ved scroll: linsen synker, titlene skilles
-    G.to(lens, { yPercent: 14, scale: 0.92, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
-    G.to(['.ht-left', '.ht-right'], { xPercent: -18, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
-    G.to('.ht-bottom', { xPercent: 10, opacity: 0.2, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
-    G.to('.hero-side', { xPercent: 30, opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: '60% top', scrub: true } });
+      .from('.ib-photo img', { scale: 1.25, filter: 'grayscale(1) contrast(1.15) brightness(0)', duration: 2.4 }, 0)
+      .from('.hero-ap', { y: -30, rotate: -120, opacity: 0 }, 0.3)
+      .from('.hero-script', { clipPath: 'inset(0% 100% 0% 0%)', duration: 1.6, ease: 'power2.inOut' }, 0.45)
+      .from('.hl-in', { yPercent: 115, stagger: 0.14, duration: 1.5 }, 0.55)
+      .from(['.hero-lead', '.hero-cta'], { y: 30, opacity: 0, stagger: 0.1 }, 0.95)
+      .from('.hero-card', { x: -60, opacity: 0 }, 1.05)
+      .from('.hero-pause', { x: 60, opacity: 0 }, 1.1)
+      .from('.top > *', { y: -40, opacity: 0, stagger: 0.08, duration: 1 }, 0.4);
+    // Når kortene kommer: bakgrunnen mørkner, hero-teksten trekker seg tilbake
+    var st1 = { trigger: '.cards', start: 'top bottom', end: 'top 15%', scrub: true };
+    G.to(ibDark, { opacity: 0.8, ease: 'none', scrollTrigger: st1 });
+    G.to(heroCenter, { opacity: 0, scale: 0.93, y: -90, ease: 'none', scrollTrigger: { trigger: '.cards', start: 'top bottom', end: 'top 35%', scrub: true } });
+    G.to(['.hero-card', '.hero-pause'], { opacity: 0, ease: 'none', scrollTrigger: { trigger: '.cards', start: 'top bottom', end: 'top 60%', scrub: true } });
   }
+
+  /* ---------- Fire felt: kortene stiger opp i ulik fart ---------- */
+  if (motion) {
+    $$('.cardx').forEach(function (c, i) {
+      var sp = parseFloat(c.dataset.speed);
+      G.fromTo(c, { y: function () { return window.innerHeight * 0.5 * sp; }, rotate: i % 2 ? 3 : -3 },
+        { y: function () { return -window.innerHeight * 0.18 * sp; }, rotate: 0, ease: 'none',
+          scrollTrigger: { trigger: '.cards', start: 'top bottom', end: 'bottom top', scrub: true, invalidateOnRefresh: true } });
+    });
+  }
+
+  /* ---------- «Book en prat»: fargen fylles fra der musen kommer inn ---------- */
+  $$('.pill').forEach(function (b) {
+    b.addEventListener('mouseenter', function (e) {
+      var r = b.getBoundingClientRect();
+      b.style.setProperty('--fx', (e.clientX - r.left) + 'px');
+      b.style.setProperty('--fy', (e.clientY - r.top) + 'px');
+    });
+    b.addEventListener('mouseleave', function (e) {
+      var r = b.getBoundingClientRect();
+      b.style.setProperty('--fx', (e.clientX - r.left) + 'px');
+      b.style.setProperty('--fy', (e.clientY - r.top) + 'px');
+    });
+  });
 
   /* ---------- Laster ---------- */
   var loader = $('#loader');
