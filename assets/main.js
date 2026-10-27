@@ -131,7 +131,7 @@
   }
 
   /* ---------- Hero: tonet bakgrunn, plantegning rundt musen, bildebytte ---------- */
-  var intro = $('#intro'), introBg = $('#introBg'), ibPhoto = $('#ibPhoto'), ibDark = $('#ibDark'), heroCenter = $('#heroCenter');
+  var intro = $('#intro'), introBg = $('#introBg'), ibDark = $('#ibDark'), heroCenter = $('#heroCenter');
   var swap = $('#swap'), pauseBtn = $('#heroPause');
   var heroVisible = true, pointerActive = false;
   var M = { x: 0.5, y: 0.45 }, MT = { x: 0.5, y: 0.45 };
@@ -141,8 +141,6 @@
     { img: 'skole-latter.jpg',   word: 'barna,' },
     { img: 'bedrift-bygg.jpg',   word: 'bedriften,' }
   ];
-  slides.forEach(function (s) { new Image().src = P + s.img + V; });
-
   intro.addEventListener('pointermove', function (e) {
     if (e.pointerType !== 'mouse') return;
     MT.x = e.clientX / window.innerWidth; MT.y = e.clientY / window.innerHeight; pointerActive = true;
@@ -167,15 +165,7 @@
   function nextSlide() {
     cur = (cur + 1) % slides.length;
     var s = slides[cur];
-    var img = new Image();
-    img.src = P + s.img + V; img.alt = ''; img.width = 1168; img.height = 784;
-    ibPhoto.appendChild(img);
-    var old = $$('img', ibPhoto).slice(0, -1);
-    if (!motion) {
-      img.style.opacity = 1; old.forEach(function (o) { o.remove(); });
-      swap.textContent = s.word; return;
-    }
-    G.fromTo(img, { opacity: 0, scale: 1.06 }, { opacity: 1, scale: 1, duration: 1.6, ease: 'power2.out', onComplete: function () { old.forEach(function (o) { o.remove(); }); } });
+    if (!motion) { swap.textContent = s.word; return; }
     G.to(swap, { yPercent: -115, duration: 0.45, ease: 'power3.in', onComplete: function () {
       swap.textContent = s.word;
       G.fromTo(swap, { yPercent: 115 }, { yPercent: 0, duration: 0.75, ease: 'power3.out' });
@@ -186,16 +176,16 @@
   pauseBtn.addEventListener('click', function () {
     heroPaused = !heroPaused;
     pauseBtn.setAttribute('aria-pressed', String(heroPaused));
-    pauseBtn.textContent = heroPaused ? 'Spill av bildene' : 'Pause bildene';
+    pauseBtn.textContent = heroPaused ? 'Spill av' : 'Pause';
     if (heroPaused) stopHero(); else startHero();
   });
-  if (reduce) { pauseBtn.setAttribute('aria-pressed', 'true'); pauseBtn.textContent = 'Spill av bildene'; }
+  if (reduce) { pauseBtn.setAttribute('aria-pressed', 'true'); pauseBtn.textContent = 'Spill av'; }
 
   function heroIntro() {
     startHero();
     if (!motion) return;
     G.timeline({ defaults: { ease: 'expo.out', duration: 1.4 } })
-      .from('.ib-photo img', { scale: 1.25, filter: 'grayscale(1) contrast(1.15) brightness(0)', duration: 2.4 }, 0)
+      .from(['.ib-color', '.ib-glow'], { opacity: 0, duration: 2.2, ease: 'power2.out' }, 0)
       .from('.hero-ap', { y: -30, rotate: -120, opacity: 0 }, 0.3)
       .from('.hero-script', { clipPath: 'inset(0% 100% 0% 0%)', duration: 1.6, ease: 'power2.inOut' }, 0.45)
       .from('.hl-in', { yPercent: 115, stagger: 0.14, duration: 1.5 }, 0.55)

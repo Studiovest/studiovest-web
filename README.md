@@ -21,9 +21,9 @@ Struktur og bevegelse inspirert av landonorris.com, tilpasset et mediebyrå og m
 - **Laster:** STUDIO/VEST og teller 0–100, gardinen trekkes opp.
 - **Meny:** fullskjerm. 2×2 bildegrid (svart-hvitt) til venstre, store lenker til høyre. Hover gir farge på bildet
   og håndtegnet strek under lenken. Bildene følger musen. Esc lukker.
-- **Hero (fra versjon 2, inspirert av for-living.it):** fullskjerm, bildene tonet i brunt med korn og vinduslys som
-  glir sakte. En plantegning lyser opp rundt musen. Håndskrift «Fra Sunnhordland», serif-tittel med gradient,
-  ordet bytter i takt med bildet (med pauseknapp).
+- **Hero (inspirert av for-living.it):** fullskjerm fargeflate i mørk brun (ingen bilde), rolig lintekstur og ett
+  mykt lys som glir sakte. En plantegning lyser opp rundt musen. Håndskrift «Fra Sunnhordland», serif-tittel med
+  gradient på to linjer (PC), ordet bytter (med pauseknapp).
 - **Fire felt (ny, mellom hero og gigantiske linjer):** fire kort stiger opp i ulik fart mens bakgrunnen mørkner.
   Hover: «STUDIO [FELT] VEST».
 - **Book en prat:** brun pille (samme farge som ordet i tittelen). Hover inspirert av lusion.co: sand fylles inn fra
