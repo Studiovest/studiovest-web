@@ -4,6 +4,7 @@
 
 @font-face{font-family:"Hanken Grotesk";src:url(fonts/hanken-grotesk.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:"Ms Madi";src:url(fonts/ms-madi.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Bodoni Moda";src:url(fonts/bodoni-moda.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:"Gloock";src:url(fonts/gloock.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
 
 :root{
@@ -118,7 +119,7 @@ body.menu-open .logo,body.menu-open .top-mark{color:var(--light)}
 .ib-linen{position:absolute;inset:0;opacity:.22;mix-blend-mode:soft-light;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9 .035' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .9 0 0 0 0 .8 0 0 0 .8 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23l)'/%3E%3C/svg%3E")}
 .ib-glow{position:absolute;left:-30%;top:-30%;width:90%;height:160%;background:radial-gradient(closest-side,rgba(255,218,176,.13),rgba(255,218,176,0));filter:blur(30px);animation:glow 22s ease-in-out infinite alternate;pointer-events:none}
-.ib-plan{position:absolute;inset:0;width:100%;height:100%;color:#E9B985;pointer-events:none}
+.ib-plan{position:absolute;inset:-4% -2%;width:104%;height:108%;color:#E9B985;pointer-events:none}
 .ib-plan-base{opacity:.09}
 .ib-plan-lit{opacity:.9;-webkit-mask-image:radial-gradient(circle min(30vw,360px) at var(--mx) var(--my),#000 0,rgba(0,0,0,.35) 45%,transparent 75%);mask-image:radial-gradient(circle min(30vw,360px) at var(--mx) var(--my),#000 0,rgba(0,0,0,.35) 45%,transparent 75%)}
 .ib-grain{position:absolute;inset:0;opacity:.08;mix-blend-mode:overlay;pointer-events:none;
@@ -133,7 +134,8 @@ body.menu-open .logo,body.menu-open .top-mark{color:var(--light)}
 @media (min-width:901px){.hl{white-space:nowrap}}
 .hl{display:block;overflow:hidden;padding:.36em .05em .05em;margin-top:-.36em}
 .hl-in{display:inline-block;padding:.36em 0 .08em;margin:-.36em 0 -.08em;background:linear-gradient(100deg,#FFFFFF 0%,#F2EEE8 35%,#E3CBAE 70%,#D9A866 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.swap-mask{display:inline-block;overflow:hidden;vertical-align:bottom;padding:.16em .02em .06em;margin:-.16em 0 -.06em}
+.swap-mask{display:inline-block;overflow:hidden;clip-path:inset(0 -.1em 0 -.1em);vertical-align:bottom;padding:.1em .02em .08em;margin:-.1em 0 -.08em}
+.swap-move{display:inline-block;will-change:transform}
 .swap{display:inline-block;background:linear-gradient(180deg,#E9B98C 0%,#C88A5C 60%,#A9704A 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero-lead{margin:26px 0 30px;max-width:26em;font-size:16px;line-height:1.5;color:rgba(242,238,232,.88)}
 .hero-cta{display:inline-flex;align-items:center;min-height:42px;padding:0 18px;border-radius:7px;background:#F2EEE8;color:#161412;text-decoration:none;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;box-shadow:0 0 0 4px rgba(242,238,232,.12);transition:box-shadow .4s,transform .4s cubic-bezier(.2,.8,.2,1)}
@@ -143,21 +145,6 @@ body.menu-open .logo,body.menu-open .top-mark{color:var(--light)}
 .hero-card b{font-size:10px}
 .hero-card i{display:block;width:100%;height:1.5px;background:currentColor}
 .hero-pause{position:absolute;right:var(--gut);bottom:clamp(20px,4svh,44px);z-index:2;background:none;border:0;padding:0;color:inherit;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:underline;text-underline-offset:4px;cursor:pointer;min-height:24px;opacity:.8}
-
-/* Fire felt som stiger opp over hero (inspirert av for-living.it) */
-.cards{position:relative;z-index:3;padding:10vh var(--gut) 26vh}
-.cards-row{list-style:none;margin:0 auto;padding:0;max-width:1320px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(14px,1.8vw,30px);align-items:start}
-.cardx{will-change:transform}
-.cardx:nth-child(1){margin-top:9vh}.cardx:nth-child(2){margin-top:0}.cardx:nth-child(3){margin-top:16vh}.cardx:nth-child(4){margin-top:5vh}
-.cardx a{position:relative;display:block;aspect-ratio:1;border-radius:8px;overflow:hidden;box-shadow:0 40px 80px -30px rgba(0,0,0,.75);text-decoration:none}
-.cardx img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.8,.2,1),filter .6s}
-.cardx a::after{content:"";position:absolute;inset:0;background:rgba(15,12,10,.18);transition:background-color .6s}
-.cardx a:hover img,.cardx a:focus-visible img{transform:scale(1.07)}
-.cardx a:hover::after,.cardx a:focus-visible::after{background:rgba(15,12,10,.42)}
-.chip{position:absolute;z-index:1;left:50%;top:50%;translate:-50% -50%;display:flex;align-items:center;gap:0;white-space:nowrap;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
-.chip-main{padding:4px 8px;border-radius:3px;background:#F2EEE8;color:#161412}
-.chip-side{display:inline-block;max-width:0;overflow:hidden;opacity:0;color:#F2EEE8;font-family:var(--serif);font-size:15px;letter-spacing:.02em;transition:max-width .7s cubic-bezier(.2,.8,.2,1),opacity .5s,margin .7s cubic-bezier(.2,.8,.2,1)}
-.cardx a:hover .chip-side,.cardx a:focus-visible .chip-side{max-width:5em;opacity:1;margin:0 10px}
 
 /* «Book en prat» — pille i samme brunfarge som ordet i tittelen. Hover inspirert av lusion.co */
 .pill{position:relative;display:inline-flex;align-items:center;gap:12px;height:48px;padding:0 20px 0 24px;border-radius:999px;background:var(--brown);color:#F2EEE8;text-decoration:none;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;overflow:hidden;isolation:isolate;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
@@ -318,9 +305,6 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
   .menu-grid{display:none}
   .menu-foot{left:0;width:100%}
   .hero-card{display:none}
-  .cards-row{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .cardx:nth-child(n){margin-top:0}
-  .cardx:nth-child(even){margin-top:8vh}
   .hero-pause{left:var(--gut);right:auto}
   .collage{height:auto;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:28px 14px;padding:12vh var(--gut)}
   .cl{position:static;width:auto !important}
@@ -358,3 +342,36 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
   .ib-plan-lit{-webkit-mask-image:none;mask-image:none;opacity:.14}
   .mq-scribble path,.split-scribble path{stroke-dashoffset:0 !important}
 }
+
+/* Logoslider i bunnkortet (inspirert av landonorris.com). Plassholdere til ekte kundelogoer kommer. */
+.logos{position:relative;z-index:1;margin-top:clamp(36px,6vh,60px);overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.logos-track{display:flex;width:max-content;gap:clamp(28px,4vw,64px);list-style:none;margin:0;padding:6px 0;animation:logos 38s linear infinite}
+.logos:hover .logos-track{animation-play-state:paused}
+.logo-slot{display:flex;align-items:center;justify-content:center;width:clamp(110px,10vw,150px);height:44px;border:1px dashed rgba(242,238,232,.35);border-radius:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(242,238,232,.55)}
+@keyframes logos{to{transform:translateX(calc(-50% - clamp(14px,2vw,32px)))}}
+
+/* Versjon B: fullskjerms bilde i bevegelse, tynn serif (inspirert av astemia.it) */
+.heroB{position:relative;height:100vh;height:100svh;min-height:560px;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;background:#0E0B09}
+.hb-media{position:absolute;inset:0}
+.hb-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform-origin:50% 50%}
+.hb-media img.on{opacity:1}
+.hb-shade{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,8,6,.62) 0,rgba(10,8,6,.38) 35%,rgba(10,8,6,.45) 70%,rgba(10,8,6,.72) 100%)}
+.hb-center{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;padding:110px var(--gut) 70px;will-change:transform,opacity}
+.hb-h1{margin:0;font-family:"Bodoni Moda",Didot,Georgia,serif;font-weight:400;text-transform:uppercase;font-size:clamp(40px,6.4vw,124px);line-height:.98;letter-spacing:-.005em}
+.hb-l{display:block;overflow:hidden;padding:.3em .06em .04em;margin-top:-.3em}
+.hb-in{display:inline-block}
+.heroB .swap{background:linear-gradient(180deg,#F3D3B2 0%,#E1AE82 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hb-lead{margin:30px 0 34px;max-width:33em;font-size:clamp(15px,1.15vw,18px);line-height:1.5;color:rgba(255,255,255,.88)}
+.hb-btn{position:relative;display:inline-flex;align-items:center;min-height:48px;padding:0 26px;color:#fff;text-decoration:none;font-size:12.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;border-left:1px solid rgba(255,255,255,.7);border-right:1px solid rgba(255,255,255,.7);transition:border-color .45s}
+.hb-btn::before,.hb-btn::after{content:"";position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,.85);transition:left .5s cubic-bezier(.2,.8,.2,1),right .5s cubic-bezier(.2,.8,.2,1)}
+.hb-btn::before{top:0}.hb-btn::after{bottom:0}
+.hb-btn:hover,.hb-btn:focus-visible{border-color:transparent}
+.hb-btn:hover::before,.hb-btn:hover::after,.hb-btn:focus-visible::before,.hb-btn:focus-visible::after{left:-14px;right:-14px}
+.heroB .hero-pause{color:#fff}
+@media (max-width:900px){.hb-h1{font-size:clamp(34px,10vw,64px)}}
+
+/* Bytte mellom versjon A og B (kun i forhåndsvisningen) */
+.vswitch{position:fixed;right:14px;bottom:14px;z-index:65;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(22,20,18,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 24px -10px rgba(0,0,0,.6)}
+.vswitch a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:36px;padding:0 12px;border-radius:999px;color:#F2EEE8;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.vswitch a[aria-current="page"]{background:#F2EEE8;color:#161412}
+@media (prefers-reduced-motion:reduce){.logos-track{animation:none;flex-wrap:wrap;width:auto;justify-content:center}.logos-track li[aria-hidden]{display:none}.logos{-webkit-mask-image:none;mask-image:none}}

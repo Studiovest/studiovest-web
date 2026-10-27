@@ -1,7 +1,8 @@
 // Studiovest — bevegelse. GSAP + ScrollTrigger for scroll-animasjoner, Lenis for myk scrolling.
 (function () {
   var V = '?v=__V__';
-  var P = 'assets/photos/';
+  var BASE = document.documentElement.getAttribute('data-base') || '';
+  var P = BASE + 'assets/photos/';
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var G = window.gsap, ST = window.ScrollTrigger;
   var motion = !reduce && !!G && !!ST;
@@ -130,48 +131,76 @@
     });
   }
 
-  /* ---------- Hero: tonet bakgrunn, plantegning rundt musen, bildebytte ---------- */
-  var intro = $('#intro'), introBg = $('#introBg'), ibDark = $('#ibDark'), heroCenter = $('#heroCenter');
-  var swap = $('#swap'), pauseBtn = $('#heroPause');
-  var heroVisible = true, pointerActive = false;
-  var M = { x: 0.5, y: 0.45 }, MT = { x: 0.5, y: 0.45 };
+  /* ---------- Hero: to varianter (A: fargeflate med plantegning, B: fullskjerms bilde i bevegelse) ---------- */
+  var intro = $('#intro'), heroB = $('#heroB');
+  var swap = $('#swap'), swapMove = $('#swapMove'), pauseBtn = $('#heroPause');
+  var heroVisible = true;
   var slides = [
-    { img: 'bolig-stue.jpg',     word: 'hjemmet,' },
-    { img: 'bedrift-kontor.jpg', word: 'folka,' },
-    { img: 'skole-latter.jpg',   word: 'barna,' },
-    { img: 'bedrift-bygg.jpg',   word: 'bedriften,' }
+    { word: 'hjemmet,',   img: 'bolig-hytte.jpg' },
+    { word: 'folka,',     img: 'bedrift-kontor.jpg' },
+    { word: 'barna,',     img: 'skole-latter.jpg' },
+    { word: 'bedriften,', img: 'bedrift-bygg.jpg' }
   ];
-  intro.addEventListener('pointermove', function (e) {
-    if (e.pointerType !== 'mouse') return;
-    MT.x = e.clientX / window.innerWidth; MT.y = e.clientY / window.innerHeight; pointerActive = true;
-  });
-  intro.addEventListener('pointerleave', function () { pointerActive = false; });
-  function planTick() {
-    if (!heroVisible) return;
-    if (!pointerActive) { // uten mus: lyset vandrer rolig over plantegningen
-      var t = performance.now() / 1000;
-      MT.x = 0.5 + 0.3 * Math.sin(t * 0.32); MT.y = 0.46 + 0.22 * Math.sin(t * 0.47 + 1);
+
+  // A: plantegningen lyser opp rundt musen
+  if (intro) {
+    var introBg = $('#introBg'), ibDark = $('#ibDark');
+    var pointerActive = false, M = { x: 0.5, y: 0.45 }, MT = { x: 0.5, y: 0.45 };
+    intro.addEventListener('pointermove', function (e) {
+      if (e.pointerType !== 'mouse') return;
+      MT.x = e.clientX / window.innerWidth; MT.y = e.clientY / window.innerHeight; pointerActive = true;
+    });
+    intro.addEventListener('pointerleave', function () { pointerActive = false; });
+    var planTick = function () {
+      if (!heroVisible) return;
+      if (!pointerActive) {
+        var t = performance.now() / 1000;
+        MT.x = 0.5 + 0.3 * Math.sin(t * 0.32); MT.y = 0.46 + 0.22 * Math.sin(t * 0.47 + 1);
+      }
+      M.x += (MT.x - M.x) * 0.07; M.y += (MT.y - M.y) * 0.07;
+      introBg.style.setProperty('--mx', (M.x * 100).toFixed(2) + '%');
+      introBg.style.setProperty('--my', (M.y * 100).toFixed(2) + '%');
+    };
+    if (motion) {
+      G.ticker.add(planTick);
+      new IntersectionObserver(function (es) { heroVisible = es[0].isIntersecting; }).observe(introBg);
     }
-    M.x += (MT.x - M.x) * 0.07; M.y += (MT.y - M.y) * 0.07;
-    introBg.style.setProperty('--mx', (M.x * 100).toFixed(2) + '%');
-    introBg.style.setProperty('--my', (M.y * 100).toFixed(2) + '%');
   }
-  if (motion) {
-    G.ticker.add(planTick);
-    new IntersectionObserver(function (es) { heroVisible = es[0].isIntersecting; }).observe(introBg);
+
+  // B: bildene glir sakte som en dronefilm og tones over i hverandre
+  var hbMedia = heroB ? $('#hbMedia') : null;
+  function kenBurns(img) {
+    if (!motion) return;
+    var dir = Math.random() < 0.5 ? -1 : 1;
+    G.fromTo(img, { scale: 1.16, xPercent: 2 * dir, yPercent: -1.5 }, { scale: 1.02, xPercent: -2 * dir, yPercent: 1.5, duration: 9, ease: 'none' });
+  }
+  if (heroB) {
+    slides.forEach(function (s) { new Image().src = P + s.img + V; });
+    kenBurns($('img', hbMedia));
+    if (motion) new IntersectionObserver(function (es) { heroVisible = es[0].isIntersecting; }).observe(heroB);
   }
 
   var cur = 0, heroTimer = null, heroPaused = reduce;
   function nextSlide() {
     cur = (cur + 1) % slides.length;
     var s = slides[cur];
+    if (hbMedia) {
+      var img = new Image();
+      img.src = P + s.img + V; img.alt = ''; img.width = 1168; img.height = 784;
+      hbMedia.appendChild(img);
+      var old = $$('img', hbMedia).slice(0, -1);
+      if (motion) {
+        kenBurns(img);
+        G.to(img, { opacity: 1, duration: 1.6, ease: 'power2.inOut', onComplete: function () { old.forEach(function (o) { G.killTweensOf(o); o.remove(); }); } });
+      } else { img.classList.add('on'); old.forEach(function (o) { o.remove(); }); }
+    }
     if (!motion) { swap.textContent = s.word; return; }
-    G.to(swap, { yPercent: -115, duration: 0.45, ease: 'power3.in', onComplete: function () {
+    G.to(swapMove, { yPercent: -120, duration: 0.45, ease: 'power3.in', onComplete: function () {
       swap.textContent = s.word;
-      G.fromTo(swap, { yPercent: 115 }, { yPercent: 0, duration: 0.75, ease: 'power3.out' });
+      G.fromTo(swapMove, { yPercent: 120 }, { yPercent: 0, duration: 0.75, ease: 'power3.out' });
     } });
   }
-  function startHero() { stopHero(); if (!heroPaused) heroTimer = setInterval(function () { if (heroVisible && !document.hidden) nextSlide(); }, 4600); }
+  function startHero() { stopHero(); if (!heroPaused) heroTimer = setInterval(function () { if (heroVisible && !document.hidden) nextSlide(); }, heroB ? 5200 : 4600); }
   function stopHero() { if (heroTimer) clearInterval(heroTimer); heroTimer = null; }
   pauseBtn.addEventListener('click', function () {
     heroPaused = !heroPaused;
@@ -184,30 +213,27 @@
   function heroIntro() {
     startHero();
     if (!motion) return;
-    G.timeline({ defaults: { ease: 'expo.out', duration: 1.4 } })
-      .from(['.ib-color', '.ib-glow'], { opacity: 0, duration: 2.2, ease: 'power2.out' }, 0)
-      .from('.hero-ap', { y: -30, rotate: -120, opacity: 0 }, 0.3)
-      .from('.hero-script', { clipPath: 'inset(0% 100% 0% 0%)', duration: 1.6, ease: 'power2.inOut' }, 0.45)
-      .from('.hl-in', { yPercent: 115, stagger: 0.14, duration: 1.5 }, 0.55)
-      .from(['.hero-lead', '.hero-cta'], { y: 30, opacity: 0, stagger: 0.1 }, 0.95)
-      .from('.hero-card', { x: -60, opacity: 0 }, 1.05)
-      .from('.hero-pause', { x: 60, opacity: 0 }, 1.1)
+    var tl = G.timeline({ defaults: { ease: 'expo.out', duration: 1.4 } });
+    if (intro) {
+      tl.from(['.ib-color', '.ib-glow'], { opacity: 0, duration: 2.2, ease: 'power2.out' }, 0)
+        .from('.hero-ap', { y: -30, rotate: -120, opacity: 0 }, 0.3)
+        .from('.hero-script', { clipPath: 'inset(0% 100% 0% 0%)', duration: 1.6, ease: 'power2.inOut' }, 0.45)
+        .from('.hl', { yPercent: 60, opacity: 0, stagger: 0.14, duration: 1.5 }, 0.55)
+        .from(['.hero-lead', '.hero-cta'], { y: 30, opacity: 0, stagger: 0.1 }, 0.95)
+        .from('.hero-card', { x: -60, opacity: 0 }, 1.05);
+      G.to('#heroCenter', { opacity: 0, scale: 0.94, y: -80, ease: 'none', scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true } });
+      G.to(ibDark, { opacity: 0.6, ease: 'none', scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true } });
+    }
+    if (heroB) {
+      tl.from('.hb-media', { opacity: 0, duration: 2.4, ease: 'power2.out' }, 0)
+        .from('.hb-in', { yPercent: 110, opacity: 0, filter: 'blur(8px)', stagger: 0.16, duration: 1.7 }, 0.35)
+        .from('.hb-lead', { y: 26, opacity: 0, filter: 'blur(6px)' }, 0.95)
+        .from('.hb-btn', { y: 20, opacity: 0 }, 1.1);
+      G.to('#hbCenter', { opacity: 0, y: -100, ease: 'none', scrollTrigger: { trigger: '#heroB', start: 'top top', end: 'bottom top', scrub: true } });
+      G.to('#hbMedia', { scale: 1.12, yPercent: 10, ease: 'none', scrollTrigger: { trigger: '#heroB', start: 'top top', end: 'bottom top', scrub: true } });
+    }
+    tl.from('.hero-pause', { x: 60, opacity: 0 }, 1.1)
       .from('.top > *', { y: -40, opacity: 0, stagger: 0.08, duration: 1 }, 0.4);
-    // Når kortene kommer: bakgrunnen mørkner, hero-teksten trekker seg tilbake
-    var st1 = { trigger: '.cards', start: 'top bottom', end: 'top 15%', scrub: true };
-    G.to(ibDark, { opacity: 0.8, ease: 'none', scrollTrigger: st1 });
-    G.to(heroCenter, { opacity: 0, scale: 0.93, y: -90, ease: 'none', scrollTrigger: { trigger: '.cards', start: 'top bottom', end: 'top 35%', scrub: true } });
-    G.to(['.hero-card', '.hero-pause'], { opacity: 0, ease: 'none', scrollTrigger: { trigger: '.cards', start: 'top bottom', end: 'top 60%', scrub: true } });
-  }
-
-  /* ---------- Fire felt: kortene stiger opp i ulik fart ---------- */
-  if (motion) {
-    $$('.cardx').forEach(function (c, i) {
-      var sp = parseFloat(c.dataset.speed);
-      G.fromTo(c, { y: function () { return window.innerHeight * 0.5 * sp; }, rotate: i % 2 ? 3 : -3 },
-        { y: function () { return -window.innerHeight * 0.18 * sp; }, rotate: 0, ease: 'none',
-          scrollTrigger: { trigger: '.cards', start: 'top bottom', end: 'bottom top', scrub: true, invalidateOnRefresh: true } });
-    });
   }
 
   /* ---------- «Book en prat»: fargen fylles fra der musen kommer inn ---------- */
