@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Versjonsmerk filer (unngår gammel versjon i nettleserens hurtigbuffer)
-        run: sed -i "s/__V__/${GITHUB_SHA::8}/g" index.html versjon-b/index.html assets/main.js
+        run: sed -i "s/__V__/${GITHUB_SHA::8}/g" index.html assets/main.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

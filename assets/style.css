@@ -3,8 +3,6 @@
    kotelinjer fra vestlandsterreng og linse som viser rå mot ferdig redigert bilde. */
 
 @font-face{font-family:"Hanken Grotesk";src:url(fonts/hanken-grotesk.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
-@font-face{font-family:"Ms Madi";src:url(fonts/ms-madi.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:"Bodoni Moda";src:url(fonts/bodoni-moda.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:"Gloock";src:url(fonts/gloock.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
 
 :root{
@@ -13,10 +11,10 @@
   --stone:#C9C1B6;  /* stein, mellomtone */
   --sand:#D9A866;   /* aksent på mørk bakgrunn */
   --brown:#8B5A3A;  /* aksent på lys bakgrunn */
-  --bg:var(--dark);
-  --fg:var(--light);
-  --acct:var(--sand);
-  --line:rgba(242,238,232,.07);
+  --bg:var(--light);
+  --fg:var(--dark);
+  --acct:var(--brown);
+  --line:rgba(22,20,18,.10);
   --sans:"Hanken Grotesk","Helvetica Neue",Arial,sans-serif;
   --serif:"Gloock",Georgia,serif;
   --gut:clamp(16px,3.4vw,48px);
@@ -24,7 +22,7 @@
 }
 
 *,*::before,*::after{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;overflow-x:clip}
+html{-webkit-text-size-adjust:100%}
 html.lenis,html.lenis body{height:auto}
 .lenis.lenis-smooth{scroll-behavior:auto !important}
 .lenis.lenis-stopped{overflow:hidden}
@@ -106,60 +104,30 @@ body.menu-open .logo,body.menu-open .top-mark{color:var(--light)}
 .menu-foot a:hover{color:var(--sand)}
 .menu-social{display:flex;gap:24px;list-style:none;margin:0;padding:0}
 
-/* Hero: inspirert av for-living.it, i Studiovests farger.
-   Bakgrunnen står fast mens hero-teksten og kortene scrolles over den. */
-.intro{position:relative;color:var(--light);--acct:var(--sand)}
-.intro-bg{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:#1A110B;z-index:0;--mx:50%;--my:45%}
-/* Fargeflate i stedet for bilde: varm brun, rolig tekstur og ett mykt lys som glir sakte */
-.ib-color{position:absolute;inset:0;background:
-  radial-gradient(65% 55% at 50% 44%,rgba(94,59,36,.95) 0%,rgba(94,59,36,0) 72%),
-  radial-gradient(55% 60% at 14% 88%,rgba(70,43,26,.8) 0%,rgba(70,43,26,0) 70%),
-  radial-gradient(50% 50% at 90% 10%,rgba(84,53,33,.7) 0%,rgba(84,53,33,0) 70%),
-  linear-gradient(165deg,#3A2416 0%,#24170E 55%,#140D08 100%)}
-.ib-linen{position:absolute;inset:0;opacity:.22;mix-blend-mode:soft-light;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9 .035' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .9 0 0 0 0 .8 0 0 0 .8 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23l)'/%3E%3C/svg%3E")}
-.ib-glow{position:absolute;left:-30%;top:-30%;width:90%;height:160%;background:radial-gradient(closest-side,rgba(255,218,176,.13),rgba(255,218,176,0));filter:blur(30px);animation:glow 22s ease-in-out infinite alternate;pointer-events:none}
-.ib-plan{position:absolute;inset:-4% -2%;width:104%;height:108%;color:#E9B985;pointer-events:none}
-.ib-plan-base{opacity:.09}
-.ib-plan-lit{opacity:.9;-webkit-mask-image:radial-gradient(circle min(30vw,360px) at var(--mx) var(--my),#000 0,rgba(0,0,0,.35) 45%,transparent 75%);mask-image:radial-gradient(circle min(30vw,360px) at var(--mx) var(--my),#000 0,rgba(0,0,0,.35) 45%,transparent 75%)}
-.ib-grain{position:absolute;inset:0;opacity:.08;mix-blend-mode:overlay;pointer-events:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.ib-dark{position:absolute;inset:0;background:#0F0C0A;opacity:0;pointer-events:none}
-
-.hero{position:relative;z-index:2;height:100vh;height:100svh;margin-top:-100vh;margin-top:-100svh;display:flex;align-items:center;justify-content:center;padding:96px var(--gut) 60px;text-align:center}
-.hero-center{display:flex;flex-direction:column;align-items:center;max-width:100%;will-change:transform,opacity}
-.hero-ap{width:46px;height:46px;color:#F2EEE8;opacity:.9}
-.hero-script{margin:10px 0 18px;font-family:"Ms Madi",cursive;font-size:clamp(26px,2.4vw,38px);line-height:1;color:#EBD9C2;transform:rotate(-3deg)}
-.hero-h1{margin:0;font-family:var(--serif);font-weight:400;text-transform:uppercase;letter-spacing:-.005em;font-size:clamp(34px,4.6vw,110px);line-height:1.02}
-@media (min-width:901px){.hl{white-space:nowrap}}
-.hl{display:block;overflow:hidden;padding:.36em .05em .05em;margin-top:-.36em}
-.hl-in{display:inline-block;padding:.36em 0 .08em;margin:-.36em 0 -.08em;background:linear-gradient(100deg,#FFFFFF 0%,#F2EEE8 35%,#E3CBAE 70%,#D9A866 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.swap-mask{display:inline-block;overflow:hidden;clip-path:inset(0 -.1em 0 -.1em);vertical-align:bottom;padding:.1em .02em .08em;margin:-.1em 0 -.08em}
-.swap-move{display:inline-block;will-change:transform}
-.swap{display:inline-block;background:linear-gradient(180deg,#E9B98C 0%,#C88A5C 60%,#A9704A 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero-lead{margin:26px 0 30px;max-width:26em;font-size:16px;line-height:1.5;color:rgba(242,238,232,.88)}
-.hero-cta{display:inline-flex;align-items:center;min-height:42px;padding:0 18px;border-radius:7px;background:#F2EEE8;color:#161412;text-decoration:none;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;box-shadow:0 0 0 4px rgba(242,238,232,.12);transition:box-shadow .4s,transform .4s cubic-bezier(.2,.8,.2,1)}
-.hero-cta:hover{transform:translateY(-2px);box-shadow:0 0 0 7px rgba(242,238,232,.16)}
-.hero-card{position:absolute;z-index:2;left:var(--gut);bottom:clamp(20px,4svh,44px);width:96px;padding:10px 8px;border:1.5px solid currentColor;border-radius:8px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.2}
+/* Hero */
+.hero{--lw:min(30vw,50svh);position:relative;min-height:100svh;display:grid;grid-template-columns:1fr var(--lw) 1fr;grid-template-rows:1fr auto;column-gap:clamp(16px,2.4vw,40px);align-items:center;padding:96px var(--gut) clamp(20px,4svh,44px);overflow:hidden}
+.hero-title{display:contents;margin:0}
+.ht{position:relative;z-index:2;display:block}
+.ht-left{grid-column:1;grid-row:1;justify-self:end;text-align:right;align-self:center;font-family:var(--sans);font-weight:850;text-transform:uppercase;letter-spacing:-.03em;font-size:clamp(44px,5.4vw,104px);line-height:.9;transform:translateY(-.55em)}
+.ht-right{grid-column:1;grid-row:1;justify-self:end;text-align:right;align-self:center;font-size:clamp(40px,4.8vw,92px);transform:translateY(.55em)}
+.ht-in{display:inline-block}
+.ht-right .ht-in{overflow:hidden;padding:0 .02em .06em;color:var(--acct)}
+.swap{display:inline-block}
+.ht-bottom{grid-column:1/-1;grid-row:2;text-align:center;font-family:var(--sans);font-weight:850;text-transform:uppercase;letter-spacing:-.03em;font-size:clamp(28px,4.3vw,82px);line-height:.95;padding-top:clamp(14px,2.4svh,30px)}
+.lens{position:relative;z-index:1;grid-column:2;grid-row:1;width:100%;aspect-ratio:4/5;max-height:66svh;border-radius:6px;overflow:hidden;cursor:none;touch-action:pan-y;background:var(--stone)}
+.lens-layer{position:absolute;inset:0}
+.lens-layer img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.raw img{filter:grayscale(1) sepia(.18) contrast(.78) brightness(1.06)}
+.edit{clip-path:circle(0% at 50% 50%)}
+.lens-tag{position:absolute;left:50%;top:50%;z-index:3;padding:6px 10px;border-radius:6px;background:var(--sand);color:var(--dark);font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;pointer-events:none;transform:translate(-50%,-50%)}
+.no-js .edit{clip-path:none}.no-js .lens-tag{display:none}
+.hero-card{position:absolute;z-index:2;left:var(--gut);bottom:clamp(20px,4svh,44px);width:96px;padding:10px 8px;border:1.5px solid currentColor;border-radius:8px 8px 8px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.2}
 .hero-card svg{width:30px;height:30px}
 .hero-card b{font-size:10px}
 .hero-card i{display:block;width:100%;height:1.5px;background:currentColor}
-.hero-pause{position:absolute;right:var(--gut);bottom:clamp(20px,4svh,44px);z-index:2;background:none;border:0;padding:0;color:inherit;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:underline;text-underline-offset:4px;cursor:pointer;min-height:24px;opacity:.8}
-
-/* «Book en prat» — pille i samme brunfarge som ordet i tittelen. Hover inspirert av lusion.co */
-.pill{position:relative;display:inline-flex;align-items:center;gap:12px;height:48px;padding:0 20px 0 24px;border-radius:999px;background:var(--brown);color:#F2EEE8;text-decoration:none;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;overflow:hidden;isolation:isolate;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
-.pill-fill{position:absolute;z-index:-1;left:var(--fx,90%);top:var(--fy,50%);width:0;height:0;border-radius:50%;background:var(--sand);translate:-50% -50%;transition:width .6s cubic-bezier(.2,.8,.2,1),height .6s cubic-bezier(.2,.8,.2,1)}
-.pill-arrow{position:absolute;left:18px;top:50%;width:16px;height:16px;margin-top:-8px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;opacity:0;transform:translateX(-14px);transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .35s}
-.pill-text{display:inline-block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
-.pill-dot{width:6px;height:6px;border-radius:50%;background:currentColor;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
-.pill:hover,.pill:focus-visible{color:#161412}
-.pill:hover .pill-fill,.pill:focus-visible .pill-fill{width:320px;height:320px}
-.pill:hover .pill-arrow,.pill:focus-visible .pill-arrow{opacity:1;transform:none}
-.pill:hover .pill-text,.pill:focus-visible .pill-text{transform:translateX(14px)}
-.pill:hover .pill-dot,.pill:focus-visible .pill-dot{transform:scale(0)}
-.pill:active{transform:scale(.97)}
-
-@keyframes glow{from{transform:translate(0,0)}to{transform:translate(70%,8%)}}
+.hero-side{grid-column:3;grid-row:1;align-self:center;justify-self:start;max-width:15em;display:flex;flex-direction:column;gap:14px;position:relative;z-index:2}
+.hero-hint{margin:0;font-size:13px;line-height:1.45;color:var(--fg);opacity:.75}
+.hero-pause{align-self:flex-start;background:none;border:0;padding:0;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:underline;text-underline-offset:4px;cursor:pointer;min-height:24px}
 
 /* Gigantiske linjer */
 .marquee{position:relative;padding:clamp(80px,16vh,180px) 0;overflow:hidden}
@@ -304,8 +272,14 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
   .menu{grid-template-columns:1fr;align-content:center}
   .menu-grid{display:none}
   .menu-foot{left:0;width:100%}
+  .hero{--lw:min(78vw,52svh);grid-template-columns:1fr;grid-template-rows:auto auto auto auto;padding-top:96px;row-gap:14px;align-content:center}
+  .ht-left,.ht-right{grid-column:1;justify-self:start;text-align:left;transform:none}
+  .ht-left{grid-row:1;font-size:clamp(40px,11vw,80px)}
+  .ht-right{grid-row:2;font-size:clamp(38px,10vw,76px);margin-top:-8px}
+  .lens{grid-column:1;grid-row:3;width:var(--lw);justify-self:center;max-height:none}
+  .ht-bottom{grid-row:4;font-size:clamp(24px,6.8vw,46px);text-align:left;padding-top:4px}
+  .hero-side{display:none}
   .hero-card{display:none}
-  .hero-pause{left:var(--gut);right:auto}
   .collage{height:auto;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:28px 14px;padding:12vh var(--gut)}
   .cl{position:static;width:auto !important}
   .cl-q1,.cl-q2,.cl-4{grid-column:1/-1}
@@ -324,9 +298,7 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
   .foot-photo{grid-column:1/-1;grid-row:1;justify-self:center}
 }
 @media (max-width:600px){
-  .top-mark{display:none}
-  .pill{height:42px;padding:0 16px 0 18px;gap:9px;font-size:12px}
-  .pill-arrow{left:14px}
+  .top-book{display:none}
   .fields-grid{grid-template-columns:1fr}
   .field:nth-child(even){margin-top:0}
   .field-more{position:static;aspect-ratio:auto;opacity:1;transform:none;background:none;padding:10px 2px 4px;color:inherit}
@@ -338,40 +310,7 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none !important;transition:none !important}
-  .ib-glow{display:none}
-  .ib-plan-lit{-webkit-mask-image:none;mask-image:none;opacity:.14}
+  .edit{clip-path:none !important}
+  .lens-tag{display:none}
   .mq-scribble path,.split-scribble path{stroke-dashoffset:0 !important}
 }
-
-/* Logoslider i bunnkortet (inspirert av landonorris.com). Plassholdere til ekte kundelogoer kommer. */
-.logos{position:relative;z-index:1;margin-top:clamp(36px,6vh,60px);overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
-.logos-track{display:flex;width:max-content;gap:clamp(28px,4vw,64px);list-style:none;margin:0;padding:6px 0;animation:logos 38s linear infinite}
-.logos:hover .logos-track{animation-play-state:paused}
-.logo-slot{display:flex;align-items:center;justify-content:center;width:clamp(110px,10vw,150px);height:44px;border:1px dashed rgba(242,238,232,.35);border-radius:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(242,238,232,.55)}
-@keyframes logos{to{transform:translateX(calc(-50% - clamp(14px,2vw,32px)))}}
-
-/* Versjon B: fullskjerms bilde i bevegelse, tynn serif (inspirert av astemia.it) */
-.heroB{position:relative;height:100vh;height:100svh;min-height:560px;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;background:#0E0B09}
-.hb-media{position:absolute;inset:0}
-.hb-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform-origin:50% 50%}
-.hb-media img.on{opacity:1}
-.hb-shade{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,8,6,.62) 0,rgba(10,8,6,.38) 35%,rgba(10,8,6,.45) 70%,rgba(10,8,6,.72) 100%)}
-.hb-center{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;padding:110px var(--gut) 70px;will-change:transform,opacity}
-.hb-h1{margin:0;font-family:"Bodoni Moda",Didot,Georgia,serif;font-weight:400;text-transform:uppercase;font-size:clamp(40px,6.4vw,124px);line-height:.98;letter-spacing:-.005em}
-.hb-l{display:block;overflow:hidden;padding:.3em .06em .04em;margin-top:-.3em}
-.hb-in{display:inline-block}
-.heroB .swap{background:linear-gradient(180deg,#F3D3B2 0%,#E1AE82 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hb-lead{margin:30px 0 34px;max-width:33em;font-size:clamp(15px,1.15vw,18px);line-height:1.5;color:rgba(255,255,255,.88)}
-.hb-btn{position:relative;display:inline-flex;align-items:center;min-height:48px;padding:0 26px;color:#fff;text-decoration:none;font-size:12.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;border-left:1px solid rgba(255,255,255,.7);border-right:1px solid rgba(255,255,255,.7);transition:border-color .45s}
-.hb-btn::before,.hb-btn::after{content:"";position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,.85);transition:left .5s cubic-bezier(.2,.8,.2,1),right .5s cubic-bezier(.2,.8,.2,1)}
-.hb-btn::before{top:0}.hb-btn::after{bottom:0}
-.hb-btn:hover,.hb-btn:focus-visible{border-color:transparent}
-.hb-btn:hover::before,.hb-btn:hover::after,.hb-btn:focus-visible::before,.hb-btn:focus-visible::after{left:-14px;right:-14px}
-.heroB .hero-pause{color:#fff}
-@media (max-width:900px){.hb-h1{font-size:clamp(34px,10vw,64px)}}
-
-/* Bytte mellom versjon A og B (kun i forhåndsvisningen) */
-.vswitch{position:fixed;right:14px;bottom:14px;z-index:65;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(22,20,18,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 24px -10px rgba(0,0,0,.6)}
-.vswitch a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:36px;padding:0 12px;border-radius:999px;color:#F2EEE8;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-.vswitch a[aria-current="page"]{background:#F2EEE8;color:#161412}
-@media (prefers-reduced-motion:reduce){.logos-track{animation:none;flex-wrap:wrap;width:auto;justify-content:center}.logos-track li[aria-hidden]{display:none}.logos{-webkit-mask-image:none;mask-image:none}}
