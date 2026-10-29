@@ -12,24 +12,15 @@ Statisk nettside (HTML, CSS, JS). Ingen WordPress, ingen byggesteg.
   Fast kopi som alltid kan åpnes: `/versjon-1/` på forhåndsvisningen. Den mappen endres aldri.
 - Rulle tilbake forsiden til versjon 1: `git checkout 57f6a33 -- index.html assets`, commit og push
   (mappen `versjon-1/` røres ikke).
-- **A/B-sammenligning (forhåndsvisning):** `/` er versjon A (hero med fargeflate og plantegning, inspirert av
-  for-living.it). `/versjon-b/` er versjon B (fullskjerms bilde i bevegelse og tynn Bodoni-serif, inspirert av
-  astemia.it). Resten av siden er felles (samme `assets/`). Knappen «A / B» nede til høyre bytter; fjernes ved lansering.
+- **Forsiden nå (29.10.2026):** nøyaktig versjon 1, identisk med `/versjon-1/`.
+- **Lagrede tillegg (ikke i bruk):** commit `cc58c64` har hero uten linse, gyldne linjer ved musepeker, logoslider
+  (Aktiv, EiendomsMegler 1, Nordvik, EIE, Eiendomsmegler Norge, Kviteberg), mindre gigantiske linjer og til-toppen-pil.
+  Kan hentes inn igjen enkeltvis.
 
 ## Design
 
-Bygger på versjon 1 (struktur og bevegelse inspirert av landonorris.com, Studiovests egne farger:
-papirhvit #F2EEE8, mørkerom #161412, stein #C9C1B6, sand #D9A866, brun #8B5A3A). Endringer etter versjon 1:
-
-- **Hero:** bildet vises i full farge (linsen med grå råfil og «boble» er fjernet). Ordet og bildet bytter fortsatt.
-- **Gyldne kotelinjer:** linjene lyser opp i gull rundt musen, i alle seksjoner med kotelinjer og i menyen.
-- **Partnere & kunder (ny, mellom Foto/Film og Fire kapitler):** logoslider som på landonorris.com, med håndskrevet
-  «Samarbeid». Logoene følger fargetemaet: svarte på lys bakgrunn, hvite når siden går over til mørk.
-  Logoer: Aktiv, EiendomsMegler 1, Nordvik, EIE, Eiendomsmegler Norge, Kviteberg (hentet fra deres nettsider).
-- **Gigantiske linjer:** mindre tekst.
-- **Til toppen:** pil nede til høyre som dukker opp når man har scrollet helt ned.
-
-Uendret fra versjon 1: laster, meny, gigantiske linjer, manifest, kollasj, Foto/Film, Fire kapitler, Timebank, vifte, bunn.
+Versjon 1: struktur og bevegelse inspirert av landonorris.com, Studiovests egne farger
+(papirhvit #F2EEE8, mørkerom #161412, stein #C9C1B6, sand #D9A866, brun #8B5A3A).
 Teknikk: GSAP + ScrollTrigger og Lenis i `assets/vendor/`. Skrift: Hanken Grotesk, Gloock og Ms Madi, lokalt i `assets/fonts/`.
 
 ## Bilder

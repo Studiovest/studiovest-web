@@ -3,7 +3,6 @@
    kotelinjer fra vestlandsterreng og linse som viser rå mot ferdig redigert bilde. */
 
 @font-face{font-family:"Hanken Grotesk";src:url(fonts/hanken-grotesk.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
-@font-face{font-family:"Ms Madi";src:url(fonts/ms-madi.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:"Gloock";src:url(fonts/gloock.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
 
 :root{
@@ -115,11 +114,11 @@ body.menu-open .logo,body.menu-open .top-mark{color:var(--light)}
 .ht-right .ht-in{overflow:hidden;padding:0 .02em .06em;color:var(--acct)}
 .swap{display:inline-block}
 .ht-bottom{grid-column:1/-1;grid-row:2;text-align:center;font-family:var(--sans);font-weight:850;text-transform:uppercase;letter-spacing:-.03em;font-size:clamp(28px,4.3vw,82px);line-height:.95;padding-top:clamp(14px,2.4svh,30px)}
-.lens{position:relative;z-index:1;grid-column:2;grid-row:1;width:100%;aspect-ratio:4/5;max-height:66svh;border-radius:6px;overflow:hidden;touch-action:pan-y;background:var(--stone)}
+.lens{position:relative;z-index:1;grid-column:2;grid-row:1;width:100%;aspect-ratio:4/5;max-height:66svh;border-radius:6px;overflow:hidden;cursor:none;touch-action:pan-y;background:var(--stone)}
 .lens-layer{position:absolute;inset:0}
 .lens-layer img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.raw{display:none}
-.edit{clip-path:none}
+.raw img{filter:grayscale(1) sepia(.18) contrast(.78) brightness(1.06)}
+.edit{clip-path:circle(0% at 50% 50%)}
 .lens-tag{position:absolute;left:50%;top:50%;z-index:3;padding:6px 10px;border-radius:6px;background:var(--sand);color:var(--dark);font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;pointer-events:none;transform:translate(-50%,-50%)}
 .no-js .edit{clip-path:none}.no-js .lens-tag{display:none}
 .hero-card{position:absolute;z-index:2;left:var(--gut);bottom:clamp(20px,4svh,44px);width:96px;padding:10px 8px;border:1.5px solid currentColor;border-radius:8px 8px 8px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.2}
@@ -131,15 +130,15 @@ body.menu-open .logo,body.menu-open .top-mark{color:var(--light)}
 .hero-pause{align-self:flex-start;background:none;border:0;padding:0;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-decoration:underline;text-underline-offset:4px;cursor:pointer;min-height:24px}
 
 /* Gigantiske linjer */
-.marquee{position:relative;padding:clamp(90px,18vh,200px) 0;overflow:hidden}
+.marquee{position:relative;padding:clamp(80px,16vh,180px) 0;overflow:hidden}
 .no-js .marquee,.no-js .statement,.no-js .fields{background:var(--dark);color:var(--light);--acct:var(--sand)}
 .mq-label{position:relative;z-index:3;margin:0 0 3vh;text-align:center;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.mq-row{white-space:nowrap;font-size:clamp(40px,6.2vw,112px);line-height:.98}
+.mq-row{white-space:nowrap;font-size:clamp(64px,11vw,190px);line-height:.95}
 .mq-row+.mq-row{margin-top:.04em}
 .mq-track{display:inline-flex;align-items:center;gap:.25em;padding-right:.25em;will-change:transform}
 .mq-row[data-dir="1"] .mq-track{font-family:var(--sans);font-weight:850;text-transform:uppercase;letter-spacing:-.03em}
 .mq-ap{width:.5em;height:.5em;flex:0 0 auto;color:var(--acct)}
-.mq-photo{position:absolute;z-index:2;left:50%;top:50%;width:clamp(130px,14vw,240px);aspect-ratio:4/5;margin:0;translate:-50% -44%}
+.mq-photo{position:absolute;z-index:2;left:50%;top:50%;width:clamp(180px,22vw,360px);aspect-ratio:4/5;margin:0;translate:-50% -44%}
 .mq-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;border-radius:4px}
 .mq-scribble{position:absolute;left:-36%;top:-14%;width:172%;height:128%;overflow:visible;pointer-events:none}
 .mq-scribble path{fill:none;stroke:var(--sand);stroke-width:3.4;stroke-linecap:round;stroke-dasharray:1 2;stroke-dashoffset:1.05}
@@ -314,56 +313,4 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
   .edit{clip-path:none !important}
   .lens-tag{display:none}
   .mq-scribble path,.split-scribble path{stroke-dashoffset:0 !important}
-}
-
-/* Gyldne kotelinjer rundt musen (som plantegningen i den forrige versjonen) */
-@property --mx{syntax:"<length>";inherits:true;initial-value:-999px}
-@property --my{syntax:"<length>";inherits:true;initial-value:-999px}
-.topo-host{transition:--mx .35s cubic-bezier(.2,.8,.2,1),--my .35s cubic-bezier(.2,.8,.2,1)}
-.topo-lit{color:#D9A866;opacity:0;transition:opacity .5s;filter:drop-shadow(0 0 4px rgba(217,168,102,.7));
-  -webkit-mask-image:radial-gradient(circle 300px at var(--mx) var(--my),#000 0,rgba(0,0,0,.4) 45%,transparent 72%);
-  mask-image:radial-gradient(circle 300px at var(--mx) var(--my),#000 0,rgba(0,0,0,.4) 45%,transparent 72%)}
-.topo-host.lit .topo-lit{opacity:1}
-.topo-lit path{stroke-width:1.9}
-[data-theme="light"] .topo-lit,.foot .topo-lit:not(.foot-card .topo-lit),.split .topo-lit,.bank .topo-lit{color:#C08A48}
-
-/* Partnere og kunder — logoslider (som landonorris.com) */
-.partners{position:relative;padding:clamp(70px,12vh,140px) 0 clamp(80px,14vh,160px);overflow:hidden}
-.pt-head{position:relative;max-width:1100px;margin:0 auto clamp(40px,7vh,72px);padding:0 var(--gut);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:center}
-.pt-head h2{position:relative;z-index:1}
-.pt-head h2 .bold{font-size:clamp(34px,3.6vw,64px)}
-.pt-head h2 .serif{font-size:clamp(34px,3.6vw,64px)}
-.pt-head p{position:relative;z-index:1;margin:0;max-width:22em;font-size:14px;line-height:1.5}
-.pt-scribble{position:absolute;z-index:0;left:12%;top:50%;translate:0 -50%;font-family:"Ms Madi",cursive;font-size:clamp(90px,12vw,210px);line-height:1;color:var(--sand);opacity:.85;transform:rotate(-12deg);pointer-events:none;white-space:nowrap}
-.pt-marquee{max-width:1100px;margin:0 auto;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14%,#000 86%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 14%,#000 86%,transparent 100%)}
-.pt-track{display:flex;align-items:center;gap:clamp(48px,6vw,96px);width:max-content;list-style:none;margin:0;padding:10px 0;animation:ptslide 34s linear infinite}
-.partners:hover .pt-track{animation-play-state:paused}
-.pt-logo{display:flex;align-items:center;gap:10px;flex:0 0 auto;color:var(--fg);transition:color .9s ease}
-.pt-logo svg{display:block;height:30px;width:auto}
-.pt-em1 svg{height:28px}
-.pt-nordvik svg{height:30px}
-.pt-emn svg{height:32px}
-.pt-kviteberg svg{height:22px}
-.pt-aktiv svg{height:26px}
-.pt-eie svg{height:26px}
-.pt-eie-text{font-weight:700;font-size:16px;letter-spacing:-.01em;white-space:nowrap}
-@keyframes ptslide{to{transform:translateX(calc(-50% - clamp(24px,3vw,48px)))}}
-
-/* Til toppen */
-.to-top{position:fixed;right:clamp(14px,2.4vw,32px);bottom:clamp(14px,2.4vw,32px);z-index:66;width:56px;height:56px;border:0;border-radius:50%;background:var(--sand);color:var(--dark);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 30px -12px rgba(0,0,0,.55);opacity:0;transform:translateY(24px) scale(.8);pointer-events:none;transition:opacity .45s,transform .55s cubic-bezier(.2,.8,.2,1),background-color .3s}
-.to-top svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
-.to-top.show{opacity:1;transform:none;pointer-events:auto}
-.to-top:hover{background:#E8BD80}
-.to-top:hover svg{transform:translateY(-3px)}
-
-@media (max-width:900px){
-  .pt-head{grid-template-columns:1fr}
-  .pt-scribble{left:30%;font-size:clamp(70px,22vw,140px)}
-  .pt-logo svg{height:24px}
-}
-@media (prefers-reduced-motion:reduce){
-  .pt-track{animation:none;flex-wrap:wrap;justify-content:center;width:auto;padding:10px var(--gut)}
-  .pt-track li[aria-hidden]{display:none}
-  .pt-marquee{-webkit-mask-image:none;mask-image:none}
-  .topo-lit{display:none}
 }

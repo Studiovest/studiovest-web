@@ -168,8 +168,9 @@
     tag.style.top = (L.y * 100 + L.r * 100 * 1.05) + '%';
     tag.style.opacity = L.r > 0.08 ? 1 : 0;
   }
-  // Linsen er slått av: bildet vises i full farge (CSS skjuler råfil-laget).
+  if (!motion) { edit.style.clipPath = 'none'; tag.style.display = 'none'; }
   if (motion) {
+    G.ticker.add(lensTick);
     new IntersectionObserver(function (es) { heroVisible = es[0].isIntersecting; }).observe(lens);
   }
 
@@ -430,51 +431,6 @@
     var endDrag = function () { dragging = false; fanStage.classList.remove('dragging'); };
     fanStage.addEventListener('pointerup', endDrag);
     fanStage.addEventListener('pointercancel', endDrag);
-  }
-
-  /* ---------- Gyldne kotelinjer rundt musen (også i menyen) ---------- */
-  if (finePointerOK()) {
-    $$('svg.topo').forEach(function (t) {
-      var host = t.parentNode;
-      if (host.classList.contains('topo-host')) return;
-      host.classList.add('topo-host');
-      var lit = t.cloneNode(true);
-      lit.classList.add('topo-lit');
-      lit.setAttribute('aria-hidden', 'true');
-      t.after(lit);
-      host.addEventListener('pointermove', function (e) {
-        if (e.pointerType !== 'mouse') return;
-        var r = host.getBoundingClientRect();
-        host.style.setProperty('--mx', (e.clientX - r.left).toFixed(0) + 'px');
-        host.style.setProperty('--my', (e.clientY - r.top).toFixed(0) + 'px');
-        host.classList.add('lit');
-      });
-      host.addEventListener('pointerleave', function () { host.classList.remove('lit'); });
-    });
-  }
-  function finePointerOK() { return !reduce && window.matchMedia('(hover: hover) and (pointer: fine)').matches; }
-
-  /* ---------- Partnere: det håndskrevne ordet skrives frem ---------- */
-  if (motion && $('.pt-scribble')) {
-    G.fromTo('.pt-scribble', { clipPath: 'inset(0% 100% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.8, ease: 'power2.inOut',
-      scrollTrigger: { trigger: '.partners', start: 'top 70%' } });
-  }
-
-  /* ---------- Til toppen: pil som dukker opp nederst på siden ---------- */
-  var toTop = $('#toTop');
-  if (toTop) {
-    var checkTop = function () {
-      var nearBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 240;
-      toTop.classList.toggle('show', nearBottom);
-    };
-    window.addEventListener('scroll', checkTop, { passive: true });
-    if (lenis) lenis.on('scroll', checkTop);
-    toTop.addEventListener('click', function () {
-      if (lenis) lenis.scrollTo(0, { duration: 1.8 });
-      else window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
-      $('.logo').focus({ preventScroll: true });
-    });
-    checkTop();
   }
 
   window.addEventListener('load', function () { if (motion) ST.refresh(); });
