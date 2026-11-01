@@ -21,11 +21,20 @@ Statisk nettside (HTML, CSS, JS). Ingen WordPress, ingen byggesteg.
 
 Versjon 1: struktur og bevegelse inspirert av landonorris.com, Studiovests egne farger
 (papirhvit #F2EEE8, mørkerom #161412, stein #C9C1B6, sand #D9A866, brun #8B5A3A).
-Teknikk: GSAP + ScrollTrigger og Lenis i `assets/vendor/`. Skrift: Hanken Grotesk, Gloock og Ms Madi, lokalt i `assets/fonts/`.
+Teknikk: GSAP + ScrollTrigger og Lenis i `assets/vendor/`. Skrift: Hanken Grotesk og Gloock lokalt i `assets/fonts/` (Ms Madi til portalen i `portal/fonts/`).
 
 ## Bilder
 
-Alle bilder ligger i `assets/photos/`, navngitt etter felt (`bolig-*`, `bedrift-*`, `skole-*`, `maritim-*`).
+Alle bilder ligger i `assets/photos/`, navngitt etter felt (`bolig-*`, `bedrift-*`, `skole-*`, `maritim-*`). Kapittel 4 er nå Markedsføring (bruker bedriftsbilder til egne bilder kommer).
 I `assets/main.js`: hero-bildene i `slides`, viften i `fanPhotos`. Kapittelbildene står i `data-photos` i `index.html`.
 
 Skole- og barnehagebilder: bare bilder med skriftlig samtykke fra foresatte til markedsføring.
+
+## Kundeportal (demo)
+
+`/portal/` er en klikkbar demo av Studiovest-portalen, med dummydata og uten innlogging. Linjen øverst bytter mellom
+Studio (intern drift) og kundevisningene Megler, Bedriftskunde, Skole og Foresatt.
+
+- `portal/js/data.js`: all dummydata (datoer regnes fra dagens dato).
+- `portal/js/core.js`: ruter, skall, modaler og ikoner. `studio.js`, `bolig.js`, `bedrift.js`, `skole.js`, `marked.js` og `innsikt.js` har sidene for hvert felt.
+- Endringer i demoen lagres bare i nettleseren. «Nullstill» oppe til høyre starter på nytt.
