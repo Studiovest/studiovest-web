@@ -33,8 +33,9 @@ Skole- og barnehagebilder: bare bilder med skriftlig samtykke fra foresatte til 
 ## Kundeportal (demo)
 
 `/portal/` er en klikkbar demo av Studiovest-portalen, med dummydata og uten innlogging. Linjen øverst bytter mellom
-Studio (intern drift) og kundevisningene Megler, Bedriftskunde, Skole og Foresatt.
+Studio, Fotograf (dagmodus), Redigering, Megler, Selger, Bedrift, Ansatt (samtykke), Skole og Foresatt.
 
 - `portal/js/data.js`: all dummydata (datoer regnes fra dagens dato).
-- `portal/js/core.js`: ruter, skall, modaler og ikoner. `studio.js`, `bolig.js`, `bedrift.js`, `skole.js`, `marked.js` og `innsikt.js` har sidene for hvert felt.
+- `portal/js/core.js`: ruter, skall, modaler og ikoner. `studio.js`, `bolig.js`, `bedrift.js`, `skole.js`, `marked.js` og `innsikt.js` har sidene for hvert felt. `roller.js` har mobilsidene for selger, ansatt og foresatt før fotodag, `dag.js` fotografens dagmodus og redigeringsvisningen.
+- `portal/img/`: nedskalerte bilder (720 px) til rutenett. Fullstørrelse brukes bare i forstørret visning.
 - Endringer i demoen lagres bare i nettleseren. «Nullstill» oppe til høyre starter på nytt.

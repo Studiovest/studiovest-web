@@ -99,7 +99,8 @@
   SV.icon = function (n, cls) { return '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true"><path d="' + (I[n] || I.info) + '"/></svg>'; };
   SV.topo = function () { return '<svg class="topo" aria-hidden="true"><use href="#topo"/></svg>'; };
   SV.ap = function (c) { return '<svg class="ap ' + (c || '') + '" aria-hidden="true"><use href="#ap"/></svg>'; };
-  SV.pic = function (src, pos, cls, alt) { return '<img src="' + src + '" alt="' + esc(alt || '') + '" loading="lazy" class="' + (cls || '') + '" style="object-position:' + (pos || '50% 50%') + '">'; };
+  SV.thumb = function (src) { var m = /photos\/([\w-]+)\.jpg$/.exec(src || ''); return m ? 'img/' + m[1] + '-720.jpg' : src; };
+  SV.pic = function (src, pos, cls, alt) { return '<img src="' + SV.thumb(src) + '" alt="' + esc(alt || '') + '" loading="lazy" class="' + (cls || '') + '" style="object-position:' + (pos || '50% 50%') + '">'; };
   SV.avatar = function (name, cls) { var p = String(name).split(' '); var s = (p[0][0] || '') + (p.length > 1 ? p[p.length - 1][0] : ''); return '<span class="av ' + (cls || '') + '" aria-hidden="true">' + esc(s.toUpperCase()) + '</span>'; };
   SV.bar = function (v, max, area) { var pc = Math.max(0, Math.min(100, max ? v / max * 100 : 0)); return '<span class="bar"><i class="' + (area ? 'a-' + area : '') + '" style="width:' + pc.toFixed(1) + '%"></i></span>'; };
 
@@ -163,7 +164,7 @@
   SV.toast = function (msg, kind) {
     var t = document.getElementById('toast');
     if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
-    t.className = 'toast ' + (kind || ''); t.innerHTML = SV.icon(kind === 'warn' ? 'info' : 'check') + '<span>' + msg + '</span>';
+    SV._toastAt = Date.now(); t.className = 'toast ' + (kind || ''); t.innerHTML = SV.icon(kind === 'warn' ? 'info' : 'check') + '<span>' + msg + '</span>';
     requestAnimationFrame(function () { t.classList.add('show'); });
     clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 3200);
   };
@@ -177,7 +178,9 @@
   on('go', function (el) { SV.go(el.getAttribute('data-href')); });
 
   var ROLES = [
-    ['studio', 'Studio', '#/'], ['megler', 'Megler', '#/kunde/megler'], ['bedrift', 'Bedriftskunde', '#/kunde/bedrift'],
+    ['studio', 'Studio', '#/'], ['dag', 'Fotograf', '#/dag'], ['red', 'Redigering', '#/redigering'], '|',
+    ['megler', 'Megler', '#/kunde/megler'], ['selger', 'Selger', '#/selger/B-2614'], '|',
+    ['bedrift', 'Bedrift', '#/kunde/bedrift'], ['ansatt', 'Ansatt', '#/samtykke'], '|',
     ['skole', 'Skole', '#/kunde/skole'], ['foresatt', 'Foresatt', '#/kunde/foresatt']
   ];
   SV.ROLES = ROLES;
@@ -192,10 +195,19 @@
   function demoBar(role) {
     return '<div class="demobar"><span class="db-l"><b>Demo</b><span class="db-hide"> · dummydata, ingen innlogging</span></span>' +
       '<nav class="db-roles" aria-label="Vis portalen som">' + '<span class="db-hide db-lbl">Vis som</span>' +
-      ROLES.map(function (r) { return '<a href="' + r[2] + '" class="' + (r[0] === role ? 'on' : '') + '"' + (r[0] === role ? ' aria-current="page"' : '') + '>' + r[1] + '</a>'; }).join('') + '</nav>' +
+      ROLES.map(function (r) { if (r === '|') return '<i class="db-sep" aria-hidden="true"></i>'; return '<a href="' + r[2] + '" class="' + (r[0] === role ? 'on' : '') + '"' + (r[0] === role ? ' aria-current="page"' : '') + '>' + r[1] + '</a>'; }).join('') + '</nav>' +
+      '<select class="db-sel" aria-label="Vis portalen som" data-change="roleSel">' + ROLES.filter(function (r) { return r !== '|'; }).map(function (r) { return '<option value="' + r[2] + '"' + (r[0] === role ? ' selected' : '') + '>' + r[1] + '</option>'; }).join('') + '</select>' +
       '<button type="button" class="db-reset" data-act="reset" title="Tilbakestill demoen">Nullstill</button></div>';
   }
   on('reset', function () { SV.reset(); });
+  on('roleSel', function (el) { location.hash = el.value; });
+  // velkomstboks bare første gang; deretter en rolig linje
+  SV.intro = function (key, full, compact) {
+    SV.state.seen = SV.state.seen || {};
+    if (SV.state.seen[key]) return compact;
+    SV.after(function () { SV.state.seen[key] = true; SV.save(); });
+    return full;
+  };
 
   function studioShell(inner, hash) {
     var navHtml = NAV.map(function (g) {
@@ -226,13 +238,14 @@
   on('side', function () { document.body.classList.toggle('side-open'); });
 
   function clientShell(role, inner, hash, cfg) {
+    if (cfg.bare) return demoBar(role) + '<div class="bare c-' + role + '"><main class="bpage" id="page" tabindex="-1">' + inner + '</main></div>';
     var tabs = cfg.tabs.map(function (t) {
       var active = hash === t[0] || (t[0] !== cfg.home && hash.indexOf(t[0] + '/') === 0) || (t[0] === cfg.home && hash === cfg.home);
       return '<a href="' + t[0] + '" class="ct' + (active ? ' on' : '') + '"' + (active ? ' aria-current="page"' : '') + '>' + t[1] + '</a>';
     }).join('');
     return demoBar(role) +
       '<div class="cshell c-' + role + '">' +
-      '<header class="ctop">' + SV.topo() +
+      '<header class="ctop">' +
         '<div class="ctop-row">' +
           '<a href="' + cfg.home + '" class="clogo"><span class="serif">STUDIO</span><span class="bold">VEST</span></a>' +
           '<span class="cx" aria-hidden="true">×</span>' +
@@ -307,7 +320,7 @@
   // ---------- start ----------
   SV.start = function () {
     SV._focus = false;
-    window.addEventListener('hashchange', function () { document.body.classList.remove('side-open'); SV.close(); render(); });
+    window.addEventListener('hashchange', function () { var tt = document.getElementById('toast'); if (tt && Date.now() - (SV._toastAt || 0) > 600) tt.classList.remove('show'); document.body.classList.remove('side-open'); SV.close(); render(); });
     render();
   };
 

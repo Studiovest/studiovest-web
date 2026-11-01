@@ -167,13 +167,12 @@
     var on = D.automations.filter(autoOn).length, runs = D.automations.reduce(function (s, a) { return s + a.runs; }, 0);
     return SV.head({ eyebrow: on + ' av ' + D.automations.length + ' aktive · ' + runs + ' kjøringer siste 30 dager', a: 'Automatisering', lead: 'Når noe skjer, gjør portalen resten: e-post, SMS, faktura, påminnelser og sletting. Du skrur av og på, og endrer tekst og tidspunkt.', actions: '<button class="btn btn-acc btn-s" data-act="autoNew">' + ic('plus') + 'Ny regel</button>' }) +
       '<div class="filters">' + [['alle', 'Alle'], ['bolig', 'Bolig'], ['bedrift', 'Bedrift'], ['skole', 'Skolefoto'], ['mark', 'Markedsføring']].map(function (x) { return '<a class="fbtn' + (x[0] === f ? ' on' : '') + '" href="#/automatisering' + (x[0] === 'alle' ? '' : '/' + x[0]) + '">' + (x[0] !== 'alle' ? SV.dot(x[0]) : '') + x[1] + '</a>'; }).join('') + '</div>' +
-      '<div class="g2">' + list.map(function (a) {
-        var o = autoOn(a);
-        return '<div class="card pad auto' + (o ? '' : ' off') + '" id="au-' + a.id + '"><div class="row between" style="flex-wrap:nowrap"><div><p class="eyebrow" style="margin-bottom:6px">' + SV.dot(a.area) + SV.areaName[a.area] + ' · ' + a.runs + ' kjøringer</p><h3 class="h3" style="font-size:17px">' + esc(a.name) + '</h3></div>' +
-          '<label class="sw"><input type="checkbox" data-change="autoToggle" data-id="' + a.id + '"' + (o ? ' checked' : '') + ' aria-label="' + esc(a.name) + '"><span></span></label></div>' +
-          '<div class="flow"><span class="fstep ftrig">' + ic('bolt') + esc(a.trigger) + '</span>' + a.steps.map(function (s) { return '<span class="arr">→</span><span class="fstep">' + esc(s) + '</span>'; }).join('') + '</div>' +
-          '<button class="link small" style="margin-top:14px" data-act="autoOpen" data-id="' + a.id + '">Endre regel</button></div>';
-      }).join('') + '</div>';
+      ['bolig', 'bedrift', 'skole', 'mark'].filter(function (k) { return list.some(function (a) { return a.area === k; }); }).map(function (k) {
+        return '<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>' + SV.dot(k) + ' ' + SV.areaName[k] + '</h3></div><div class="card-b" style="padding-top:2px;padding-bottom:2px">' + list.filter(function (a) { return a.area === k; }).map(function (a) {
+          var o = autoOn(a);
+          return '<div class="li auto' + (o ? '' : ' off') + '" id="au-' + a.id + '"><span class="li-t"><b style="white-space:normal">' + esc(a.name) + '</b><small>' + ic('bolt', 'tiny-ic') + ' ' + esc(a.trigger) + ' → ' + a.steps.length + ' steg · ' + a.runs + ' kjøringer</small></span><button class="btn btn-ghost btn-xs" data-act="autoOpen" data-id="' + a.id + '">Endre</button><label class="sw"><input type="checkbox" data-change="autoToggle" data-id="' + a.id + '"' + (o ? ' checked' : '') + ' aria-label="' + esc(a.name) + '"><span></span></label></div>';
+        }).join('') + '</div></div>';
+      }).join('');
   }, { title: 'Automatisering' });
   SV.route('/automatisering/:felt', 'studio', function (p) { return SV.routes.filter(function (r) { return r.pattern === '/automatisering'; })[0].fn(p); }, { title: 'Automatisering' });
   SV.on('autoToggle', function (el) {
