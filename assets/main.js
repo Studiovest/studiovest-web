@@ -132,7 +132,7 @@
 
   /* ---------- Hero: bilder i full farge, lukker-avdekking og fremdriftslinjer ---------- */
   var lens = $('#lens'), edit = $('#lensEdit'), cap = $('#lensCap'), bars = $$('#lensBars button'), heroNum = $('#heroNum');
-  var swap = $('#swap'), pauseBtn = $('#heroPause');
+  var swap = $('#swap');
   var heroVisible = true, DUR = 4600;
   var slides = [
     { img: 'bolig-stue.jpg',     word: 'hjemmet,',   cap: 'Boligfoto', alt: 'Stue med peis og store vinduer mot fjorden i kveldslys' },
@@ -177,13 +177,6 @@
   lens.addEventListener('click', function (e) { var b = lens.getBoundingClientRect(); show(e.clientX - b.left < b.width / 3 ? (cur - 1 + slides.length) % slides.length : (cur + 1) % slides.length); startHero(); });
   lens.style.setProperty('--dur', DUR / 1000 + 's');
   if (motion) new IntersectionObserver(function (es) { heroVisible = es[0].isIntersecting; bars[0].parentNode.classList.toggle('paused', heroPaused || !heroVisible); }).observe(lens);
-  pauseBtn.addEventListener('click', function () {
-    heroPaused = !heroPaused;
-    pauseBtn.setAttribute('aria-pressed', String(heroPaused));
-    pauseBtn.textContent = heroPaused ? 'Spill av bildene' : 'Pause bildene';
-    if (heroPaused) { stopHero(); bars[0].parentNode.classList.add('paused'); } else startHero();
-  });
-  if (reduce) { pauseBtn.setAttribute('aria-pressed', 'true'); pauseBtn.textContent = 'Spill av bildene'; }
 
   function heroIntro() {
     startHero();
