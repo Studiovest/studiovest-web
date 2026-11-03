@@ -130,83 +130,64 @@
     });
   }
 
-  /* ---------- Hero: linse og bildebytte ---------- */
-  var lens = $('#lens'), raw = $('#lensRaw'), edit = $('#lensEdit'), tag = $('#lensTag');
+  /* ---------- Hero: bilder i full farge, lukker-avdekking og fremdriftslinjer ---------- */
+  var lens = $('#lens'), edit = $('#lensEdit'), cap = $('#lensCap'), bars = $$('#lensBars button'), heroNum = $('#heroNum');
   var swap = $('#swap'), pauseBtn = $('#heroPause');
-  var heroReady = false, hovering = false, heroVisible = true;
-  var L = { x: 0.5, y: 0.5, r: 0 }, T = { x: 0.5, y: 0.5, r: 0 };
+  var heroVisible = true, DUR = 4600;
   var slides = [
-    { img: 'bolig-stue.jpg',     word: 'hjemmet,',   alt: 'Stue med peis og store vinduer mot fjorden i kveldslys' },
-    { img: 'bedrift-kontor.jpg', word: 'folka,',     alt: 'Ansatt ved skrivebord i et lyst kontorlandskap' },
-    { img: 'skole-latter.jpg',   word: 'barna,',     alt: 'Tre barn som ler utendørs' },
-    { img: 'bedrift-bygg.jpg',   word: 'bedriften,', alt: 'Kontorbygg ved sjøen i skumring' }
+    { img: 'bolig-stue.jpg',     word: 'hjemmet,',   cap: 'Boligfoto', alt: 'Stue med peis og store vinduer mot fjorden i kveldslys' },
+    { img: 'bedrift-kontor.jpg', word: 'folka,',     cap: 'Bedrift', alt: 'Ansatt ved skrivebord i et lyst kontorlandskap' },
+    { img: 'skole-latter.jpg',   word: 'barna,',     cap: 'Skole og barnehage', alt: 'Tre barn som ler utendørs' },
+    { img: 'bedrift-bygg.jpg',   word: 'bedriften,', cap: 'Lokaler', alt: 'Kontorbygg ved sjøen i skumring' }
   ];
   slides.forEach(function (s) { new Image().src = P + s.img + V; });
 
-  function lensMove(e) {
-    var b = lens.getBoundingClientRect();
-    T.x = (e.clientX - b.left) / b.width;
-    T.y = (e.clientY - b.top) / b.height;
-    T.r = 0.3;
-    hovering = true;
+  var cur = 0, heroTimer = null, heroPaused = reduce, kb = null;
+  function kenBurns(img) { if (!motion || !img) return; if (kb) kb.kill(); kb = G.fromTo(img, { scale: 1 }, { scale: 1.07, duration: DUR / 1000 + 1.4, ease: 'none' }); }
+  function setBars() {
+    bars.forEach(function (bt, i) { bt.classList.remove('on'); bt.classList.toggle('done', i < cur); });
+    void lens.offsetWidth; // start linjeanimasjonen på nytt
+    bars[cur].classList.add('on');
+    bars[0].parentNode.classList.toggle('paused', heroPaused);
   }
-  lens.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') lensMove(e); });
-  lens.addEventListener('pointerleave', function () { hovering = false; });
-  lens.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') { lensMove(e); setTimeout(function () { hovering = false; }, 1600); } });
-
-  function lensTick() {
-    if (!heroVisible) return;
-    var t = performance.now() / 1000;
-    if (!hovering) {
-      T.x = 0.5 + 0.26 * Math.sin(t * 0.55);
-      T.y = 0.5 + 0.2 * Math.sin(t * 0.9 + 1.2);
-      T.r = heroReady ? 0.24 : 0;
-    }
-    L.x += (T.x - L.x) * 0.1; L.y += (T.y - L.y) * 0.1; L.r += (T.r - L.r) * 0.08;
-    edit.style.clipPath = 'circle(' + (L.r * 100).toFixed(2) + '% at ' + (L.x * 100).toFixed(2) + '% ' + (L.y * 100).toFixed(2) + '%)';
-    tag.style.left = (L.x * 100) + '%';
-    tag.style.top = (L.y * 100 + L.r * 100 * 1.05) + '%';
-    tag.style.opacity = L.r > 0.08 ? 1 : 0;
-  }
-  if (!motion) { edit.style.clipPath = 'none'; tag.style.display = 'none'; }
-  if (motion) {
-    G.ticker.add(lensTick);
-    new IntersectionObserver(function (es) { heroVisible = es[0].isIntersecting; }).observe(lens);
-  }
-
-  var cur = 0, heroTimer = null, heroPaused = reduce;
-  function layerSwap(layer, s, alt) {
-    var img = new Image();
-    img.src = P + s.img + V; img.alt = alt || ''; img.width = 1168; img.height = 784;
-    layer.appendChild(img);
-    var old = $$('img', layer).slice(0, -1);
-    if (!motion) { old.forEach(function (o) { o.remove(); }); return; }
-    G.fromTo(img, { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 1.1, ease: 'power3.out', onComplete: function () { old.forEach(function (o) { o.remove(); }); } });
-  }
-  function nextSlide() {
-    cur = (cur + 1) % slides.length;
-    var s = slides[cur];
-    layerSwap(raw, s, '');
-    layerSwap(edit, s, s.alt);
-    if (!motion) { swap.textContent = s.word; return; }
+  function dropOld(list) { list.forEach(function (o) { if (o.parentNode) o.parentNode.removeChild(o); }); }
+  function show(i) {
+    if (i === cur) return;
+    var dir = i > cur || (cur === slides.length - 1 && i === 0) ? 1 : -1;
+    cur = i; var s = slides[cur];
+    var img = new Image(); img.src = P + s.img + V; img.alt = s.alt; img.width = 1168; img.height = 784;
+    var old = $$('img', edit);
+    edit.appendChild(img);
+    cap.textContent = s.cap;
+    if (heroNum) heroNum.textContent = '0' + (cur + 1) + ' / 0' + slides.length;
+    setBars();
+    if (!motion) { dropOld(old); swap.textContent = s.word; return; }
+    G.fromTo(img, { clipPath: dir > 0 ? 'inset(100% 0% 0% 0%)' : 'inset(0% 0% 100% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.15, ease: 'expo.inOut', onComplete: function () { dropOld(old); } });
+    old.forEach(function (o) { G.to(o, { yPercent: dir > 0 ? -12 : 12, duration: 1.15, ease: 'expo.inOut' }); });
+    kenBurns(img);
     G.to(swap, { yPercent: -115, duration: 0.45, ease: 'power3.in', onComplete: function () {
       swap.textContent = s.word;
       G.fromTo(swap, { yPercent: 115 }, { yPercent: 0, duration: 0.7, ease: 'power3.out' });
     } });
   }
-  function startHero() { stopHero(); if (!heroPaused) heroTimer = setInterval(function () { if (heroVisible && !document.hidden) nextSlide(); }, 4600); }
+  function nextSlide() { show((cur + 1) % slides.length); }
+  function startHero() { stopHero(); setBars(); if (!heroPaused) heroTimer = setInterval(function () { if (heroVisible && !document.hidden) nextSlide(); }, DUR); }
   function stopHero() { if (heroTimer) clearInterval(heroTimer); heroTimer = null; }
+  bars.forEach(function (bt, i) { bt.addEventListener('click', function (e) { e.stopPropagation(); show(i); startHero(); }); });
+  lens.addEventListener('click', function (e) { var b = lens.getBoundingClientRect(); show(e.clientX - b.left < b.width / 3 ? (cur - 1 + slides.length) % slides.length : (cur + 1) % slides.length); startHero(); });
+  lens.style.setProperty('--dur', DUR / 1000 + 's');
+  if (motion) new IntersectionObserver(function (es) { heroVisible = es[0].isIntersecting; bars[0].parentNode.classList.toggle('paused', heroPaused || !heroVisible); }).observe(lens);
   pauseBtn.addEventListener('click', function () {
     heroPaused = !heroPaused;
     pauseBtn.setAttribute('aria-pressed', String(heroPaused));
     pauseBtn.textContent = heroPaused ? 'Spill av bildene' : 'Pause bildene';
-    if (heroPaused) stopHero(); else startHero();
+    if (heroPaused) { stopHero(); bars[0].parentNode.classList.add('paused'); } else startHero();
   });
   if (reduce) { pauseBtn.setAttribute('aria-pressed', 'true'); pauseBtn.textContent = 'Spill av bildene'; }
 
   function heroIntro() {
-    heroReady = true;
     startHero();
+    kenBurns($('img', edit));
     if (!motion) return;
     G.timeline({ defaults: { ease: 'expo.out', duration: 1.4 } })
       .from(lens, { clipPath: 'inset(50% 50% 50% 50% round 6px)', scale: 0.9, duration: 1.5, ease: 'expo.inOut' }, 0)

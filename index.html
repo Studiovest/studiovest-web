@@ -67,7 +67,7 @@
 
 <main id="innhold">
 
-<!-- 1. Hero: linse som viser ferdig redigert bilde over det rå -->
+<!-- 1. Hero: bilder i full farge som skifter med lukker-avdekking -->
 <section class="hero" data-theme="light" aria-label="Introduksjon">
   <svg class="topo" aria-hidden="true"><use href="#topo"/></svg>
   <h1 class="hero-title">
@@ -76,9 +76,14 @@
     <span class="ht ht-bottom"><span class="ht-in">slik det fortjener å bli sett.</span></span>
   </h1>
   <div class="lens" id="lens">
-    <div class="lens-layer raw" id="lensRaw"><img src="assets/photos/bolig-stue.jpg?v=__V__" alt="" width="1168" height="784"></div>
     <div class="lens-layer edit" id="lensEdit"><img src="assets/photos/bolig-stue.jpg?v=__V__" alt="Stue med peis og store vinduer mot fjorden i kveldslys" width="1168" height="784"></div>
-    <span class="lens-tag" id="lensTag" aria-hidden="true">Ferdig redigert</span>
+    <span class="lens-cap" id="lensCap">Boligfoto</span>
+    <div class="lens-bars" id="lensBars" role="group" aria-label="Velg bilde">
+      <button type="button" class="on" aria-label="Bilde 1: Boligfoto"><i></i></button>
+      <button type="button" aria-label="Bilde 2: Bedrift"><i></i></button>
+      <button type="button" aria-label="Bilde 3: Skole og barnehage"><i></i></button>
+      <button type="button" aria-label="Bilde 4: Lokaler"><i></i></button>
+    </div>
   </div>
   <div class="hero-card" aria-hidden="true">
     <span>Basert i</span>
@@ -88,7 +93,7 @@
     <span>Tilgjengelig overalt</span>
   </div>
   <div class="hero-side">
-    <p class="hero-hint">Før musen over bildet. Utenfor linsen ser du råfilen, innenfor ser du bildet slik vi leverer det.</p>
+    <p class="hero-hint"><span class="hero-num" id="heroNum">01 / 04</span>Bolig, bedrift, skole og barnehage. Fotografert og redigert av oss.</p>
     <button type="button" class="hero-pause" id="heroPause" aria-pressed="false">Pause bildene</button>
   </div>
 </section>
