@@ -135,7 +135,7 @@
   var swap = $('#swap');
   var heroVisible = true, DUR = 4600;
   var slides = [
-    { img: 'bolig-stue.jpg',     word: 'hjemmet,',   cap: 'Boligfoto', alt: 'Stue med peis og store vinduer mot fjorden i kveldslys' },
+    { img: 'bolig-kjokken-hero.jpg', word: 'hjemmet,', cap: 'Boligfoto', alt: 'Kjøkken med kjøkkenøy, hengelamper og store vinduer mot grønne trær' },
     { img: 'bedrift-kontor.jpg', word: 'folka,',     cap: 'Bedrift', alt: 'Ansatt ved skrivebord i et lyst kontorlandskap' },
     { img: 'skole-latter.jpg',   word: 'barna,',     cap: 'Skole og barnehage', alt: 'Tre barn som ler utendørs' },
     { img: 'bedrift-bygg.jpg',   word: 'bedriften,', cap: 'Lokaler', alt: 'Kontorbygg ved sjøen i skumring' }
