@@ -359,7 +359,7 @@
   });
 
   /* ---------- Vifte med kort ---------- */
-  var fanPhotos = ['bolig-stue', 'skole-latter', 'bedrift-portrett', 'bedrift-flytekran', 'bolig-kjokken', 'skole-lek', 'maritim-sveiser', 'bolig-drone', 'bedrift-kontor', 'bolig-kveld', 'maritim-fiskebat'];
+  var fanPhotos = ['bolig-kjokken-hero', 'skole-latter', 'bedrift-portrett', 'bedrift-flytekran', 'bolig-spisestue', 'skole-lek', 'natur-foss', 'bolig-drone', 'maritim-sveiser', 'bolig-stuekrok', 'bedrift-kontor', 'bolig-kveld', 'bedrift-elv', 'bolig-utsikt', 'maritim-fiskebat'];
   var fanCards = $('#fanCards'), fanStage = $('#fanStage');
   var cards = fanPhotos.map(function (n) {
     var li = document.createElement('li');
