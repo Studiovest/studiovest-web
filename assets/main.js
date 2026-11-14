@@ -133,7 +133,7 @@
   /* ---------- Hero: bilder i full farge, lukker-avdekking og fremdriftslinjer ---------- */
   var lens = $('#lens'), edit = $('#lensEdit'), cap = $('#lensCap'), bars = $$('#lensBars button'), heroNum = $('#heroNum');
   var swap = $('#swap');
-  var heroVisible = true, DUR = 4600;
+  var heroVisible = true, DUR = 4000;
   var slides = [
     { img: 'bolig-kjokken-hero.jpg', word: 'hjemmet,', cap: 'Boligfoto', alt: 'Kjøkken med kjøkkenøy, hengelamper og store vinduer mot grønne trær' },
     { img: 'bedrift-kontor.jpg', word: 'folka,',     cap: 'Bedrift', alt: 'Ansatt ved skrivebord i et lyst kontorlandskap' },
