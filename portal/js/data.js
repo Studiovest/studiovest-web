@@ -184,7 +184,10 @@
     { id: 'p13', name: 'Utskrift 13×18', price: 89, kind: 'print', desc: 'Fotopapir, matt.' },
     { id: 'p18', name: 'Utskrift 18×24', price: 149, kind: 'print', desc: 'Fotopapir, matt.' },
     { id: 'pkl', name: 'Klassebilde 20×30 med navn', price: 149, kind: 'print', desc: 'Trykt med navneliste.' },
-    { id: 'kal', name: 'Kalender 2027', price: 199, kind: 'print', desc: 'Tolv måneder med ditt utvalg.' }
+    { id: 'kal', name: 'Kalender 2027', price: 199, kind: 'print', desc: 'Tolv måneder med ditt utvalg.' },
+    { id: 'bg-fjord', name: 'Bakgrunn: Fjordblå', price: 49, kind: 'upgrade', desc: 'Premium bakgrunn, byttes automatisk og kontrolleres for hånd.' },
+    { id: 'bg-skog', name: 'Bakgrunn: Høstskog', price: 49, kind: 'upgrade', desc: 'Premium bakgrunn, byttes automatisk og kontrolleres for hånd.' },
+    { id: 'bg-bok', name: 'Bakgrunn: Bokhylle', price: 49, kind: 'upgrade', desc: 'Premium bakgrunn, byttes automatisk og kontrolleres for hånd.' }
   ];
 
   // ---------- drift ----------

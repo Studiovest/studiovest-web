@@ -65,7 +65,7 @@
       return '<div style="max-width:560px;margin:0 auto"><p class="eyebrow">Sjøbakken barnehage · fotodag ' + SV.fdate(s.date) + '</p>' +
         '<div class="bhead"><h1>Takk! Valgene for Selma er lagret.</h1><p>Fotografen ser valgene dine på fotodagen. Du får SMS når bildene er klare, ca. tre dager etter.</p></div>' +
         '<div class="card pad" style="margin-top:16px"><dl class="kv"><dt>Fotografering</dt><dd>' + esc(c.consent) + '</dd><dt>Søskenbilde</dt><dd>' + (c.sib ? 'Ja, med Johannes (Bjørnehiet)' : 'Nei') + '</dd><dt>Vennebilde</dt><dd>' + (c.friend ? 'Med ' + esc(c.friend) + ' · venter på svar fra deres foresatte' : 'Nei') + '</dd><dt>Bakgrunn</dt><dd>' + esc(c.bg) + '</dd></dl></div>' +
-        '<button class="btn btn-ghost" style="margin-top:14px" data-act="preEdit">Endre</button></div>';
+        SV.skx.preDone() + '<button class="btn btn-ghost" style="margin-top:14px" data-act="preEdit">Endre</button></div>';
     }
     return '<div style="max-width:560px;margin:0 auto"><p class="eyebrow">Sjøbakken barnehage · fotodag ' + SV.fdate(s.date) + '</p>' +
       '<div class="bhead"><h1>Fotodag for Selma ' + SV.fdate(s.date, true) + '</h1><p>Velg hva som gjelder for Selma. Ingen bilder tas uten ditt ja, og du kan endre til fotodagen.</p></div>' +
@@ -74,7 +74,7 @@
       '<h2 class="h2" style="margin-top:20px"><span class="serif">Søsken</span></h2><label class="choice cb"><input type="checkbox" name="sib" checked><b>Søskenbilde med Johannes</b><small>Bjørnehiet · tas etter lunsj</small></label>' +
       '<h2 class="h2" style="margin-top:20px"><span class="serif">Vennebilde</span></h2><label class="fld"><span>Hvem vil Selma bli tatt bilde med? (valgfritt)</span><input class="inp" name="friend" placeholder="Navnet på vennen"></label><p class="hint" style="margin-top:-6px;margin-bottom:12px">Vennens foresatte får spørsmål og må også si ja.</p>' +
       '<h2 class="h2" style="margin-top:20px"><span class="serif">Bakgrunn på portrettet</span></h2><div class="row">' + [['Lys', '#EDE8E0'], ['Grå', '#9A958E'], ['Ute i naturen', '#6F7D5C']].map(function (b, i) { return '<label class="choice" style="flex:1;min-width:140px"><input type="radio" name="bg" value="' + b[0] + '"' + (i === 0 ? ' checked' : '') + '><span class="swatch" style="background:' + b[1] + ';display:block;margin-bottom:6px"></span><b>' + b[0] + '</b></label>'; }).join('') + '</div>' +
-      '<button class="btn btn-dark bigbtn" style="margin-top:16px" data-act="preSave">Lagre valgene</button></form>' +
+      SV.skx.presale() + '<button class="btn btn-dark bigbtn" style="margin-top:16px" data-act="preSave">Lagre valgene</button></form>' +
       '<p class="hint" style="text-align:center;margin-top:12px">Bildene vises bare for dere og barnehagen og slettes etter 24 måneder.</p></div>';
   }, { title: 'Fotodag' });
   SV.on('preSave', function () { var f = document.getElementById('pre'); SV.state.preConsent = { consent: f.querySelector('input[name=c]:checked').value, sib: f.sib.checked, friend: f.friend.value.trim(), bg: f.querySelector('input[name=bg]:checked').value }; SV.save(); SV.render(); SV.toast('Lagret · barnehagen og fotografen ser valgene'); });

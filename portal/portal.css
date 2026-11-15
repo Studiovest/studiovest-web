@@ -731,3 +731,7 @@ a.li:hover b{text-decoration:underline;text-underline-offset:3px}
 
 .rot90{transform:rotate(90deg)}
 .tiny-ic{width:13px;height:13px;vertical-align:-2px}
+
+/* bakgrunnsbytte, forhåndsvisning (demo) */
+.cut{clip-path:ellipse(26% 42% at 50% 60%)}
+.opt.nobox{padding-left:14px}.opt.nobox::before{display:none}
