@@ -188,7 +188,7 @@
   var NAV = [
     { h: '' , items: [['#/', 'home', 'Oversikt']] },
     { h: 'Felt', items: [['#/bolig', 'house', 'Bolig', 'bolig'], ['#/bedrift', 'brief', 'Bedrift', 'bedrift'], ['#/skole', 'school', 'Skolefoto', 'skole'], ['#/marked', 'mega', 'Markedsføring', 'mark']] },
-    { h: 'Drift', items: [['#/kalender', 'cal', 'Kalender'], ['#/kunder', 'users', 'Kunder'], ['#/lagring', 'box', 'Lagring'], ['#/automatisering', 'bolt', 'Automatisering'], ['#/epost', 'mail', 'E-post og varsler'], ['#/okonomi', 'wallet', 'Økonomi']] },
+    { h: 'Drift', items: [['#/kalender', 'cal', 'Kalender'], ['#/stasjon', 'cam', 'Fotostasjon'], ['#/kunder', 'users', 'Kunder'], ['#/lagring', 'box', 'Lagring'], ['#/automatisering', 'bolt', 'Automatisering'], ['#/epost', 'mail', 'E-post og varsler'], ['#/okonomi', 'wallet', 'Økonomi']] },
     { h: 'Om portalen', items: [['#/innsikt', 'info', 'Behov og innsikt']] }
   ];
 
