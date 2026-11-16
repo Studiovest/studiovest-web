@@ -6,43 +6,73 @@
   'use strict';
   var SV = window.SV, D = SV.data, esc = SV.esc, ic = SV.icon;
 
-  var MODES = {
-    skole: { title: 'Fjordtun skule · omfotografering', tpl: '[Skole]/[Klasse]/[Kode]_[Nr]', next: 'Neste elev' },
-    bedrift: { title: 'Vestkraft Energi · portrettdag', tpl: 'Vestkraft/[Etternavn]_[Fornavn]_[Nr]', next: 'Neste person' }
-  };
-  var S = { mode: 'skole', cur: null, shots: {}, log: [], queue: 0, synced: 0, done: {}, absent: {}, picks: {}, sel: {}, rej: {}, syncing: false };
-  function subjects() {
-    if (S.mode === 'skole') {
-      var s = D.schoolDays[0], out = [];
-      [s.classes[4], s.classes[0]].forEach(function (c) { c.pupils.slice(0, 7).forEach(function (p) { out.push({ id: p.code, name: p.name, group: c.name, consent: SV.state.consents[p.id] || p.consent, kid: /Emma/.test(p.name) ? 'emma' : /Nora/.test(p.name) ? 'nora' : null }); }); });
-      return out;
-    }
+  // Fotodager stasjonen kan brukes på. Listen, samtykkene og filnavnmalen følger prosjektet.
+  var S = { proj: null, tpl: {}, cur: null, shots: {}, log: [], queue: 0, synced: 0, done: {}, absent: {}, picks: {}, sel: {}, rej: {}, syncing: false, cls: '' };
+  function kidOf(name) { return /Oskar Sæbø/.test(name) ? 'oskar' : /Emma/.test(name) ? 'emma' : /Nora/.test(name) ? 'nora' : null; }
+  function fromClasses(classes, max) {
+    var out = [];
+    classes.forEach(function (c) { (max ? c.pupils.slice(0, max) : c.pupils).forEach(function (p) { out.push({ id: p.code, name: p.name, group: c.name, consent: SV.state.consents[p.id] || p.consent, kid: kidOf(p.name) }); }); });
+    return out;
+  }
+  function vestkraft() {
     return [['Ola Brekke', 'Avdelingsleder'], ['Emil Sandvik', 'Lærling'], ['Nora Fet', 'Elektriker'], ['Kjell Ask', 'Fagarbeider'], ['Ingvild Rønning', 'HR'], ['Kristian Moe', 'Driftsingeniør'], ['Sara Lid', 'Økonomi'], ['Per Åsen', 'Montør']].map(function (x, i) {
       var consent = x[0] === 'Kjell Ask' ? (SV.state.consentKjell ? 'Ja' : 'Ikke svart') : 'Ja';
       return { id: 'VKE-' + (101 + i), name: x[0], group: x[1], consent: consent, email: x[0].split(' ')[0].toLowerCase() + '@vestkraft.example', signup: i < 6 ? '09:' + String(i * 10).padStart(2, '0') : 'Drop-in' };
     });
   }
+  function projects() {
+    var fj = D.schoolDays[0], sj = D.schoolDays[1];
+    var list = [
+      { id: 'fjt-omfoto', kind: 'skole', title: 'Fjordtun skule · omfotografering', type: 'Skolefoto · fravær og nye bilder', place: fj.town, date: D.W(0), tag: 'FJT2026', tpl: '[Skole]/[Klasse]/[Kode]_[Nr]', next: 'Neste elev', subs: function () { return fromClasses([fj.classes[4], fj.classes[0]], 7); } },
+      { id: 'sjb', kind: 'skole', title: 'Sjøbakken barnehage', type: 'Barnehagefoto · 4 avdelinger', place: sj.town, date: sj.date, tag: 'SJB2026', tpl: '[Skole]/[Klasse]/[Kode]_[Nr]', next: 'Neste barn', subs: function () { return fromClasses(sj.classes); } },
+      { id: 'vke-portrett', kind: 'bedrift', title: 'Vestkraft Energi · portrettdag', type: 'Portrettdag bedrift', place: 'Husnes', date: D.W(6), tag: 'VKE', tpl: 'Vestkraft/[Etternavn]_[Fornavn]_[Nr]', next: 'Neste person', subs: vestkraft }
+    ];
+    D.schoolDays.slice(2).concat(SV.state.newDays || []).forEach(function (d) {
+      list.push({ id: d.id, kind: 'skole', title: d.school, type: d.kind, place: d.town, date: d.date, tag: d.id.replace(/\W/g, '').toUpperCase(), tpl: '[Skole]/[Klasse]/[Kode]_[Nr]', next: 'Neste elev', day: d.id, subs: function () { return fromClasses(d.classes || []); } });
+    });
+    list.forEach(function (p) { if (S.tpl[p.id]) p.tpl = S.tpl[p.id]; });
+    return list;
+  }
+  function P() { return SV.find(projects(), S.proj) || projects()[0]; }
+  function subjects() { return P().subs(); }
+  function daysTo(iso) { var d = SV.parse(iso); if (!d) return null; var t = new Date(); t.setHours(0, 0, 0, 0); d.setHours(0, 0, 0, 0); return Math.round((d - t) / 864e5); }
+  function when(iso) { var n = daysTo(iso); return n === 0 ? 'I dag' : n === 1 ? 'I morgen' : n > 1 && n < 14 ? 'Om ' + n + ' dager' : n < 0 ? 'Var ' + SV.fdate(iso) : SV.fdate(iso, true); }
+
+  // demobilder: Oskar Sæbø er allerede fotografert i omfotograferingen
+  (function seed() {
+    var id = 'FJT-4B-4871', base = 'FJT2026/4B/' + id + '_';
+    S.shots[id] = [0, 1, 2, 3, 4, 5].map(function (i) { return { n: i + 1, i: i, f: base + String(i + 1).padStart(4, '0') + '.jpg', st: 'på PC + SSD' }; });
+    S.picks[id] = 1; S.rej[id] = { 3: true }; S.queue = 5; S.cur = id; S.sel[id] = 1;
+    S.log = [['09:14:52', 'Bilde 4 forkastet (uskarpt)'], ['09:14:40', 'Favoritt · bilde 2'], ['09:14:31', 'Nytt bilde · ' + base + '0006.jpg'], ['09:13:58', 'Valgt · Oskar Sæbø']];
+  })();
+
   function fname(sub, n) {
     var p = sub.name.split(' '), fn = p[0], ln = p[p.length - 1];
-    return MODES[S.mode].tpl.replace('[Skole]', 'FJT2026').replace('[Klasse]', sub.group).replace('[Kode]', sub.id).replace('[Etternavn]', ln).replace('[Fornavn]', fn).replace('[Nr]', String(n).padStart(4, '0')) + '.jpg';
+    return P().tpl.replace('[Skole]', P().tag).replace('[Klasse]', sub.group).replace('[Kode]', sub.id).replace('[Etternavn]', ln).replace('[Fornavn]', fn).replace('[Nr]', String(n).padStart(4, '0')) + '.jpg';
   }
   function img(sub, i) {
-    if (S.mode === 'skole') return 'img/kids/' + (sub.kid || (sub.group === '1A' ? 'nora' : 'emma')) + '-p' + (i % 4) + '.jpg';
+    if (sub.kid === 'oskar') return 'img/kids/oskar-p' + (i % 6) + '.jpg';
+    if (P().kind === 'skole') return 'img/kids/' + (sub.kid || (sub.group === '1A' ? 'nora' : 'emma')) + '-p' + (i % 4) + '.jpg';
     return SV.thumb(D.img.portrett);
   }
-  function blocked(sub) { return sub.consent === 'Nei' || (S.mode === 'bedrift' && sub.consent !== 'Ja'); }
+  function blocked(sub) { return sub.consent === 'Nei' || (P().kind === 'bedrift' && sub.consent !== 'Ja'); }
   function log(t) { var d = new Date(); S.log.unshift([String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0'), t]); S.log = S.log.slice(0, 9); }
 
-  SV.route('/stasjon', 'studio', function () {
-    var subs = subjects(), cur = S.cur && SV.find(subs, S.cur), m = MODES[S.mode], shots = cur ? (S.shots[cur.id] || []) : [];
+  SV.route('/stasjon/:id', 'studio', function (params) {
+    var pid = (params && params.id) || '';
+    if (!SV.find(projects(), pid)) return chooser();
+    if (S.proj !== pid) { if (S.proj) S.cur = null; S.proj = pid; S.cls = ''; }
+    var all = subjects(), groups = all.map(function (x) { return x.group; }).filter(function (g, i, a) { return a.indexOf(g) === i; });
+    var subs = P().kind === 'skole' && S.cls ? all.filter(function (x) { return x.group === S.cls; }) : all;
+    var cur = S.cur && SV.find(all, S.cur), m = P(), shots = cur ? (S.shots[cur.id] || []) : [];
     var doneN = subs.filter(function (s) { return S.done[s.id]; }).length;
-    var queue = '<div class="card st-q"><div class="card-b"><label class="search" style="max-width:none;margin-bottom:10px">' + ic('search') + '<input id="stSearch" placeholder="Søk etter navn" aria-label="Søk i listen" data-input="stFilter" autocomplete="off"></label><p class="tiny muted" style="margin-bottom:8px">Klikk på navnet til den som sitter foran kamera. Klikk neste navn når du går videre, så blir forrige ferdig av seg selv.</p><div id="stList">' +
+    var queue = '<div class="card st-q"><div class="card-b"><label class="search" style="max-width:none;margin-bottom:10px">' + ic('search') + '<input id="stSearch" placeholder="Søk etter navn" aria-label="Søk i listen" data-input="stFilter" autocomplete="off"></label>' + (P().kind === 'skole' && groups.length > 1 ? '<div class="filters" style="margin:0 0 10px;flex-wrap:wrap"><button class="fbtn' + (S.cls ? '' : ' on') + '" data-act="stCls" data-c="">Alle</button>' + groups.map(function (g) { return '<button class="fbtn' + (S.cls === g ? ' on' : '') + '" data-act="stCls" data-c="' + esc(g) + '">' + esc(g) + '</button>'; }).join('') + '</div>' : '') + '<p class="tiny muted" style="margin-bottom:8px">Klikk på navnet til den som sitter foran kamera. Klikk neste navn når du går videre, så blir forrige ferdig av seg selv.</p><div id="stList">' +
       subs.map(function (s) {
         var st = S.done[s.id] ? 'Ferdig' : S.absent[s.id] ? 'Fravær' : s.id === S.cur ? 'Pågår' : blocked(s) ? (s.consent === 'Nei' ? 'Skal ikke' : 'Mangler') : 'Venter';
         return '<button class="pp' + (blocked(s) ? ' flag' : '') + (s.id === S.cur ? ' on' : '') + '" data-act="stPick" data-id="' + s.id + '" data-q="' + esc((s.name + ' ' + s.id).toLowerCase()) + '">' + SV.avatar(s.name) + '<span><b>' + esc(s.name) + '</b><small>' + esc(s.group) + (s.signup ? ' · ' + s.signup : '') + ' · ' + esc(s.id) + '</small></span>' + SV.chip(st, st === 'Ferdig' ? 'ok' : st === 'Pågår' ? 'sand' : /Skal|Mangler/.test(st) ? 'bad' : 'mute') + '</button>';
       }).join('') + '</div></div></div>';
     var center;
-    if (!cur) center = '<div class="card st-c"><div class="st-view st-empty">' + ic('users') + '<b>Klikk på et navn i listen</b><span>Bildene som tas etterpå får navn og kobles til riktig ' + (S.mode === 'skole' ? 'elev' : 'person') + ' til du klikker neste navn.</span></div></div>';
+    if (!cur) center = '<div class="card st-c"><div class="st-view st-empty">' + ic('users') + '<b>Klikk på et navn i listen</b><span>Bildene som tas etterpå får navn og kobles til riktig ' + (P().kind === 'skole' ? 'barn' : 'person') + ' til du klikker neste navn.</span></div></div>';
     else if (blocked(cur)) center = '<div class="card st-c"><div class="st-view st-block">' + ic('shield') + '<b>' + (cur.consent === 'Nei' ? 'Ikke fotografer ' : 'Samtykke mangler for ') + esc(cur.name) + '</b><span>' + (cur.consent === 'Nei' ? 'Foresatte har svart nei. Bilder som likevel tas, slettes ved opplasting.' : 'Be personen svare på samtykket på mobilen først. Lenke sendes på SMS.') + '</span><button class="btn btn-acc btn-s" data-act="stSkip">Hopp over</button></div></div>';
     else {
       // stort bilde: det du har valgt i rekka, ellers det siste (nye bilder vises med en gang)
@@ -51,15 +81,15 @@
         (last ? '<button class="st-nav l" data-act="stNav" data-d="-1" aria-label="Forrige bilde"' + (k > 0 ? '' : ' hidden') + '>‹</button><button class="st-nav r" data-act="stNav" data-d="1" aria-label="Neste bilde"' + (k < shots.length - 1 ? '' : ' hidden') + '>›</button>' : '') + '</div>' +
         '<div class="card-b">' + (shots.length ? '<p class="small muted" style="margin-bottom:8px"><b style="color:var(--ink)">' + keep + '</b> bilder · ' + (S.picks[cur.id] != null ? '1 favoritt' : 'ingen favoritt ennå') + (shots.length > keep ? ' · ' + (shots.length - keep) + ' forkastet' : '') + '</p>' : '') + '<div class="st-strip">' + shots.map(function (s, j) { return '<button class="' + (j === k ? 'on' : '') + (S.picks[cur.id] === j ? ' fav' : '') + (rej[j] ? ' rej' : '') + '" data-act="stView" data-k="' + j + '" aria-label="Vis bilde ' + (j + 1) + '"><img src="' + img(cur, s.i) + '" alt=""><i>' + String(s.n).padStart(2, '0') + '</i></button>'; }).join('') + '</div>' +
         '<div class="row" style="margin-top:12px"><button class="btn btn-acc" data-act="stShoot">' + ic('cam') + 'Ta bilde <span class="kbd">Mellomrom</span></button><button class="btn btn-ghost btn-s" data-act="stFav"' + (last ? '' : ' disabled') + '>★ Favoritt <span class="kbd">F</span></button><button class="btn btn-ghost btn-s" data-act="stRej"' + (last ? '' : ' disabled') + '>✕ Forkast <span class="kbd">X</span></button><button class="btn btn-dark" data-act="stDone"' + (shots.length ? '' : ' disabled') + '>' + ic('check') + 'Ferdig, ' + m.next.toLowerCase() + ' <span class="kbd">Enter</span></button><button class="btn btn-ghost btn-s" data-act="stAbsent">Fravær</button></div>' +
-        '<p class="hint">' + (S.mode === 'skole' ? '← → blar i bildene. Nye bilder vises stort med en gang. Fravær gir automatisk plass på omfotograferingen.' : '← → blar i bildene. Nye bilder vises stort med en gang. Galleriet sendes på e-post når bildene er lastet opp.') + '</p></div></div>';
+        '<p class="hint">' + (P().kind === 'skole' ? '← → blar i bildene. Nye bilder vises stort med en gang. Fravær gir automatisk plass på omfotograferingen.' : '← → blar i bildene. Nye bilder vises stort med en gang. Galleriet sendes på e-post når bildene er lastet opp.') + '</p></div></div>';
     }
     var side = '<div class="stack"><div class="card"><div class="card-h"><h3>Utstyr</h3></div><div class="card-b small">' +
       [['cam', 'Kamera (Sony) · USB-C-kabel', 'Studiovest Stasjon · tilkoblet'], ['box', 'Kopi til SSD', 'Hver fil lagres to steder']].map(function (x) { return '<div class="li" style="padding:8px 0">' + ic(x[0]) + '<span class="li-t"><b>' + x[1] + '</b><small>' + x[2] + '</small></span><i class="ndot n-ok"></i></div>'; }).join('') + '</div></div>' +
       '<div class="card"><div class="card-h"><h3>Opplasting</h3><span class="small muted">etter fotograferingen</span></div><div class="card-b"><p style="font-size:22px;font-weight:800;letter-spacing:-.02em">' + (S.syncing ? 'Laster opp …' : S.queue ? S.queue + ' bilder · ' + (S.queue * 52 / 1000).toFixed(1).replace('.', ',') + ' GB' : 'Ingenting venter') + '</p><p class="small muted" style="margin:4px 0 12px">' + (S.queue ? 'Ligger trygt på PC-en og SSD-en. Lastes opp av seg selv når PC-en er på wifi «Studiovest» hjemme, eller trykk under.' : 'Bildene vises på stasjonen rett fra PC-en, så fotograferingen trenger ikke nett.') + '</p><button class="btn btn-dark btn-s" data-act="stSync"' + (S.queue && !S.syncing ? '' : ' disabled') + '>' + ic('upload') + 'Last opp nå</button></div></div>' +
       '<div class="card"><div class="card-h"><h3>Filnavn</h3></div><div class="card-b"><input class="inp" id="tplIn" value="' + esc(m.tpl) + '" data-input="stTpl" aria-label="Mal for filnavn" style="font-family:ui-monospace,Menlo,monospace;font-size:13px"><p class="tiny muted" style="margin-top:6px">Eksempel: <b id="tplEx">' + esc(cur ? fname(cur, 1) : fname(subs[0], 1)) + '</b></p><p class="hint">Personens ID lagres også i bildets metadata, så bildet finner riktig person selv om filen får nytt navn.</p></div></div>' +
       '<div class="card"><div class="card-h"><h3>Logg</h3><span class="small muted">' + doneN + ' av ' + subs.length + ' ferdig</span></div><div class="card-b"><ul class="feed small">' + (S.log.length ? S.log.map(function (l) { return '<li><span>' + l[1] + '</span><time>' + l[0] + '</time></li>'; }).join('') : '<li><span class="muted">Ingen hendelser ennå</span></li>') + '</ul></div></div></div>';
-    return SV.head({ eyebrow: 'Stasjon 1 · ' + m.title, a: 'Fotostasjon', lead: 'Kamera i kabel til PC. Klikk på navnet, ta bildene, klikk neste navn. Navn, sortering, opplasting og samtykkekontroll skjer av seg selv.',
-        actions: '<div class="filters" style="margin:0"><button class="fbtn' + (S.mode === 'skole' ? ' on' : '') + '" data-act="stMode" data-m="skole">Skolefoto</button><button class="fbtn' + (S.mode === 'bedrift' ? ' on' : '') + '" data-act="stMode" data-m="bedrift">Portrettdag bedrift</button></div>' }) +
+    return '<p class="small" style="margin-bottom:14px"><a href="#/stasjon" class="muted">← Alle fotodager</a></p>' + SV.head({ eyebrow: 'Stasjon 1 · ' + esc(when(m.date)) + ' · ' + esc(m.type), a: esc(m.title),  lead: 'Kamera i kabel til PC. Klikk på navnet, ta bildene, klikk neste navn. Navn, sortering, opplasting og samtykkekontroll skjer av seg selv.',
+        actions: '<a class="btn btn-ghost btn-s" href="#/stasjon">' + ic('cal') + 'Bytt fotodag</a>' }) +
       '<div class="st-grid">' + queue + center + side + '</div>' +
       '<details class="card sec"><summary class="card-h" style="cursor:pointer"><h3>Slik settes stasjonen opp</h3><span class="small muted">utstyr og programmer</span></summary><div class="card-b research"><ul class="new">' +
         '<li><b>Kabel:</b> Tether Tools TetherPro Optima 10G, USB-C rett til vinkel (10 Gbit/s). Vinkelen går inn i kameraet, så kontakten ikke belastes. Velg lengde etter rommet; 4,6 m er vanlig for skolefoto. Bruk kabelsikring og batterieliminator på lange dager.</li>' +
@@ -72,8 +102,24 @@
         '<li><b>Flere stasjoner:</b> én PC per stasjon. Portalen ser alle stasjonene live.</li></ul></div></details>';
   }, { title: 'Fotostasjon' });
 
+  // Fotostasjon i menyen: velg fotodag først
+  function chooser() {
+    var list = projects().map(function (p) { return { p: p, n: daysTo(p.date) }; }).sort(function (a, b) { var x = a.n < 0 ? 1e4 - a.n : a.n, y = b.n < 0 ? 1e4 - b.n : b.n; return x - y; });
+    var cards = list.map(function (o) {
+      var p = o.p, subs = p.subs(), miss = subs.filter(function (x) { return x.consent !== 'Ja'; }).length, taken = subs.filter(function (x) { return S.done[x.id] || (S.shots[x.id] || []).length; }).length, active = taken > 0;
+      var past = o.n < 0;
+      return '<div class="card pad" style="display:flex;flex-direction:column;gap:12px' + (active ? ';box-shadow:inset 0 0 0 2px var(--sand)' : '') + (past ? ';opacity:.6' : '') + '"><div class="row between" style="margin:0"><span class="chip chip-' + (o.n === 0 ? 'sand' : past ? 'mute' : 'ok') + '">' + esc(when(p.date)) + '</span>' + (active ? '<span class="tiny muted">Pågår</span>' : '') + '</div>' +
+        '<div><h3 class="h3">' + esc(p.title) + '</h3><p class="small muted">' + esc(p.type) + ' · ' + esc(p.place) + '</p></div>' +
+        (subs.length ? '<dl class="kv small"><dt>' + (p.kind === 'skole' ? 'Barn' : 'Personer') + '</dt><dd>' + subs.length + '</dd><dt>Samtykke ikke ja</dt><dd>' + miss + '</dd><dt>Fotografert</dt><dd>' + taken + ' av ' + subs.length + '</dd></dl>' : '<p class="small muted">Ingen ' + (p.kind === 'skole' ? 'klasseliste' : 'deltakerliste') + ' ennå.</p>') +
+        '<div style="margin-top:auto">' + (subs.length ? '<a class="btn ' + (active || o.n === 0 ? 'btn-acc' : 'btn-dark') + ' btn-s" href="#/stasjon/' + p.id + '">' + ic('cam') + (active ? 'Fortsett' : 'Start stasjonen') + '</a>' : (p.day ? '<a class="btn btn-ghost btn-s" href="#/skole/' + p.day + '">Importer liste</a>' : '')) + '</div></div>';
+    }).join('');
+    return SV.head({ eyebrow: 'Stasjon 1 · Drift', a: 'Fotostasjon', lead: 'Velg fotodagen du skal fotografere. Liste, samtykker og filnavn følger prosjektet. På stasjons-PC-en lastes alt ned før dagen, så det virker uten nett.' }) +
+      '<div class="g3">' + cards + '</div>';
+  }
+  SV.route('/stasjon', 'studio', chooser, { title: 'Fotostasjon' });
+
   function rerender() { var y = window.scrollY; SV.render(); window.scrollTo(0, y); }
-  SV.on('stMode', function (el) { S.mode = el.getAttribute('data-m'); S.cur = null; rerender(); });
+  SV.on('stCls', function (el) { S.cls = el.getAttribute('data-c'); rerender(); });
   SV.on('stPick', function (el) { start(el.getAttribute('data-id')); });
   function start(id) {
     var sub = SV.find(subjects(), id); if (!sub) { SV.toast('Fant ikke personen', 'warn'); return; }
@@ -83,7 +129,7 @@
   }
   SV.on('stFilter', function (el) { var q = el.value.trim().toLowerCase(); document.querySelectorAll('#stList .pp').forEach(function (b) { b.hidden = q && b.getAttribute('data-q').indexOf(q) < 0; }); });
   document.addEventListener('keydown', function (e) {
-    if (location.hash !== '#/stasjon') return;
+    if (location.hash.indexOf('#/stasjon/') !== 0) return;
     var t = e.target;
     if (t && t.id === 'stSearch' && e.key === 'Enter') { var v = t.value.trim(), hit = v && subjects().filter(function (s) { return s.name.toLowerCase().indexOf(v.toLowerCase()) > -1; })[0]; if (hit) start(hit.id); else SV.toast('Fant ingen med «' + v + '»', 'warn'); e.preventDefault(); return; }
     if (t && /INPUT|TEXTAREA|SELECT/.test(t.tagName)) return;
@@ -103,10 +149,10 @@
   SV.on('stShoot', shoot);
   function done() {
     var subs = subjects(), sub = SV.find(subs, S.cur); if (!sub || !(S.shots[sub.id] || []).length) return;
-    S.done[sub.id] = true; log(S.mode === 'skole' ? 'Ferdig · ' + esc(sub.name) + ' lagt i galleriet' : 'Ferdig · galleri sendt til ' + esc(sub.email));
+    S.done[sub.id] = true; log(P().kind === 'skole' ? 'Ferdig · ' + esc(sub.name) + ' lagt i galleriet' : 'Ferdig · galleri sendt til ' + esc(sub.email));
     var next = subs.filter(function (s) { return !S.done[s.id] && !S.absent[s.id] && !blocked(s); })[0];
     S.cur = next ? next.id : null; rerender();
-    SV.toast(S.mode === 'skole' ? sub.name + ' er ferdig · ' + (next ? 'neste: ' + next.name : 'alle er tatt') : 'Galleri sendt til ' + sub.name + ' · ' + (next ? 'neste: ' + next.name : 'alle er tatt'));
+    SV.toast(P().kind === 'skole' ? sub.name + ' er ferdig · ' + (next ? 'neste: ' + next.name : 'alle er tatt') : 'Galleri sendt til ' + sub.name + ' · ' + (next ? 'neste: ' + next.name : 'alle er tatt'));
   }
   SV.on('stDone', done);
   SV.on('stAbsent', function () { var sub = SV.find(subjects(), S.cur); S.absent[sub.id] = true; log('Fravær · ' + esc(sub.name) + ' får plass på omfotografering'); S.cur = null; rerender(); });
@@ -121,15 +167,15 @@
   SV.on('stRej', rej);
   SV.on('stSync', function () {
     S.syncing = true; log('Opplasting startet · ' + S.queue + ' bilder'); rerender();
-    setTimeout(function () { var n = S.queue; S.queue = 0; S.syncing = false; Object.keys(S.shots).forEach(function (id) { S.shots[id].forEach(function (p, j) { if (!(S.rej[id] || {})[j]) p.st = 'lastet opp'; }); }); log('Alt lastet opp · ' + n + ' bilder'); if (location.hash === '#/stasjon') rerender(); SV.toast(n + ' bilder lastet opp til portalen'); }, 1600);
+    setTimeout(function () { var n = S.queue; S.queue = 0; S.syncing = false; Object.keys(S.shots).forEach(function (id) { S.shots[id].forEach(function (p, j) { if (!(S.rej[id] || {})[j]) p.st = 'lastet opp'; }); }); log('Alt lastet opp · ' + n + ' bilder'); if (location.hash.indexOf('#/stasjon/') === 0) rerender(); SV.toast(n + ' bilder lastet opp til portalen'); }, 1600);
   });
-  SV.on('stTpl', function (el) { MODES[S.mode].tpl = el.value; var subs = subjects(), cur = (S.cur && SV.find(subs, S.cur)) || subs[0]; document.getElementById('tplEx').textContent = fname(cur, 1); });
+  SV.on('stTpl', function (el) { S.tpl[P().id] = el.value; var subs = subjects(), cur = (S.cur && SV.find(subs, S.cur)) || subs[0]; document.getElementById('tplEx').textContent = fname(cur, 1); });
 
   // ---------- Bedrift: portrettdag ----------
   SV.route('/bedrift/portrettdag', 'studio', function () {
-    var subs = subjects.call(null), m = S.mode; S.mode = 'bedrift'; subs = subjects(); S.mode = m;
+    var subs = vestkraft();
     var sent = subs.filter(function (s, i) { return i < 5; });
-    return '<p class="small" style="margin-bottom:14px"><a href="#/bedrift" class="muted">← Bedrift</a></p>' + SV.head({ eyebrow: SV.dot('bedrift') + 'Vestkraft Energi AS · ' + SV.fdate(D.W(6), true), a: 'Portrettdag', lead: 'Ansatte melder seg på en tid selv, blir tatt i kø med tethering, og får galleriet sitt på e-post med en gang. De velger selv hvilke bilder som skal retusjeres.', actions: '<a class="btn btn-acc btn-s" href="#/stasjon">' + ic('cam') + 'Åpne fotostasjonen</a>' }) +
+    return '<p class="small" style="margin-bottom:14px"><a href="#/bedrift" class="muted">← Bedrift</a></p>' + SV.head({ eyebrow: SV.dot('bedrift') + 'Vestkraft Energi AS · ' + SV.fdate(D.W(6), true), a: 'Portrettdag', lead: 'Ansatte melder seg på en tid selv, blir tatt i kø med tethering, og får galleriet sitt på e-post med en gang. De velger selv hvilke bilder som skal retusjeres.', actions: '<a class="btn btn-acc btn-s" href="#/stasjon/vke-portrett">' + ic('cam') + 'Åpne fotostasjonen</a>' }) +
       '<div class="g4">' + SV.stat('users', 'Påmeldt', subs.length, '6 med tid · 2 drop-in') + SV.stat('mail', 'Galleri sendt', sent.length, 'under fotograferingen') + SV.stat('heart', 'Valgt til retusj', '7', '2 inkludert per person') + SV.stat('wallet', 'Ekstra retusj', SV.kr(1050), '3 bilder à 350 kr', true) + '</div>' +
       '<div class="g21 sec"><div class="card tbl-w"><table class="tbl"><thead><tr><th>Person</th><th>Tid</th><th class="hide-s">Samtykke</th><th>Galleri</th><th class="r">Retusj</th></tr></thead><tbody>' +
       subs.map(function (s, i) { return '<tr><td><b>' + esc(s.name) + '</b><small>' + esc(s.group) + '</small></td><td>' + s.signup + '</td><td class="hide-s">' + SV.chip(s.consent === 'Ja' ? 'Signert' : 'Venter') + '</td><td>' + (i < 5 ? SV.chip('Sendt', 'ok') : SV.chip('Ikke tatt', 'mute')) + '</td><td class="r small">' + (i < 3 ? '2 valgt' + (i === 1 ? ' + 3 ekstra' : '') : i < 5 ? '<span class="muted">venter</span>' : '–') + '</td></tr>'; }).join('') + '</tbody></table></div>' +
