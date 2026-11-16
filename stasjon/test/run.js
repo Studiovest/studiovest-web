@@ -6,6 +6,7 @@ const path = require('path');
 const assert = require('assert');
 const { start } = require('../src/server');
 const naming = require('../src/naming');
+const { largestJpeg } = require('../src/preview');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'svstasjon-'));
 const d = n => path.join(tmp, n);
@@ -44,15 +45,34 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('  ✓
     ok(lib.filter(f => f.endsWith('.xmp')).length === 3, 'XMP-sidefil med koden ved hvert bilde');
     ok(fs.readFileSync(path.join(cfg.libraryDir, 'FJT2026/4B/FJT-4B-7K2Q_0001.jpg.xmp'), 'utf8').includes('<dc:identifier>FJT-4B-7K2Q</dc:identifier>'), 'koden står i metadata (dc:identifier)');
     ok(ls(cfg.backupDir).filter(f => f.endsWith('.jpg')).length === 3, 'kopi av hvert bilde på backup-disken');
-    await wait(3000);
-    ok(ls(path.join(path.dirname(cfg.libraryDir), 'lastet-opp')).filter(f => f.endsWith('.jpg')).length === 3, 'alle tre er lastet opp (lokal testmodus)');
+    await wait(2000);
+    const up0 = await api('/api/state');
+    ok(ls(path.join(path.dirname(cfg.libraryDir), 'lastet-opp')).length === 0 && up0.uploads.waiting === 3 && up0.uploads.mode === 'etterpå', 'ingenting lastes opp under fotograferingen, 3 venter på PC-en');
+    ok(up0.people.find(p => p.code === 'FJT-4B-7K2Q').shots.map(s => s.seq).join() === '1,2,3', 'galleriet viser Emmas tre bilder');
+
+    // favoritt og forkast
+    await api('/api/mark', { code: 'FJT-4B-7K2Q', seq: 2, fav: true });
+    await api('/api/mark', { code: 'FJT-4B-7K2Q', seq: 3, rejected: true });
+    const mk = (await api('/api/state')).people.find(p => p.code === 'FJT-4B-7K2Q').shots;
+    ok(mk[1].fav && mk[2].rejected && (await api('/api/state')).uploads.waiting === 2, 'favoritt merkes, forkastet bilde tas ut av opplastingen');
+    ok(fs.readFileSync(path.join(cfg.libraryDir, 'FJT2026/4B/FJT-4B-7K2Q_0002.jpg.xmp'), 'utf8').includes('<xmp:Rating>5</xmp:Rating>') && fs.readFileSync(path.join(cfg.libraryDir, 'FJT2026/4B/FJT-4B-7K2Q_0003.jpg.xmp'), 'utf8').includes('<xmp:Rating>-1</xmp:Rating>'), 'favoritt (5) og forkastet (-1) står i XMP for Lightroom/Capture One');
+
+    // RAW-forhåndsvisning: innebygd JPG hentes ut av RAW-filen
+    const jpgBuf = fs.readFileSync(path.join(cfg.libraryDir, 'FJT2026/4B/FJT-4B-7K2Q_0001.jpg'));
+    const fakeRaw = Buffer.concat([Buffer.alloc(4096), jpgBuf, Buffer.alloc(2048)]);
+    ok(Buffer.compare(largestJpeg(fakeRaw), jpgBuf) === 0, 'henter innebygd JPG ut av en RAW-fil');
+    fs.writeFileSync(path.join(cfg.incomingDir, 'DSC07777.ARW'), fakeRaw); await wait(1500);
+    const rawShot = (await api('/api/state')).people.find(p => p.code === 'FJT-4B-7K2Q').shots.find(s => s.files.some(f => f.rel.endsWith('.arw')));
+    const pv = await fetch('http://127.0.0.1:7499/bilde?rel=' + encodeURIComponent(rawShot.view));
+    ok(rawShot && rawShot.view && pv.ok && (await pv.arrayBuffer()).byteLength === jpgBuf.length, 'bilde tatt bare i RAW vises med en gang i galleriet');
 
     // RAW + JPG fra samme utløsning får samme nummer
     fs.copyFileSync(path.join(cfg.libraryDir, 'FJT2026/4B/FJT-4B-7K2Q_0001.jpg'), path.join(cfg.incomingDir, 'DSC09999.ARW'));
     fs.copyFileSync(path.join(cfg.libraryDir, 'FJT2026/4B/FJT-4B-7K2Q_0001.jpg'), path.join(cfg.incomingDir, 'DSC09999.JPG'));
     await wait(1500);
     const lib2 = ls(cfg.libraryDir);
-    ok(lib2.includes(path.join('FJT2026', '4B', 'FJT-4B-7K2Q_0004.arw')) && lib2.includes(path.join('FJT2026', '4B', 'FJT-4B-7K2Q_0004.jpg')), 'RAW og JPG fra samme bilde får samme nummer (_0004)');
+    ok(lib2.includes(path.join('FJT2026', '4B', 'FJT-4B-7K2Q_0005.arw')) && lib2.includes(path.join('FJT2026', '4B', 'FJT-4B-7K2Q_0005.jpg')), 'RAW og JPG fra samme bilde får samme nummer (_0005)');
+    ok((await api('/api/state')).people.find(p => p.code === 'FJT-4B-7K2Q').shots.length === 5, 'RAW + JPG vises som ett bilde i galleriet');
 
     // klikk på neste navn -> Emma blir ferdig av seg selv
     const rn = await api('/api/select', { code: 'FJT-1A-7K2Q' });
@@ -75,10 +95,22 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('  ✓
     const ru = await api('/api/select', { code: 'XYZ' });
     ok(!ru.ok, 'ukjent person avvises');
 
-    const st = await api('/api/state');
-    ok(st.people.find(p => p.code === 'FJT-4B-7K2Q').status === 'Ferdig' && st.people.find(p => p.code === 'FJT-1A-7K2Q').status === 'Ferdig' && st.uploads.waiting === 0, 'status: Emma og Nora ferdig, ingen i opplastingskø');
+    // hjemme: last opp nå
+    const before = (await api('/api/state')).uploads.waiting;
+    await api('/api/sync', {}); await wait(4000);
+    const st = await api('/api/state'), uploaded = ls(path.join(path.dirname(cfg.libraryDir), 'lastet-opp'));
+    ok(before === 6 && st.uploads.waiting === 0 && uploaded.length === 6 && !uploaded.some(f => f.includes('_0003')), '«Last opp nå» laster opp alt unntatt forkastet bilde');
+    ok(st.people.find(p => p.code === 'FJT-4B-7K2Q').status === 'Ferdig' && st.people.find(p => p.code === 'FJT-1A-7K2Q').status === 'Ferdig', 'status: Emma og Nora ferdig');
     ok(fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8').includes('/api/events'), 'stasjonsskjermen henter hendelser live');
   } finally { app.close(); }
+
+  // omstart midt på dagen: galleri, favoritter og status er der fortsatt
+  await wait(300);
+  const app2 = await start(cfg);
+  try {
+    const st2 = await api('/api/state'), emma = st2.people.find(p => p.code === 'FJT-4B-7K2Q');
+    ok(emma.status === 'Ferdig' && emma.shots.length === 5 && emma.shots[1].fav && emma.shots[2].rejected, 'etter omstart: galleri, favoritter og status er tatt vare på');
+  } finally { app2.close(); }
   console.log(`\n${pass} tester bestått`);
   fs.rmSync(tmp, { recursive: true, force: true });
   process.exit(0);

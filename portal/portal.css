@@ -760,6 +760,13 @@ a.li:hover b{text-decoration:underline;text-underline-offset:3px}
 .st-strip img{width:100%;height:100%;object-fit:cover}
 .st-strip i{position:absolute;left:3px;bottom:3px;font-style:normal;font-size:10px;font-weight:800;color:#fff;background:rgba(0,0,0,.5);border-radius:4px;padding:0 4px}
 .st-strip button.on{outline:3px solid var(--sand);outline-offset:-3px}
+.st-strip button.fav::after{content:"★";position:absolute;right:3px;top:1px;color:var(--sand);font-size:14px;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.st-strip button.rej img{opacity:.3}.st-strip button.rej::after{content:"✕";position:absolute;right:4px;top:1px;color:#ff9a85;font-weight:800}
+.st-fav{position:absolute;right:14px;top:12px;font-size:12px;font-weight:750;background:var(--sand);color:#161412;padding:3px 8px;border-radius:6px}
+.st-fav.st-x{background:#A8432F;color:#fff}
+.st-rej img{opacity:.35}
+.st-nav{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:60px;border:0;border-radius:10px;background:rgba(0,0,0,.35);color:#fff;font-size:26px;cursor:pointer}
+.st-nav.l{left:10px}.st-nav.r{right:10px}.st-nav[hidden]{display:none}
 .kbd{font-size:11px;font-weight:700;opacity:.65;border:1px solid currentColor;border-radius:5px;padding:0 5px;margin-left:4px}
 @media (max-width:1180px){.st-grid{grid-template-columns:260px minmax(0,1fr)}.st-grid>.stack{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.st-grid>.stack>*+*{margin-top:0}}
 @media (max-width:900px){.st-grid,.st-grid>.stack{grid-template-columns:minmax(0,1fr)}.st-view{height:52vh}}

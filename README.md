@@ -42,4 +42,4 @@ Studio, Fotograf (dagmodus), Redigering, Megler, Selger, Bedrift, Ansatt (samtyk
 
 ## Studiovest Stasjon (tethering)
 
-Eget program i `stasjon/` for fotodager: kamera i USB-C-kabel til PC, klikk på navnet i listen, navngiving etter person, samtykkestopp, kopi til SSD og opplasting til portalen. Se `stasjon/README.md`. Test: `cd stasjon && npm test`.
+Eget program i `stasjon/` for fotodager: kamera i USB-C-kabel til PC, klikk på navnet i listen, stort bilde og galleri live fra PC-en, favoritt/forkast, navngiving etter person, samtykkestopp, kopi til SSD og opplasting til portalen når dere er hjemme på wifi. Se `stasjon/README.md`. Test: `cd stasjon && npm test`.

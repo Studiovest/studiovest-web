@@ -18,7 +18,7 @@ function sidecar(meta) {
    <dc:creator><rdf:Seq><rdf:li>Studiovest</rdf:li></rdf:Seq></dc:creator>
    <dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Studiovest</rdf:li></rdf:Alt></dc:rights>
    <xmp:CreateDate>${esc(meta.takenAt)}</xmp:CreateDate>
-   <sv:Code>${esc(meta.code)}</sv:Code>
+${meta.rating != null ? `   <xmp:Rating>${esc(meta.rating)}</xmp:Rating>\n` : ''}   <sv:Code>${esc(meta.code)}</sv:Code>
    <sv:Group>${esc(meta.group)}</sv:Group>
    <sv:Session>${esc(meta.session)}</sv:Session>
    <sv:Station>${esc(meta.station)}</sv:Station>

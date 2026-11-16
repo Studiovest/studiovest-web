@@ -9,6 +9,9 @@
   "unsortedDir": "./data/usortert",
   "rosterFile": "./data/roster.json",
   "template": "{skole}/{klasse}/{kode}_{nr}",
+  "previewDir": "./data/forhandsvisning",
+  "uploadMode": "etterpå",
+  "syncWifi": ["Studiovest"],
   "portalUrl": "",
   "portalToken": "",
   "gphoto2": "gphoto2"

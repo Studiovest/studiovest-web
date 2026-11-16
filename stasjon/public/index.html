@@ -12,7 +12,7 @@ header{display:flex;align-items:center;gap:16px;padding:10px 18px;background:var
 header b{font-weight:850;letter-spacing:-.02em;text-transform:uppercase}
 .pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:4px 10px;border-radius:99px;background:rgba(242,238,232,.08)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}.dot.bad{background:#e2856f}.dot.warn{background:var(--sand)}
-main{flex:1;display:grid;grid-template-columns:300px minmax(0,1fr) 300px;gap:14px;padding:14px;min-height:0}
+main{flex:1;display:grid;grid-template-columns:280px minmax(0,1fr) 280px;gap:14px;padding:14px;min-height:0}
 .col{display:flex;flex-direction:column;gap:12px;min-height:0}
 .card{background:var(--card);border-radius:14px;box-shadow:inset 0 0 0 1px var(--line);padding:14px}
 h2{font-size:14px;margin:0 0 10px}
@@ -29,8 +29,6 @@ input:focus{box-shadow:inset 0 0 0 2px var(--dark)}
 .view .file{position:absolute;left:14px;bottom:12px;background:rgba(0,0,0,.6);color:#fff;font:12px ui-monospace,Menlo,monospace;padding:4px 8px;border-radius:6px}
 .view.stop{background:#3b1d16}
 .big{font-size:28px;font-family:Georgia,serif;color:#fff}
-.strip{display:flex;gap:6px;overflow-x:auto;padding-top:10px}
-.strip img{width:58px;height:72px;object-fit:cover;border-radius:7px}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 button.b{font:inherit;font-weight:650;border:0;border-radius:10px;padding:11px 16px;cursor:pointer}
 .b.acc{background:var(--sand)}.b.dark{background:var(--dark);color:var(--paper)}.b.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
@@ -40,7 +38,32 @@ kbd{font:11px ui-monospace,Menlo,monospace;border:1px solid currentColor;border-
 #log{list-style:none;margin:0;padding:0;font-size:12.5px;overflow:auto;max-height:40vh}
 #log li{padding:6px 0;border-bottom:1px solid var(--line)}#log li.stop{color:var(--bad);font-weight:700}#log li.warn{color:#8a5a14}
 #log time{color:var(--dim);margin-right:6px;font-variant-numeric:tabular-nums}
-@media (max-width:1100px){main{grid-template-columns:260px 1fr}main>.col:last-child{grid-column:1/-1}}
+
+.view{cursor:zoom-in;user-select:none}
+.view.zoom{cursor:zoom-out}.view.zoom img{object-fit:none}
+.view .tag{position:absolute;right:14px;top:12px;display:flex;gap:6px}
+.view .tag span{background:rgba(0,0,0,.55);color:#fff;font-size:12.5px;font-weight:700;padding:4px 9px;border-radius:7px}
+.view .tag .fav{background:var(--sand);color:var(--dark)}.view .tag .rej{background:var(--bad)}
+.view.rejected img{opacity:.35}
+.view .nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;border-radius:10px;background:rgba(0,0,0,.35);color:#fff;font-size:26px;cursor:pointer}
+.view .nav.l{left:10px}.view .nav.r{right:10px}.view .nav[hidden]{display:none}
+.view .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.view .flash.go{animation:fl .5s ease-out}@keyframes fl{0%{opacity:.55}100%{opacity:0}}
+.strip{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px}
+.th{position:relative;flex:0 0 auto;width:64px;height:80px;border:0;padding:0;border-radius:8px;overflow:hidden;cursor:pointer;background:#2a2622;box-shadow:inset 0 0 0 1px var(--line)}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.th i{position:absolute;left:4px;bottom:3px;font:700 11px ui-monospace,Menlo,monospace;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);font-style:normal}
+.th.on{outline:3px solid var(--sand);outline-offset:-3px}
+.th.fav::after{content:"★";position:absolute;right:4px;top:2px;color:var(--sand);font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.th.rej img{opacity:.3}.th.rej::after{content:"✕";position:absolute;right:5px;top:2px;color:#ff9a85;font-weight:800}
+.th .raw{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font:700 11px ui-monospace,Menlo,monospace}
+.sum{font-size:13px;color:var(--dim);margin:0 0 8px;display:flex;gap:10px;flex-wrap:wrap}
+.sum b{color:var(--dark)}
+.up{font-size:13px}.up .big2{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.up p{margin:6px 0 0;color:var(--dim)}
+.b.sm{padding:8px 12px;font-size:13.5px}
+.b.fv.on{background:var(--sand)}.b.rj.on{background:var(--bad);color:#fff}
+@media (max-width:1100px){main{grid-template-columns:240px 1fr}main>.col:last-child{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -52,12 +75,15 @@ kbd{font:11px ui-monospace,Menlo,monospace;border:1px solid currentColor;border-
   </section>
   <section class="col">
     <div class="view" id="view"><div><div class="big">Klikk på et navn</div><p>Bildene som tas, kobles til personen du har valgt. Klikk neste navn når du går videre.</p></div></div>
-    <div class="card"><div class="strip" id="strip"></div>
-      <div class="row"><button class="b acc" id="shoot">Ta bilde<kbd>Mellomrom</kbd></button><button class="b dark" id="done" disabled>Ferdig, neste<kbd>Enter</kbd></button><button class="b ghost" id="absent" disabled>Fravær</button></div>
+    <div class="card">
+      <p class="sum" id="sum"></p>
+      <div class="strip" id="strip"></div>
+      <div class="row"><button class="b acc" id="shoot">Ta bilde<kbd>Mellomrom</kbd></button><button class="b ghost sm fv" id="fav" disabled>★ Favoritt<kbd>F</kbd></button><button class="b ghost sm rj" id="rej" disabled>✕ Forkast<kbd>X</kbd></button><button class="b dark" id="done" disabled>Ferdig, neste<kbd>Enter</kbd></button><button class="b ghost sm" id="absent" disabled>Fravær</button></div>
       <p id="hint" style="font-size:13px;color:var(--dim);margin:10px 0 0"></p></div>
   </section>
   <section class="col">
-    <div class="card"><h2>Oppsett</h2><dl class="kv"><dt>Stasjon</dt><dd id="st">–</dd><dt>Kamera</dt><dd id="drv">–</dd><dt>Filnavn</dt><dd id="tpl" style="font-family:ui-monospace,Menlo,monospace;font-size:12px">–</dd><dt>Opplasting</dt><dd id="upm">–</dd></dl></div>
+    <div class="card up" id="upCard"><h2>Opplasting</h2><div class="big2" id="upBig">–</div><p id="upTxt"></p><div class="row" style="margin-top:10px"><button class="b dark sm" id="sync">Last opp nå</button></div></div>
+    <div class="card"><h2>Oppsett</h2><dl class="kv"><dt>Stasjon</dt><dd id="st">–</dd><dt>Kamera</dt><dd id="drv">–</dd><dt>Filnavn</dt><dd id="tpl" style="font-family:ui-monospace,Menlo,monospace;font-size:12px">–</dd><dt>Til</dt><dd id="upm">–</dd></dl></div>
     <div class="card" style="flex:1;min-height:0"><h2>Logg</h2><ul id="log"></ul></div>
   </section>
 </main>
@@ -65,41 +91,92 @@ kbd{font:11px ui-monospace,Menlo,monospace;border:1px solid currentColor;border-
 (function () {
   'use strict';
   var S = null, $ = function (id) { return document.getElementById(id); };
+  var view = { code: null, seq: null, follow: true, zoom: false }, lastCount = {};
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function post(u, b) { return fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b || {}) }).then(function (r) { return r.json(); }); }
   function load() { return fetch('/api/state').then(function (r) { return r.json(); }).then(function (s) { S = s; draw(); }); }
+  function src(shot) { return '/bilde?rel=' + encodeURIComponent(shot.view) + '&v=' + encodeURIComponent(shot.takenAt || ''); }
+  function gb(b) { return b > 1e9 ? (b / 1e9).toFixed(1).replace('.', ',') + ' GB' : b < 1e6 ? 'under 1 MB' : Math.round(b / 1e6) + ' MB'; }
+  function cur() { return S && S.people.filter(function (p) { return p.code === S.current; })[0]; }
+  function shotNow(p) {
+    var list = p.shots; if (!list.length) return null;
+    if (view.code !== p.code) { view.code = p.code; view.seq = null; view.follow = true; view.zoom = false; }
+    var n = list.length, grew = lastCount[p.code] != null && n > lastCount[p.code]; lastCount[p.code] = n;
+    if (view.follow || view.seq == null || !list.some(function (s) { return s.seq === view.seq; })) { view.seq = list[n - 1].seq; if (grew) flash(); }
+    return list.filter(function (s) { return s.seq === view.seq; })[0];
+  }
+  function flash() { setTimeout(function () { var f = document.querySelector('.view .flash'); if (f) { f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); } }, 0); }
   function draw() {
     $('sess').textContent = S.session; $('st').textContent = S.station; $('drv').textContent = S.driver; $('tpl').textContent = S.template;
     $('cam').textContent = S.camera.camera; $('camDot').className = 'dot' + (S.camera.connected ? '' : ' bad');
-    var u = S.uploads; $('up').textContent = u.waiting ? u.waiting + ' i kø' + (u.offline ? ' · venter på nett' : '') : 'Alt lastet opp'; $('upDot').className = 'dot' + (u.offline ? ' warn' : '');
-    $('upm').textContent = u.mode === 'portal' ? 'Til portalen' : 'Lokal test (ingen portal satt)';
+    drawUpload();
     var done = S.people.filter(function (p) { return p.status === 'Ferdig'; }).length;
     $('count').textContent = done + ' av ' + S.people.length + ' ferdig';
-    $('people').innerHTML = S.people.map(function (p) { return '<button class="p' + (p.code === S.current ? ' on' : '') + (p.blocked ? ' stop' : '') + '" data-code="' + esc(p.code) + '" data-q="' + esc((p.name + ' ' + p.code).toLowerCase()) + '"><span><b>' + esc(p.name) + '</b><small>' + esc(p.group) + ' · ' + esc(p.code) + (p.blocked ? ' · ' + esc(p.blocked) : '') + '</small></span><span class="s ' + esc(p.status) + '">' + esc(p.status) + '</span></button>'; }).join('');
-    var cur = S.people.filter(function (p) { return p.code === S.current; })[0], v = $('view');
-    $('done').disabled = !cur || !cur.photos.length || !!cur.blocked; $('absent').disabled = !cur; $('shoot').style.display = S.canTrigger ? '' : 'none';
-    $('hint').textContent = S.canTrigger ? '' : 'Ta bildet med utløseren på kameraet. Det dukker opp her med en gang.';
-    if (!cur) { v.className = 'view'; v.innerHTML = '<div><div class="big">Klikk på et navn</div><p>Bildene som tas, kobles til personen du har valgt. Klikk neste navn når du går videre.</p></div>'; $('strip').innerHTML = ''; }
-    else if (cur.blocked) { v.className = 'view stop'; v.innerHTML = '<div><div class="big">Ikke fotografer ' + esc(cur.name) + '</div><p>' + esc(cur.blocked) + '. Bilder som likevel tas, legges i karantene og lastes ikke opp.</p></div>'; $('strip').innerHTML = ''; }
+    $('people').innerHTML = S.people.map(function (p) { var n = p.shots.filter(function (s) { return !s.rejected; }).length, f = p.shots.filter(function (s) { return s.fav; }).length; return '<button class="p' + (p.code === S.current ? ' on' : '') + (p.blocked ? ' stop' : '') + '" data-code="' + esc(p.code) + '" data-q="' + esc((p.name + ' ' + p.group).toLowerCase()) + '"><span><b>' + esc(p.name) + '</b><small>' + esc(p.group) + (n ? ' · ' + n + ' bilder' + (f ? ' · ' + f + '★' : '') : '') + (p.blocked ? ' · ' + esc(p.blocked) : '') + '</small></span><span class="s ' + esc(p.status) + '">' + esc(p.status) + '</span></button>'; }).join('');
+    var c = cur(), v = $('view'), sh = c && !c.blocked ? shotNow(c) : null;
+    $('done').disabled = !c || !c.shots.length || !!c.blocked; $('absent').disabled = !c; $('shoot').style.display = S.canTrigger ? '' : 'none';
+    $('fav').disabled = $('rej').disabled = !sh; $('fav').className = 'b ghost sm fv' + (sh && sh.fav ? ' on' : ''); $('rej').className = 'b ghost sm rj' + (sh && sh.rejected ? ' on' : '');
+    $('hint').textContent = (S.canTrigger ? '' : 'Ta bildet med utløseren på kameraet. Det dukker opp her med en gang. ') + (sh ? '← → bla · klikk på bildet for 100 % (sjekk skarphet) · F favoritt · X forkast' : '');
+    if (!c) { v.className = 'view'; v.innerHTML = '<div><div class="big">Klikk på et navn</div><p>Bildene som tas, kobles til personen du har valgt. Klikk neste navn når du går videre.</p></div>'; $('strip').innerHTML = ''; $('sum').innerHTML = ''; }
+    else if (c.blocked) { v.className = 'view stop'; v.innerHTML = '<div><div class="big">Ikke fotografer ' + esc(c.name) + '</div><p>' + esc(c.blocked) + '. Bilder som likevel tas, legges i karantene og lastes ikke opp.</p></div>'; $('strip').innerHTML = ''; $('sum').innerHTML = ''; }
     else {
-      var last = cur.photos[cur.photos.length - 1];
-      v.className = 'view'; v.innerHTML = (last && /\.jpe?g$/i.test(last.rel) ? '<img src="/bilde?rel=' + encodeURIComponent(last.rel) + '&t=' + Date.now() + '" alt="">' : '<div><div class="big">Klar</div><p>Ta første bilde av ' + esc(cur.name) + '</p></div>') + '<span class="who">' + esc(cur.name) + ' · ' + esc(cur.group) + '</span>' + (last ? '<span class="file">' + esc(last.rel) + ' · ' + esc(last.upload) + '</span>' : '');
-      $('strip').innerHTML = cur.photos.filter(function (p) { return /\.jpe?g$/i.test(p.rel); }).map(function (p) { return '<img src="/bilde?rel=' + encodeURIComponent(p.rel) + '" alt="" title="' + esc(p.rel) + '">'; }).join('');
+      var list = c.shots, i = sh ? list.indexOf(sh) : -1;
+      v.className = 'view' + (view.zoom ? ' zoom' : '') + (sh && sh.rejected ? ' rejected' : '');
+      v.innerHTML = (sh ? (sh.view ? '<img id="bigImg" src="' + src(sh) + '" alt="Bilde ' + sh.seq + ' av ' + esc(c.name) + '" draggable="false">' : '<div><div class="big">RAW uten forhåndsvisning</div><p>' + esc(sh.files[0].rel) + '</p></div>') : '<div><div class="big">Klar</div><p>Ta første bilde av ' + esc(c.name) + '</p></div>') +
+        '<span class="who">' + esc(c.name) + ' · ' + esc(c.group) + (sh ? ' · bilde ' + (i + 1) + ' av ' + list.length : '') + '</span>' +
+        (sh ? '<span class="tag">' + (sh.fav ? '<span class="fav">★ Favoritt</span>' : '') + (sh.rejected ? '<span class="rej">Forkastet</span>' : '') + '</span><span class="file">' + esc(sh.files.map(function (f) { return f.rel.split('/').pop(); }).join(' + ')) + ' · ' + esc(sh.upload) + '</span>' +
+          '<button class="nav l" data-nav="-1" aria-label="Forrige bilde"' + (i > 0 ? '' : ' hidden') + '>‹</button><button class="nav r" data-nav="1" aria-label="Neste bilde"' + (i < list.length - 1 ? '' : ' hidden') + '>›</button>' : '') + '<i class="flash"></i>';
+      var keep = list.filter(function (s) { return !s.rejected; }).length, favs = list.filter(function (s) { return s.fav; }).length;
+      $('sum').innerHTML = list.length ? '<span><b>' + keep + '</b> bilder</span>' + (favs ? '<span><b>' + favs + '</b> favoritt' + (favs > 1 ? 'er' : '') + '</span>' : '<span>Ingen favoritt ennå</span>') + (list.length > keep ? '<span>' + (list.length - keep) + ' forkastet</span>' : '') : '';
+      $('strip').innerHTML = list.map(function (s) { return '<button class="th' + (sh && s.seq === sh.seq ? ' on' : '') + (s.fav ? ' fav' : '') + (s.rejected ? ' rej' : '') + '" data-seq="' + s.seq + '" aria-label="Bilde ' + s.seq + '">' + (s.view ? '<img src="' + src(s) + '" alt="" loading="lazy" decoding="async">' : '<span class="raw">RAW</span>') + '<i>' + String(s.seq).padStart(2, '0') + '</i></button>'; }).join('');
+      var on = document.querySelector('.th.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      if (view.zoom && view.at) zoomTo(view.at);
     }
     $('log').innerHTML = S.log.map(function (l) { return '<li class="' + l.level + '"><time>' + l.t.slice(11, 19) + '</time>' + esc(l.text) + '</li>'; }).join('');
   }
+  function drawUpload() {
+    var u = S.uploads, waiting = u.waiting;
+    $('upm').textContent = u.target === 'portal' ? 'Portalen' : 'Lokal test (ingen portal satt)';
+    $('up').textContent = !waiting ? 'Alt lastet opp' : u.active ? 'Laster opp · ' + waiting + ' igjen' + (u.offline ? ' · venter på nett' : '') : waiting + ' filer venter på opplasting';
+    $('upDot').className = 'dot' + (u.offline ? ' bad' : waiting && !u.active ? ' warn' : '');
+    $('upBig').textContent = waiting ? waiting + ' filer · ' + gb(u.bytes) : 'Alt er lastet opp';
+    $('upTxt').textContent = !waiting ? 'Bildene ligger fortsatt på PC-en og SSD-en.' :
+      u.active ? (u.offline ? 'Får ikke kontakt med portalen. Prøver igjen av seg selv.' : 'JPG først, så RAW. Du kan fortsette å fotografere.') :
+      'Ligger trygt på PC-en og SSD-en. ' + (u.wifi && u.wifi.length ? 'Lastes opp av seg selv på wifi «' + u.wifi.join('», «') + '».' : 'Trykk «Last opp nå» når du er på godt nett.');
+    $('sync').textContent = u.syncing ? 'Pause' : 'Last opp nå'; $('sync').disabled = !waiting && !u.syncing; $('sync').hidden = u.mode === 'med-en-gang';
+  }
+  function step(d) { var c = cur(); if (!c || !c.shots.length) return; var list = c.shots, i = list.findIndex(function (s) { return s.seq === view.seq; }), j = Math.max(0, Math.min(list.length - 1, i + d)); view.seq = list[j].seq; view.follow = j === list.length - 1; view.zoom = false; draw(); }
+  function mark(k) { var c = cur(); if (!c) return; var sh = c.shots.filter(function (s) { return s.seq === view.seq; })[0]; if (!sh) return; var b = { code: c.code, seq: sh.seq }; b[k] = !sh[k]; post('/api/mark', b).then(load); }
+  function zoomTo(at) { var img = $('bigImg'); if (img) img.style.objectPosition = (at[0] * 100) + '% ' + (at[1] * 100) + '%'; }
   function pick(code) { post('/api/select', { code: code }).then(load); }
   // Enter i søket velger første treff
   $('scan').addEventListener('keydown', function (e) { if (e.key !== 'Enter') return; e.preventDefault(); var v = this.value.trim().toLowerCase(); var hit = v && S.people.filter(function (p) { return p.name.toLowerCase().indexOf(v) > -1; })[0]; if (hit) pick(hit.code); this.value = ''; document.querySelectorAll('.p').forEach(function (b) { b.hidden = false; }); this.blur(); });
   $('scan').addEventListener('input', function () { var q = this.value.toLowerCase(); document.querySelectorAll('.p').forEach(function (b) { b.hidden = q && b.getAttribute('data-q').indexOf(q) < 0; }); });
   $('people').addEventListener('click', function (e) { var b = e.target.closest('.p'); if (b) pick(b.getAttribute('data-code')); });
+  $('strip').addEventListener('click', function (e) { var b = e.target.closest('.th'); if (!b) return; var c = cur(); view.seq = +b.getAttribute('data-seq'); view.follow = c && c.shots.length && c.shots[c.shots.length - 1].seq === view.seq; view.zoom = false; draw(); });
+  $('view').addEventListener('click', function (e) {
+    var n = e.target.closest('[data-nav]'); if (n) { step(+n.getAttribute('data-nav')); return; }
+    if (!$('bigImg')) return;
+    var r = this.getBoundingClientRect(); view.zoom = !view.zoom; view.at = [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; draw();
+  });
+  $('view').addEventListener('mousemove', function (e) { if (!view.zoom) return; var r = this.getBoundingClientRect(); view.at = [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; zoomTo(view.at); });
   $('shoot').onclick = function () { post('/api/shoot'); };
+  $('fav').onclick = function () { mark('fav'); };
+  $('rej').onclick = function () { mark('rejected'); };
   $('done').onclick = function () { post('/api/done').then(load); };
   $('absent').onclick = function () { post('/api/absent', {}).then(load); };
+  $('sync').onclick = function () { post('/api/sync', S.uploads.syncing ? { pause: true } : {}).then(load); };
   document.addEventListener('keydown', function (e) {
-    if (e.target.tagName === 'INPUT') return;
-    if (e.key === ' ' && S && S.canTrigger) { e.preventDefault(); post('/api/shoot'); }
-    if (e.key === 'Enter' && !$('done').disabled) { e.preventDefault(); $('done').click(); }
+    if (e.target.tagName === 'INPUT' || !S) return;
+    if (e.target.tagName === 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.target.blur(); }
+    if (e.key === ' ' && S.canTrigger) { e.preventDefault(); post('/api/shoot'); }
+    else if (e.key === 'Enter' && !$('done').disabled) { e.preventDefault(); $('done').click(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    else if (e.key === 'f' || e.key === 'F') mark('fav');
+    else if (e.key === 'x' || e.key === 'X' || e.key === 'Delete') mark('rejected');
+    else if ((e.key === 'z' || e.key === 'Z') && $('bigImg')) { view.zoom = !view.zoom; view.at = view.at || [.5, .3]; draw(); }
+    else if (e.key === 'Escape' && view.zoom) { view.zoom = false; draw(); }
   });
   var es = new EventSource('/api/events'), t = null;
   es.onmessage = function () { clearTimeout(t); t = setTimeout(load, 120); };

@@ -12,7 +12,7 @@ function loadConfig(argv) {
   const file = fs.existsSync(path.join(root, 'config.json')) ? path.join(root, 'config.json') : path.join(root, 'config.example.json');
   const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
   for (const a of argv) { const m = /^--(\w+)=(.*)$/.exec(a); if (m) cfg[m[1]] = m[2]; }
-  for (const k of ['incomingDir', 'libraryDir', 'backupDir', 'quarantineDir', 'unsortedDir', 'rosterFile', 'simSource']) if (cfg[k]) cfg[k] = path.resolve(root, cfg[k]);
+  for (const k of ['incomingDir', 'libraryDir', 'backupDir', 'quarantineDir', 'unsortedDir', 'previewDir', 'rosterFile', 'simSource']) if (cfg[k]) cfg[k] = path.resolve(root, cfg[k]);
   cfg.port = Number(cfg.port) || 7420;
   return cfg;
 }
@@ -24,7 +24,8 @@ function start(cfg) {
   const clients = new Set();
   function broadcast(obj) { const s = 'data: ' + JSON.stringify(obj) + '\n\n'; clients.forEach(r => r.write(s)); }
   session.on('event', e => broadcast(e));
-  uploader.on('uploaded', item => { session.note('Lastet opp · ' + item.rel); broadcast({ type: 'state' }); });
+  uploader.on('uploaded', item => { session.uploaded(item.file); broadcast({ type: 'state' }); });
+  uploader.on('sync', why => { session.note(why === 'ferdig' ? 'Alt er lastet opp' : why === 'pause' ? 'Opplasting satt på pause' : 'Opplasting startet (' + why + ')'); broadcast({ type: 'state' }); });
   uploader.on('failed', (item, e) => { session.note('Venter på nett · ' + item.rel + ' (' + e.message + ')', 'warn'); });
 
   const pub = path.join(__dirname, '..', 'public');
@@ -41,6 +42,8 @@ function start(cfg) {
         clients.add(res); req.on('close', () => clients.delete(res)); return;
       }
       if (req.method === 'POST' && u.pathname === '/api/select') { const b = await body(req); return json(res, 200, session.select(b.code)); }
+      if (req.method === 'POST' && u.pathname === '/api/mark') { const b = await body(req); return json(res, 200, session.mark(b.code, b.seq, b)); }
+      if (req.method === 'POST' && u.pathname === '/api/sync') { const b = await body(req); if (b.pause) uploader.pause(); else uploader.start('manuelt'); return json(res, 200, { ok: true, uploads: uploader.stats() }); }
       if (req.method === 'POST' && u.pathname === '/api/done') return json(res, 200, session.done());
       if (req.method === 'POST' && u.pathname === '/api/absent') { const b = await body(req); return json(res, 200, session.absent(b.code)); }
       if (req.method === 'POST' && u.pathname === '/api/shoot') {
@@ -48,9 +51,13 @@ function start(cfg) {
         return json(res, 200, { ok: true, file: await driver.trigger() });
       }
       if (req.method === 'GET' && u.pathname === '/bilde') {
-        const rel = u.searchParams.get('rel') || '', f = path.resolve(cfg.libraryDir, rel);
-        if (!f.startsWith(cfg.libraryDir + path.sep) || !fs.existsSync(f) || !/\.jpe?g$/i.test(f)) { res.writeHead(404); return res.end(); }
-        res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store' }); return fs.createReadStream(f).pipe(res);
+        // JPG fra biblioteket, eller forhåndsvisningen som er hentet ut av en RAW-fil
+        const rel = u.searchParams.get('rel') || '';
+        let f = path.resolve(cfg.libraryDir, rel);
+        if (!f.startsWith(cfg.libraryDir + path.sep)) { res.writeHead(404); return res.end(); }
+        if (!/\.jpe?g$/i.test(f)) { f = path.resolve(session.previewDir, rel + '.jpg'); if (!f.startsWith(session.previewDir + path.sep)) { res.writeHead(404); return res.end(); } }
+        if (!fs.existsSync(f)) { res.writeHead(404); return res.end(); }
+        res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=31536000, immutable' }); return fs.createReadStream(f).pipe(res);
       }
       res.writeHead(404); res.end();
     } catch (e) { json(res, 500, { ok: false, error: e.message }); }

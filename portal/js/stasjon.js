@@ -10,7 +10,7 @@
     skole: { title: 'Fjordtun skule · omfotografering', tpl: '[Skole]/[Klasse]/[Kode]_[Nr]', next: 'Neste elev' },
     bedrift: { title: 'Vestkraft Energi · portrettdag', tpl: 'Vestkraft/[Etternavn]_[Fornavn]_[Nr]', next: 'Neste person' }
   };
-  var S = { mode: 'skole', cur: null, shots: {}, log: [], queue: 0, synced: 0, done: {}, absent: {}, picks: {} };
+  var S = { mode: 'skole', cur: null, shots: {}, log: [], queue: 0, synced: 0, done: {}, absent: {}, picks: {}, sel: {}, rej: {}, syncing: false };
   function subjects() {
     if (S.mode === 'skole') {
       var s = D.schoolDays[0], out = [];
@@ -45,14 +45,17 @@
     if (!cur) center = '<div class="card st-c"><div class="st-view st-empty">' + ic('users') + '<b>Klikk på et navn i listen</b><span>Bildene som tas etterpå får navn og kobles til riktig ' + (S.mode === 'skole' ? 'elev' : 'person') + ' til du klikker neste navn.</span></div></div>';
     else if (blocked(cur)) center = '<div class="card st-c"><div class="st-view st-block">' + ic('shield') + '<b>' + (cur.consent === 'Nei' ? 'Ikke fotografer ' : 'Samtykke mangler for ') + esc(cur.name) + '</b><span>' + (cur.consent === 'Nei' ? 'Foresatte har svart nei. Bilder som likevel tas, slettes ved opplasting.' : 'Be personen svare på samtykket på mobilen først. Lenke sendes på SMS.') + '</span><button class="btn btn-acc btn-s" data-act="stSkip">Hopp over</button></div></div>';
     else {
-      var last = shots[shots.length - 1];
-      center = '<div class="card st-c"><div class="st-view">' + (last ? '<img src="' + img(cur, last.i) + '" alt="Siste bilde av ' + esc(cur.name) + '">' : '<div class="st-live">LIVE VIEW</div>') + '<span class="st-guide" aria-hidden="true"></span><span class="st-cap">' + esc(cur.name) + ' · ' + esc(cur.group) + '</span>' + (last ? '<span class="st-file">' + esc(last.f) + ' · ' + last.st + '</span>' : '') + '</div>' +
-        '<div class="card-b"><div class="st-strip">' + shots.map(function (s, k) { return '<button class="' + (S.picks[cur.id] === k ? 'on' : '') + '" data-act="stFav" data-k="' + k + '" aria-label="Velg ' + esc(s.f) + ' som favoritt"><img src="' + img(cur, s.i) + '" alt=""><i>' + String(s.n).padStart(2, '0') + '</i></button>'; }).join('') + '</div>' +
-        '<div class="row" style="margin-top:12px"><button class="btn btn-acc" data-act="stShoot">' + ic('cam') + 'Ta bilde <span class="kbd">Mellomrom</span></button><button class="btn btn-dark" data-act="stDone"' + (shots.length ? '' : ' disabled') + '>' + ic('check') + 'Ferdig, ' + m.next.toLowerCase() + ' <span class="kbd">Enter</span></button><button class="btn btn-ghost btn-s" data-act="stAbsent">Fravær</button></div>' +
-        '<p class="hint">' + (S.mode === 'skole' ? 'Ferdig: elevens bilder legges i galleriet til foresatte. Fravær gir automatisk plass på omfotograferingen.' : 'Ferdig: personen får galleriet sitt på e-post med en gang, og velger to bilder til retusj.') + '</p></div></div>';
+      // stort bilde: det du har valgt i rekka, ellers det siste (nye bilder vises med en gang)
+      var k = S.sel[cur.id] == null ? shots.length - 1 : S.sel[cur.id], last = shots[k], rej = S.rej[cur.id] || {}, keep = shots.filter(function (s, j) { return !rej[j]; }).length;
+      center = '<div class="card st-c"><div class="st-view' + (last && rej[k] ? ' st-rej' : '') + '">' + (last ? '<img src="' + img(cur, last.i) + '" alt="Bilde ' + (k + 1) + ' av ' + esc(cur.name) + '">' : '<div class="st-live">Klar · ta første bilde</div>') + '<span class="st-guide" aria-hidden="true"></span><span class="st-cap">' + esc(cur.name) + ' · ' + esc(cur.group) + (last ? ' · bilde ' + (k + 1) + ' av ' + shots.length : '') + '</span>' + (last && S.picks[cur.id] === k ? '<span class="st-fav">★ Favoritt</span>' : '') + (last && rej[k] ? '<span class="st-fav st-x">Forkastet</span>' : '') + (last ? '<span class="st-file">' + esc(last.f) + ' · ' + last.st + '</span>' : '') +
+        (last ? '<button class="st-nav l" data-act="stNav" data-d="-1" aria-label="Forrige bilde"' + (k > 0 ? '' : ' hidden') + '>‹</button><button class="st-nav r" data-act="stNav" data-d="1" aria-label="Neste bilde"' + (k < shots.length - 1 ? '' : ' hidden') + '>›</button>' : '') + '</div>' +
+        '<div class="card-b">' + (shots.length ? '<p class="small muted" style="margin-bottom:8px"><b style="color:var(--ink)">' + keep + '</b> bilder · ' + (S.picks[cur.id] != null ? '1 favoritt' : 'ingen favoritt ennå') + (shots.length > keep ? ' · ' + (shots.length - keep) + ' forkastet' : '') + '</p>' : '') + '<div class="st-strip">' + shots.map(function (s, j) { return '<button class="' + (j === k ? 'on' : '') + (S.picks[cur.id] === j ? ' fav' : '') + (rej[j] ? ' rej' : '') + '" data-act="stView" data-k="' + j + '" aria-label="Vis bilde ' + (j + 1) + '"><img src="' + img(cur, s.i) + '" alt=""><i>' + String(s.n).padStart(2, '0') + '</i></button>'; }).join('') + '</div>' +
+        '<div class="row" style="margin-top:12px"><button class="btn btn-acc" data-act="stShoot">' + ic('cam') + 'Ta bilde <span class="kbd">Mellomrom</span></button><button class="btn btn-ghost btn-s" data-act="stFav"' + (last ? '' : ' disabled') + '>★ Favoritt <span class="kbd">F</span></button><button class="btn btn-ghost btn-s" data-act="stRej"' + (last ? '' : ' disabled') + '>✕ Forkast <span class="kbd">X</span></button><button class="btn btn-dark" data-act="stDone"' + (shots.length ? '' : ' disabled') + '>' + ic('check') + 'Ferdig, ' + m.next.toLowerCase() + ' <span class="kbd">Enter</span></button><button class="btn btn-ghost btn-s" data-act="stAbsent">Fravær</button></div>' +
+        '<p class="hint">' + (S.mode === 'skole' ? '← → blar i bildene. Nye bilder vises stort med en gang. Fravær gir automatisk plass på omfotograferingen.' : '← → blar i bildene. Nye bilder vises stort med en gang. Galleriet sendes på e-post når bildene er lastet opp.') + '</p></div></div>';
     }
     var side = '<div class="stack"><div class="card"><div class="card-h"><h3>Utstyr</h3></div><div class="card-b small">' +
-      [['cam', 'Kamera (Sony) · USB-C-kabel', 'Studiovest Stasjon · tilkoblet'], ['upload', 'Opplasting', S.queue ? S.queue + ' i kø' : 'Alt er synket'], ['box', 'Kopi til SSD', 'Hver fil lagres to steder']].map(function (x) { return '<div class="li" style="padding:8px 0">' + ic(x[0]) + '<span class="li-t"><b>' + x[1] + '</b><small>' + x[2] + '</small></span><i class="ndot n-ok"></i></div>'; }).join('') + '</div></div>' +
+      [['cam', 'Kamera (Sony) · USB-C-kabel', 'Studiovest Stasjon · tilkoblet'], ['box', 'Kopi til SSD', 'Hver fil lagres to steder']].map(function (x) { return '<div class="li" style="padding:8px 0">' + ic(x[0]) + '<span class="li-t"><b>' + x[1] + '</b><small>' + x[2] + '</small></span><i class="ndot n-ok"></i></div>'; }).join('') + '</div></div>' +
+      '<div class="card"><div class="card-h"><h3>Opplasting</h3><span class="small muted">etter fotograferingen</span></div><div class="card-b"><p style="font-size:22px;font-weight:800;letter-spacing:-.02em">' + (S.syncing ? 'Laster opp …' : S.queue ? S.queue + ' bilder · ' + (S.queue * 52 / 1000).toFixed(1).replace('.', ',') + ' GB' : 'Ingenting venter') + '</p><p class="small muted" style="margin:4px 0 12px">' + (S.queue ? 'Ligger trygt på PC-en og SSD-en. Lastes opp av seg selv når PC-en er på wifi «Studiovest» hjemme, eller trykk under.' : 'Bildene vises på stasjonen rett fra PC-en, så fotograferingen trenger ikke nett.') + '</p><button class="btn btn-dark btn-s" data-act="stSync"' + (S.queue && !S.syncing ? '' : ' disabled') + '>' + ic('upload') + 'Last opp nå</button></div></div>' +
       '<div class="card"><div class="card-h"><h3>Filnavn</h3></div><div class="card-b"><input class="inp" id="tplIn" value="' + esc(m.tpl) + '" data-input="stTpl" aria-label="Mal for filnavn" style="font-family:ui-monospace,Menlo,monospace;font-size:13px"><p class="tiny muted" style="margin-top:6px">Eksempel: <b id="tplEx">' + esc(cur ? fname(cur, 1) : fname(subs[0], 1)) + '</b></p><p class="hint">Personens ID lagres også i bildets metadata, så bildet finner riktig person selv om filen får nytt navn.</p></div></div>' +
       '<div class="card"><div class="card-h"><h3>Logg</h3><span class="small muted">' + doneN + ' av ' + subs.length + ' ferdig</span></div><div class="card-b"><ul class="feed small">' + (S.log.length ? S.log.map(function (l) { return '<li><span>' + l[1] + '</span><time>' + l[0] + '</time></li>'; }).join('') : '<li><span class="muted">Ingen hendelser ennå</span></li>') + '</ul></div></div></div>';
     return SV.head({ eyebrow: 'Stasjon 1 · ' + m.title, a: 'Fotostasjon', lead: 'Kamera i kabel til PC. Klikk på navnet, ta bildene, klikk neste navn. Navn, sortering, opplasting og samtykkekontroll skjer av seg selv.',
@@ -63,6 +66,8 @@
         '<li><b>PC:</b> Bærbar med Studiovest Stasjon, vårt eget program. Det tar imot bildene fra kamera, gir dem navn etter personen som er valgt, legger personens ID i metadata (XMP), tar kopi til ekstern SSD og laster opp. Virker uten nett og laster opp når nettet er tilbake.</li>' +
         '<li><b>Kamera:</b> direkte via kabelen med libgphoto2 (åpen kildekode), eller via kameraprodusentens gratis tether-program som lagrer i en mappe stasjonen følger. Støtte for direkte styring og live view kan bygges med Sony Camera Remote SDK.</li>' +
         '<li><b>Liste:</b> klikk på navnet til den som står foran kamera. Klikk neste navn når du går videre, så blir forrige ferdig. Lang liste: skriv noen bokstaver i søket og trykk Enter. Ingen QR-kort eller skanner.</li>' +
+        '<li><b>Uten nett på stedet:</b> bildene vises stort og i galleri rett fra PC-en mens du fotograferer, så det går like fort uansett dekning. Alt ligger på PC-en og SSD-en til dere er hjemme. Der starter opplastingen av seg selv på kjent wifi (eller med «Last opp nå»), JPG først og RAW etterpå. Forkastede bilder lastes ikke opp.</li>' +
+        '<li><b>Kontroll:</b> klikk på det store bildet for 100 % og sjekk skarpheten i øynene. F = favoritt, X = forkast. Merkingen følger med til Lightroom og Capture One.</li>' +
         '<li><b>Samtykke:</b> klasseliste og samtykker hentes fra portalen før dagen. Barn med «nei» gir rød stopp, og bilder som likevel tas legges i karantene og lastes ikke opp.</li>' +
         '<li><b>Flere stasjoner:</b> én PC per stasjon. Portalen ser alle stasjonene live.</li></ul></div></details>';
   }, { title: 'Fotostasjon' });
@@ -84,13 +89,16 @@
     if (t && /INPUT|TEXTAREA|SELECT/.test(t.tagName)) return;
     if (e.key === ' ' && S.cur) { e.preventDefault(); shoot(); }
     if (e.key === 'Enter' && S.cur) { e.preventDefault(); done(); }
+    if (e.key === 'ArrowLeft' && S.cur) { e.preventDefault(); nav(-1); }
+    if (e.key === 'ArrowRight' && S.cur) { e.preventDefault(); nav(1); }
+    if ((e.key === 'f' || e.key === 'F') && S.cur) fav();
+    if ((e.key === 'x' || e.key === 'X') && S.cur) rej();
   });
   function shoot() {
     var sub = SV.find(subjects(), S.cur); if (!sub) return;
     if (blocked(sub)) { SV.toast('Denne personen skal ikke fotograferes', 'warn'); return; }
-    var list = S.shots[sub.id] = S.shots[sub.id] || [], n = list.length + 1, ph = { n: n, i: n - 1, f: fname(sub, n), st: 'lastes ned' };
-    list.push(ph); S.queue++; log('Nytt bilde · ' + esc(ph.f)); rerender();
-    setTimeout(function () { ph.st = 'lastet opp'; S.queue = Math.max(0, S.queue - 1); log('Lastet opp · ' + esc(ph.f)); if (location.hash === '#/stasjon') rerender(); }, 1100);
+    var list = S.shots[sub.id] = S.shots[sub.id] || [], n = list.length + 1, ph = { n: n, i: n - 1, f: fname(sub, n), st: 'på PC + SSD' };
+    list.push(ph); S.queue++; S.sel[sub.id] = null; log('Nytt bilde · ' + esc(ph.f)); rerender();
   }
   SV.on('stShoot', shoot);
   function done() {
@@ -103,7 +111,18 @@
   SV.on('stDone', done);
   SV.on('stAbsent', function () { var sub = SV.find(subjects(), S.cur); S.absent[sub.id] = true; log('Fravær · ' + esc(sub.name) + ' får plass på omfotografering'); S.cur = null; rerender(); });
   SV.on('stSkip', function () { S.cur = null; rerender(); });
-  SV.on('stFav', function (el) { S.picks[S.cur] = +el.getAttribute('data-k'); rerender(); });
+  function viewed() { var l = S.shots[S.cur] || []; return S.sel[S.cur] == null ? l.length - 1 : S.sel[S.cur]; }
+  function nav(d) { var l = S.shots[S.cur] || []; if (!l.length) return; var k = Math.max(0, Math.min(l.length - 1, viewed() + d)); S.sel[S.cur] = k === l.length - 1 ? null : k; rerender(); }
+  function fav() { var k = viewed(); if (k < 0) return; S.picks[S.cur] = S.picks[S.cur] === k ? null : k; if (S.rej[S.cur]) S.rej[S.cur][k] = false; rerender(); }
+  function rej() { var k = viewed(); if (k < 0) return; var r = S.rej[S.cur] = S.rej[S.cur] || {}; r[k] = !r[k]; if (r[k] && S.picks[S.cur] === k) S.picks[S.cur] = null; S.queue += r[k] ? -1 : 1; rerender(); }
+  SV.on('stView', function (el) { var l = S.shots[S.cur] || [], k = +el.getAttribute('data-k'); S.sel[S.cur] = k === l.length - 1 ? null : k; rerender(); });
+  SV.on('stNav', function (el) { nav(+el.getAttribute('data-d')); });
+  SV.on('stFav', fav);
+  SV.on('stRej', rej);
+  SV.on('stSync', function () {
+    S.syncing = true; log('Opplasting startet · ' + S.queue + ' bilder'); rerender();
+    setTimeout(function () { var n = S.queue; S.queue = 0; S.syncing = false; Object.keys(S.shots).forEach(function (id) { S.shots[id].forEach(function (p, j) { if (!(S.rej[id] || {})[j]) p.st = 'lastet opp'; }); }); log('Alt lastet opp · ' + n + ' bilder'); if (location.hash === '#/stasjon') rerender(); SV.toast(n + ' bilder lastet opp til portalen'); }, 1600);
+  });
   SV.on('stTpl', function (el) { MODES[S.mode].tpl = el.value; var subs = subjects(), cur = (S.cur && SV.find(subs, S.cur)) || subs[0]; document.getElementById('tplEx').textContent = fname(cur, 1); });
 
   // ---------- Bedrift: portrettdag ----------

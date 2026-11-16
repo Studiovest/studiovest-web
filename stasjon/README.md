@@ -10,11 +10,29 @@ USB-C-kabel (Tether Tools TetherPro Optima 10G, USB-C rett til vinkel).
    - får navn etter mal, f.eks. `FJT2026/4B/FJT-4B-7K2Q_0001.jpg`
    - får en XMP-fil med personens ID fra klasselisten (`dc:identifier`), så det finner riktig barn selv om filen får nytt navn
    - kopieres til backup-disken (ekstern SSD)
+   - vises **stort med en gang** på skjermen, og i galleriet under med alle bildene av personen
    - legges i opplastingskøen til portalen. Køen ligger på disk og tåler nettbrudd og omstart.
 3. **Klikk neste navn** når du går videre. Forrige person blir ferdig av seg selv.
    Eller trykk **Enter = ferdig**, så velges neste i listen automatisk. Barn uten samtykke hoppes over.
 
 Ingen QR-kort eller skanner trengs.
+
+## Kontroll på stedet
+
+Alt vises rett fra PC-en, så det går like fort uten nett.
+- **← →** blar i bildene til personen. Nye bilder hopper frem av seg selv (hvis du ser på det siste).
+- **Klikk på bildet** = 100 % for å sjekke skarphet i øynene. Flytt musen for å se rundt. Klikk igjen eller Esc for å gå ut.
+- **F** = favoritt, **X** = forkast. Står i XMP som stjerner (5) og avvist (−1), så Lightroom og Capture One ser det.
+  Forkastede bilder lastes ikke opp.
+- Fotograferer du bare i RAW, hentes det innebygde JPG-bildet ut av RAW-filen, så du ser bildet like fort.
+- Dagen lagres på disk (`data/okt.json`). Etter omstart eller tomt batteri er galleri, favoritter og status der.
+
+## Opplasting etterpå (`uploadMode`)
+
+- `"etterpå"` (standard): ingenting lastes opp på stedet. Alt ligger på PC-en og SSD-en.
+  Opplastingen starter av seg selv når PC-en er på et kjent wifi (`syncWifi`, f.eks. `["Studiovest"]`),
+  eller med «Last opp nå». JPG først, så RAW. Kan settes på pause.
+- `"med-en-gang"`: laster opp fortløpende når det er nett.
 
 Sikkerhet:
 - Barn med «nei», «bare gruppebilde» eller ubesvart samtykke gir **rød stopp**. Bilder som likevel tas,
@@ -47,7 +65,7 @@ npm start                               # med kamera
 
 Åpne http://localhost:7420 på stasjons-PC-en.
 
-Test: `npm test` (19 tester, simulert kamera).
+Test: `npm test` (27 tester, simulert kamera).
 
 ## Filnavnmal
 
