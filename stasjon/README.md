@@ -5,18 +5,21 @@ USB-C-kabel (Tether Tools TetherPro Optima 10G, USB-C rett til vinkel).
 
 ## Hva det gjør
 
-1. **Skann QR-kortet** (USB-skanner, eller skriv navn). Stasjonen vet hvem som står foran kamera.
+1. **Klikk på navnet** i listen til den som sitter foran kamera (lang liste: skriv noen bokstaver i søket og trykk Enter).
 2. **Ta bildet** med kameraets utløser. Bildet kommer over kabelen og
    - får navn etter mal, f.eks. `FJT2026/4B/FJT-4B-7K2Q_0001.jpg`
-   - får en XMP-fil med koden (`dc:identifier`), så det finner riktig barn selv om filen får nytt navn
+   - får en XMP-fil med personens ID fra klasselisten (`dc:identifier`), så det finner riktig barn selv om filen får nytt navn
    - kopieres til backup-disken (ekstern SSD)
    - legges i opplastingskøen til portalen. Køen ligger på disk og tåler nettbrudd og omstart.
-3. **Enter = ferdig og neste.** Barn uten samtykke hoppes over.
+3. **Klikk neste navn** når du går videre. Forrige person blir ferdig av seg selv.
+   Eller trykk **Enter = ferdig**, så velges neste i listen automatisk. Barn uten samtykke hoppes over.
+
+Ingen QR-kort eller skanner trengs.
 
 Sikkerhet:
 - Barn med «nei», «bare gruppebilde» eller ubesvart samtykke gir **rød stopp**. Bilder som likevel tas,
   havner i `karantene/` og lastes aldri opp.
-- Bilder tatt uten skannet kode havner i `usortert/`.
+- Bilder tatt før noen er valgt, havner i `usortert/`.
 - RAW og JPG fra samme utløsning får samme nummer.
 
 ## Kamera (`driver` i config)
@@ -44,7 +47,7 @@ npm start                               # med kamera
 
 Åpne http://localhost:7420 på stasjons-PC-en.
 
-Test: `npm test` (17 tester, simulert kamera).
+Test: `npm test` (19 tester, simulert kamera).
 
 ## Filnavnmal
 

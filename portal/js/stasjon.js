@@ -1,6 +1,6 @@
 /* Fotostasjon (tethering) for skolefoto og portrettdager i bedrift.
    Egen løsning: kamera i TetherPro-kabel (USB-C) til PC som kjører Studiovest Stasjon (mappen stasjon/
-   i repoet). Stasjonen tar imot bildene fra kamera, navngir dem etter skannet QR-kode, sjekker samtykke,
+   i repoet). Stasjonen tar imot bildene fra kamera, navngir dem etter navnet som er valgt i listen, sjekker samtykke,
    tar kopi til SSD og laster opp til portalen. Denne siden viser hvordan det ser ut i portalen (simulert). */
 (function () {
   'use strict';
@@ -36,13 +36,13 @@
   SV.route('/stasjon', 'studio', function () {
     var subs = subjects(), cur = S.cur && SV.find(subs, S.cur), m = MODES[S.mode], shots = cur ? (S.shots[cur.id] || []) : [];
     var doneN = subs.filter(function (s) { return S.done[s.id]; }).length;
-    var queue = '<div class="card st-q"><div class="card-b"><label class="search" style="max-width:none;margin-bottom:10px">' + ic('qr') + '<input id="scanIn" placeholder="Skann QR eller skriv navn" aria-label="Skann QR-kode eller søk" data-input="stFilter" autocomplete="off"></label><p class="tiny muted" style="margin-bottom:8px">USB-skanneren «skriver» koden og trykker Enter. Klikk på en person for å starte.</p><div id="stList">' +
+    var queue = '<div class="card st-q"><div class="card-b"><label class="search" style="max-width:none;margin-bottom:10px">' + ic('search') + '<input id="stSearch" placeholder="Søk etter navn" aria-label="Søk i listen" data-input="stFilter" autocomplete="off"></label><p class="tiny muted" style="margin-bottom:8px">Klikk på navnet til den som sitter foran kamera. Klikk neste navn når du går videre, så blir forrige ferdig av seg selv.</p><div id="stList">' +
       subs.map(function (s) {
         var st = S.done[s.id] ? 'Ferdig' : S.absent[s.id] ? 'Fravær' : s.id === S.cur ? 'Pågår' : blocked(s) ? (s.consent === 'Nei' ? 'Skal ikke' : 'Mangler') : 'Venter';
         return '<button class="pp' + (blocked(s) ? ' flag' : '') + (s.id === S.cur ? ' on' : '') + '" data-act="stPick" data-id="' + s.id + '" data-q="' + esc((s.name + ' ' + s.id).toLowerCase()) + '">' + SV.avatar(s.name) + '<span><b>' + esc(s.name) + '</b><small>' + esc(s.group) + (s.signup ? ' · ' + s.signup : '') + ' · ' + esc(s.id) + '</small></span>' + SV.chip(st, st === 'Ferdig' ? 'ok' : st === 'Pågår' ? 'sand' : /Skal|Mangler/.test(st) ? 'bad' : 'mute') + '</button>';
       }).join('') + '</div></div></div>';
     var center;
-    if (!cur) center = '<div class="card st-c"><div class="st-view st-empty">' + ic('qr') + '<b>Skann QR-kortet</b><span>Filnavnet settes automatisk fra koden, og bildene kobles til riktig ' + (S.mode === 'skole' ? 'elev' : 'person') + '.</span></div></div>';
+    if (!cur) center = '<div class="card st-c"><div class="st-view st-empty">' + ic('users') + '<b>Klikk på et navn i listen</b><span>Bildene som tas etterpå får navn og kobles til riktig ' + (S.mode === 'skole' ? 'elev' : 'person') + ' til du klikker neste navn.</span></div></div>';
     else if (blocked(cur)) center = '<div class="card st-c"><div class="st-view st-block">' + ic('shield') + '<b>' + (cur.consent === 'Nei' ? 'Ikke fotografer ' : 'Samtykke mangler for ') + esc(cur.name) + '</b><span>' + (cur.consent === 'Nei' ? 'Foresatte har svart nei. Bilder som likevel tas, slettes ved opplasting.' : 'Be personen svare på samtykket på mobilen først. Lenke sendes på SMS.') + '</span><button class="btn btn-acc btn-s" data-act="stSkip">Hopp over</button></div></div>';
     else {
       var last = shots[shots.length - 1];
@@ -52,18 +52,17 @@
         '<p class="hint">' + (S.mode === 'skole' ? 'Ferdig: elevens bilder legges i galleriet til foresatte. Fravær gir automatisk plass på omfotograferingen.' : 'Ferdig: personen får galleriet sitt på e-post med en gang, og velger to bilder til retusj.') + '</p></div></div>';
     }
     var side = '<div class="stack"><div class="card"><div class="card-h"><h3>Utstyr</h3></div><div class="card-b small">' +
-      [['cam', 'Kamera (Sony) · USB-C-kabel', 'Studiovest Stasjon · tilkoblet'], ['qr', 'QR-skanner (USB)', 'Klar'], ['upload', 'Opplasting', S.queue ? S.queue + ' i kø' : 'Alt er synket'], ['box', 'Kopi til SSD', 'Hver fil lagres to steder']].map(function (x) { return '<div class="li" style="padding:8px 0">' + ic(x[0]) + '<span class="li-t"><b>' + x[1] + '</b><small>' + x[2] + '</small></span><i class="ndot n-ok"></i></div>'; }).join('') + '</div></div>' +
-      '<div class="card"><div class="card-h"><h3>Filnavn</h3></div><div class="card-b"><input class="inp" id="tplIn" value="' + esc(m.tpl) + '" data-input="stTpl" aria-label="Mal for filnavn" style="font-family:ui-monospace,Menlo,monospace;font-size:13px"><p class="tiny muted" style="margin-top:6px">Eksempel: <b id="tplEx">' + esc(cur ? fname(cur, 1) : fname(subs[0], 1)) + '</b></p><p class="hint">Koden lagres også i bildets metadata, så bildet finner riktig person selv om filen får nytt navn.</p></div></div>' +
+      [['cam', 'Kamera (Sony) · USB-C-kabel', 'Studiovest Stasjon · tilkoblet'], ['upload', 'Opplasting', S.queue ? S.queue + ' i kø' : 'Alt er synket'], ['box', 'Kopi til SSD', 'Hver fil lagres to steder']].map(function (x) { return '<div class="li" style="padding:8px 0">' + ic(x[0]) + '<span class="li-t"><b>' + x[1] + '</b><small>' + x[2] + '</small></span><i class="ndot n-ok"></i></div>'; }).join('') + '</div></div>' +
+      '<div class="card"><div class="card-h"><h3>Filnavn</h3></div><div class="card-b"><input class="inp" id="tplIn" value="' + esc(m.tpl) + '" data-input="stTpl" aria-label="Mal for filnavn" style="font-family:ui-monospace,Menlo,monospace;font-size:13px"><p class="tiny muted" style="margin-top:6px">Eksempel: <b id="tplEx">' + esc(cur ? fname(cur, 1) : fname(subs[0], 1)) + '</b></p><p class="hint">Personens ID lagres også i bildets metadata, så bildet finner riktig person selv om filen får nytt navn.</p></div></div>' +
       '<div class="card"><div class="card-h"><h3>Logg</h3><span class="small muted">' + doneN + ' av ' + subs.length + ' ferdig</span></div><div class="card-b"><ul class="feed small">' + (S.log.length ? S.log.map(function (l) { return '<li><span>' + l[1] + '</span><time>' + l[0] + '</time></li>'; }).join('') : '<li><span class="muted">Ingen hendelser ennå</span></li>') + '</ul></div></div></div>';
-    SV.after(function () { var i = document.getElementById('scanIn'); if (i && !cur) i.focus({ preventScroll: true }); });
-    return SV.head({ eyebrow: 'Stasjon 1 · ' + m.title, a: 'Fotostasjon', lead: 'Kamera i kabel til PC. Skann koden, ta bildene, trykk ferdig. Navn, sortering, opplasting og samtykkekontroll skjer av seg selv.',
+    return SV.head({ eyebrow: 'Stasjon 1 · ' + m.title, a: 'Fotostasjon', lead: 'Kamera i kabel til PC. Klikk på navnet, ta bildene, klikk neste navn. Navn, sortering, opplasting og samtykkekontroll skjer av seg selv.',
         actions: '<div class="filters" style="margin:0"><button class="fbtn' + (S.mode === 'skole' ? ' on' : '') + '" data-act="stMode" data-m="skole">Skolefoto</button><button class="fbtn' + (S.mode === 'bedrift' ? ' on' : '') + '" data-act="stMode" data-m="bedrift">Portrettdag bedrift</button></div>' }) +
       '<div class="st-grid">' + queue + center + side + '</div>' +
       '<details class="card sec"><summary class="card-h" style="cursor:pointer"><h3>Slik settes stasjonen opp</h3><span class="small muted">utstyr og programmer</span></summary><div class="card-b research"><ul class="new">' +
         '<li><b>Kabel:</b> Tether Tools TetherPro Optima 10G, USB-C rett til vinkel (10 Gbit/s). Vinkelen går inn i kameraet, så kontakten ikke belastes. Velg lengde etter rommet; 4,6 m er vanlig for skolefoto. Bruk kabelsikring og batterieliminator på lange dager.</li>' +
-        '<li><b>PC:</b> Bærbar med Studiovest Stasjon, vårt eget program. Det tar imot bildene fra kamera, gir dem navn etter koden, legger koden i metadata (XMP), tar kopi til ekstern SSD og laster opp. Virker uten nett og laster opp når nettet er tilbake.</li>' +
+        '<li><b>PC:</b> Bærbar med Studiovest Stasjon, vårt eget program. Det tar imot bildene fra kamera, gir dem navn etter personen som er valgt, legger personens ID i metadata (XMP), tar kopi til ekstern SSD og laster opp. Virker uten nett og laster opp når nettet er tilbake.</li>' +
         '<li><b>Kamera:</b> direkte via kabelen med libgphoto2 (åpen kildekode), eller via kameraprodusentens gratis tether-program som lagrer i en mappe stasjonen følger. Støtte for direkte styring og live view kan bygges med Sony Camera Remote SDK.</li>' +
-        '<li><b>QR:</b> USB-skanner til QR-kortene. Den skriver koden inn som et tastatur, så stasjonen vet hvem som står foran kamera.</li>' +
+        '<li><b>Liste:</b> klikk på navnet til den som står foran kamera. Klikk neste navn når du går videre, så blir forrige ferdig. Lang liste: skriv noen bokstaver i søket og trykk Enter. Ingen QR-kort eller skanner.</li>' +
         '<li><b>Samtykke:</b> klasseliste og samtykker hentes fra portalen før dagen. Barn med «nei» gir rød stopp, og bilder som likevel tas legges i karantene og lastes ikke opp.</li>' +
         '<li><b>Flere stasjoner:</b> én PC per stasjon. Portalen ser alle stasjonene live.</li></ul></div></details>';
   }, { title: 'Fotostasjon' });
@@ -72,14 +71,16 @@
   SV.on('stMode', function (el) { S.mode = el.getAttribute('data-m'); S.cur = null; rerender(); });
   SV.on('stPick', function (el) { start(el.getAttribute('data-id')); });
   function start(id) {
-    var sub = SV.find(subjects(), id); if (!sub) { SV.toast('Fant ingen med koden ' + id, 'warn'); return; }
-    S.cur = id; log('Skannet ' + esc(sub.id) + ' · ' + esc(sub.name)); if (blocked(sub)) log('<b>Stopp:</b> ' + (sub.consent === 'Nei' ? 'ikke samtykke' : 'samtykke mangler')); rerender();
+    var sub = SV.find(subjects(), id); if (!sub) { SV.toast('Fant ikke personen', 'warn'); return; }
+    var prev = S.cur && S.cur !== id && SV.find(subjects(), S.cur);
+    if (prev && (S.shots[prev.id] || []).length && !S.done[prev.id]) { S.done[prev.id] = true; log('Ferdig · ' + esc(prev.name) + ' (' + S.shots[prev.id].length + ' bilder)'); }
+    S.cur = id; log('Valgt · ' + esc(sub.name)); if (blocked(sub)) log('<b>Stopp:</b> ' + (sub.consent === 'Nei' ? 'ikke samtykke' : 'samtykke mangler')); rerender();
   }
   SV.on('stFilter', function (el) { var q = el.value.trim().toLowerCase(); document.querySelectorAll('#stList .pp').forEach(function (b) { b.hidden = q && b.getAttribute('data-q').indexOf(q) < 0; }); });
   document.addEventListener('keydown', function (e) {
     if (location.hash !== '#/stasjon') return;
     var t = e.target;
-    if (t && t.id === 'scanIn' && e.key === 'Enter') { var v = t.value.trim(), subs = subjects(), hit = SV.find(subs, v.toUpperCase()) || subs.filter(function (s) { return s.name.toLowerCase().indexOf(v.toLowerCase()) > -1; })[0]; if (hit) start(hit.id); else SV.toast('Fant ingen med «' + v + '»', 'warn'); e.preventDefault(); return; }
+    if (t && t.id === 'stSearch' && e.key === 'Enter') { var v = t.value.trim(), hit = v && subjects().filter(function (s) { return s.name.toLowerCase().indexOf(v.toLowerCase()) > -1; })[0]; if (hit) start(hit.id); else SV.toast('Fant ingen med «' + v + '»', 'warn'); e.preventDefault(); return; }
     if (t && /INPUT|TEXTAREA|SELECT/.test(t.tagName)) return;
     if (e.key === ' ' && S.cur) { e.preventDefault(); shoot(); }
     if (e.key === 'Enter' && S.cur) { e.preventDefault(); done(); }

@@ -9,7 +9,7 @@
 
   // ---------- maler for ny fotodag ----------
   var PRESETS = [
-    { id: 'skole', name: 'Skole med klasseliste', icon: 'school', desc: 'Klasseliste fra skolen, samtykke, QR-kort, portrett og klassebilde.', time: 'Av', slot: 0, buffer: 0, cap: 0, fee: 0, presale: false, free: '1 portrett til skolens systemer', access: 'Privat galleri per barn med kode', roster: 'Importert klasseliste' },
+    { id: 'skole', name: 'Skole med klasseliste', icon: 'school', desc: 'Klasseliste fra skolen, samtykke, portrett og klassebilde.', time: 'Av', slot: 0, buffer: 0, cap: 0, fee: 0, presale: false, free: '1 portrett til skolens systemer', access: 'Privat galleri per barn med kode', roster: 'Importert klasseliste' },
     { id: 'bhg', name: 'Barnehage', icon: 'heart', desc: 'Avdelinger, samtykke, søsken- og vennebilder med samtykke fra begge familier.', time: 'Valgfritt for søsken og familie', slot: 10, buffer: 5, cap: 1, fee: 0, presale: true, free: 'Ingen', access: 'Privat galleri per barn med kode', roster: 'Importert liste fra barnehagen' },
     { id: 'idrett', name: 'Idrettslag og mediedag', icon: 'users', desc: 'Lagbilder og spillerportretter. Åpen påmelding per lag.', time: 'Påkrevd per lag', slot: 20, buffer: 5, cap: 1, fee: 0, presale: true, free: 'Lagbilde til klubben', access: 'Privat galleri per spiller', roster: 'Åpen påmelding' },
     { id: 'apen', name: 'Åpen fotodag', icon: 'cal', desc: 'Familier booker tid selv, f.eks. julefoto. Fotograferingsavgift trekkes fra kjøpet.', time: 'Påkrevd', slot: 15, buffer: 5, cap: 1, fee: 250, presale: true, free: 'Ingen', access: 'Privat galleri per booking', roster: 'Åpen påmelding' },
@@ -91,7 +91,7 @@
         '<dl class="kv small" style="margin-top:14px"><dt>Fotograferingsavgift</dt><dd>' + (b.fee ? SV.kr(b.fee) + ' (trekkes fra kjøp)' : 'Ingen') + '</dd><dt>Forhåndssalg</dt><dd>' + b.presale + ' pakker · ' + SV.kr(b.presaleKr) + '</dd><dt>Ubetalt</dt><dd>' + (b.fee ? '2 venter på Vipps · <button class="link" data-act="unpaid">minn på</button>' : '–') + '</dd></dl>' +
         '<div class="row" style="margin-top:14px"><a class="btn btn-ghost btn-xs" href="#/booking/' + b.id + '">' + ic('eye') + 'Se bookingsiden</a><button class="btn btn-ghost btn-xs" data-act="dummy">' + ic('qr') + 'QR</button></div></div>';
     }).join('') + '</div>' +
-      '<div class="callout sec" style="margin-top:16px">' + ic('info') + '<span>Bookingsiden har fast lenke. Familien får bekreftelse med personlig QR-kode og galleri-kode, og kan endre eller avbestille selv frem til dagen før. Forhåndssalg gir 15 % rabatt og bedre planlegging av trykk.</span></div>';
+      '<div class="callout sec" style="margin-top:16px">' + ic('info') + '<span>Bookingsiden har fast lenke. Familien får bekreftelse med tid og galleri-kode, og kan endre eller avbestille selv frem til dagen før. Forhåndssalg gir 15 % rabatt og bedre planlegging av trykk.</span></div>';
   };
   SV.on('unpaid', function () { SV.toast('Påminnelse sendt til 2 som ikke har betalt'); });
 
@@ -109,7 +109,7 @@
     return '<div class="g21"><div class="card"><div class="card-h"><h3>Luker ' + SV.fdate(s.date, true) + '</h3><span class="small muted">' + booked + ' booket · ' + free + ' ledige</span></div><div class="card-b"><div class="slots" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr))">' +
       sl.map(function (x) { return x.lunch ? '<div class="opt nobox" style="padding:12px;background:rgba(22,20,18,.05);cursor:default;grid-column:span 2"><b>' + ic('lock', 'tiny-ic') + ' Lunsj 11:30–12:15</b><small>Låst</small></div>' : '<div class="opt nobox" style="padding:12px;' + (x.full ? 'background:rgba(125,139,106,.15);' : '') + 'cursor:default"><b>' + hm(x.t) + '</b><small>' + (x.full ? 'Booket' : 'Ledig') + '</small></div>'; }).join('') + '</div></div></div>' +
       '<div class="stack"><div class="card pad"><h3 class="h3">Innstillinger</h3><dl class="kv small" style="margin-top:10px"><dt>Luke</dt><dd>10 min + 5 min buffer</dd><dt>Kapasitet</dt><dd>1 familie per luke</dd><dt>Tidsvalg</dt><dd>Valgfritt</dd><dt>Endre/avbestille</dt><dd>Til dagen før kl. 12</dd></dl><a class="btn btn-ghost btn-s" style="margin-top:12px" href="#/booking/' + s.id + '">' + ic('eye') + 'Se siden familiene får</a></div>' +
-      '<div class="callout">' + ic('qr') + '<span>Bookede får en personlig QR-kode. Ved stasjonen skannes den, så havner bildene i riktig familiegalleri.</span></div></div></div>';
+      '<div class="callout">' + ic('users') + '<span>De bookede står i stasjonens liste i tidsrekkefølge. Fotografen klikker på familien når de kommer, så havner bildene i riktig familiegalleri.</span></div></div></div>';
   };
 
   // ---------- offentlig bookingside ----------
@@ -118,7 +118,7 @@
     var b = SV.find(BOOKINGS, p.id) || BOOKINGS[0], my = (st().bookings || {})[b.id], sl = slots(3);
     if (my) {
       return SV.brand(b.kind) + '<div class="bhead"><h1>Du er booket!</h1><p>' + esc(b.name) + '</p></div>' +
-        '<div class="card pad" style="margin-top:18px;text-align:center"><p style="font-family:var(--serif);font-size:26px">' + SV.fdate(b.when, true) + ' kl. ' + my.t + '</p><p class="small muted" style="margin:6px 0 14px">' + esc(my.who) + (my.pre ? ' · forhåndskjøpt: ' + esc(my.pre) : '') + '</p>' + qrSvg(my.t + my.who) + '<p class="small" style="margin-top:10px">Vis QR-koden ved stasjonen. Galleri-kode: <b>' + esc('BK-' + my.t.replace(':', '') + '-7Q') + '</b></p></div>' +
+        '<div class="card pad" style="margin-top:18px;text-align:center"><p style="font-family:var(--serif);font-size:26px">' + SV.fdate(b.when, true) + ' kl. ' + my.t + '</p><p class="small muted" style="margin:6px 0 14px">' + esc(my.who) + (my.pre ? ' · forhåndskjøpt: ' + esc(my.pre) : '') + '</p><p class="small" style="margin-top:10px">Si navnet ditt ved stasjonen. Galleri-kode: <b>' + esc('BK-' + my.t.replace(':', '') + '-7Q') + '</b></p></div>' +
         '<div class="row" style="margin-top:14px"><button class="btn btn-ghost" data-act="ics">' + ic('cal') + 'Legg i kalender</button><button class="btn btn-ghost" data-act="bkCancel" data-id="' + b.id + '">Endre eller avbestill</button></div>' +
         '<p class="hint" style="margin-top:12px">Du får SMS dagen før. Bildene er klare ca. tre dager etter, og du får beskjed.</p>';
     }

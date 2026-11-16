@@ -47,11 +47,11 @@ kbd{font:11px ui-monospace,Menlo,monospace;border:1px solid currentColor;border-
 <header><b>Studiovest</b><span>Stasjon</span><span class="pill" id="sess">–</span><span class="pill"><i class="dot" id="camDot"></i><span id="cam">Kamera</span></span><span class="pill"><i class="dot" id="upDot"></i><span id="up">Opplasting</span></span></header>
 <main>
   <section class="col">
-    <div class="card"><input id="scan" placeholder="Skann QR-kort eller skriv navn" autocomplete="off" aria-label="Skann QR-kode"></div>
+    <div class="card"><input id="scan" placeholder="Søk etter navn" autocomplete="off" aria-label="Søk i listen"></div>
     <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0"><h2 id="count">Liste</h2><div id="people"></div></div>
   </section>
   <section class="col">
-    <div class="view" id="view"><div><div class="big">Skann QR-kortet</div><p>Bildene får navn etter koden og lastes opp av seg selv.</p></div></div>
+    <div class="view" id="view"><div><div class="big">Klikk på et navn</div><p>Bildene som tas, kobles til personen du har valgt. Klikk neste navn når du går videre.</p></div></div>
     <div class="card"><div class="strip" id="strip"></div>
       <div class="row"><button class="b acc" id="shoot">Ta bilde<kbd>Mellomrom</kbd></button><button class="b dark" id="done" disabled>Ferdig, neste<kbd>Enter</kbd></button><button class="b ghost" id="absent" disabled>Fravær</button></div>
       <p id="hint" style="font-size:13px;color:var(--dim);margin:10px 0 0"></p></div>
@@ -79,7 +79,7 @@ kbd{font:11px ui-monospace,Menlo,monospace;border:1px solid currentColor;border-
     var cur = S.people.filter(function (p) { return p.code === S.current; })[0], v = $('view');
     $('done').disabled = !cur || !cur.photos.length || !!cur.blocked; $('absent').disabled = !cur; $('shoot').style.display = S.canTrigger ? '' : 'none';
     $('hint').textContent = S.canTrigger ? '' : 'Ta bildet med utløseren på kameraet. Det dukker opp her med en gang.';
-    if (!cur) { v.className = 'view'; v.innerHTML = '<div><div class="big">Skann QR-kortet</div><p>Bildene får navn etter koden og lastes opp av seg selv.</p></div>'; $('strip').innerHTML = ''; $('scan').focus(); }
+    if (!cur) { v.className = 'view'; v.innerHTML = '<div><div class="big">Klikk på et navn</div><p>Bildene som tas, kobles til personen du har valgt. Klikk neste navn når du går videre.</p></div>'; $('strip').innerHTML = ''; }
     else if (cur.blocked) { v.className = 'view stop'; v.innerHTML = '<div><div class="big">Ikke fotografer ' + esc(cur.name) + '</div><p>' + esc(cur.blocked) + '. Bilder som likevel tas, legges i karantene og lastes ikke opp.</p></div>'; $('strip').innerHTML = ''; }
     else {
       var last = cur.photos[cur.photos.length - 1];
@@ -88,10 +88,11 @@ kbd{font:11px ui-monospace,Menlo,monospace;border:1px solid currentColor;border-
     }
     $('log').innerHTML = S.log.map(function (l) { return '<li class="' + l.level + '"><time>' + l.t.slice(11, 19) + '</time>' + esc(l.text) + '</li>'; }).join('');
   }
-  function scan(v) { v = v.trim(); if (!v) return; var hit = S.people.filter(function (p) { return p.code.toLowerCase() === v.toLowerCase(); })[0] || S.people.filter(function (p) { return p.name.toLowerCase().indexOf(v.toLowerCase()) > -1; })[0]; post('/api/scan', { code: hit ? hit.code : v }).then(load); $('scan').value = ''; }
-  $('scan').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); scan(this.value); } });
+  function pick(code) { post('/api/select', { code: code }).then(load); }
+  // Enter i søket velger første treff
+  $('scan').addEventListener('keydown', function (e) { if (e.key !== 'Enter') return; e.preventDefault(); var v = this.value.trim().toLowerCase(); var hit = v && S.people.filter(function (p) { return p.name.toLowerCase().indexOf(v) > -1; })[0]; if (hit) pick(hit.code); this.value = ''; document.querySelectorAll('.p').forEach(function (b) { b.hidden = false; }); this.blur(); });
   $('scan').addEventListener('input', function () { var q = this.value.toLowerCase(); document.querySelectorAll('.p').forEach(function (b) { b.hidden = q && b.getAttribute('data-q').indexOf(q) < 0; }); });
-  $('people').addEventListener('click', function (e) { var b = e.target.closest('.p'); if (b) post('/api/scan', { code: b.getAttribute('data-code') }).then(load); });
+  $('people').addEventListener('click', function (e) { var b = e.target.closest('.p'); if (b) pick(b.getAttribute('data-code')); });
   $('shoot').onclick = function () { post('/api/shoot'); };
   $('done').onclick = function () { post('/api/done').then(load); };
   $('absent').onclick = function () { post('/api/absent', {}).then(load); };

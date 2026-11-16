@@ -1,5 +1,5 @@
 'use strict';
-// Ende-til-ende-test uten kamera: simulert kamera, skann, bilder, samtykkestopp, usortert, RAW+JPG, opplasting.
+// Ende-til-ende-test uten kamera: simulert kamera, velg navn i listen, bilder, samtykkestopp, usortert, RAW+JPG, opplasting.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -32,11 +32,11 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('  ✓
   try {
     // bilde uten skannet kode -> usortert
     await api('/api/shoot', null); await wait(1200);
-    ok(ls(cfg.unsortedDir).length === 1, 'bilde uten skannet kode havner i «usortert»');
+    ok(ls(cfg.unsortedDir).length === 1, 'bilde uten valgt person havner i «usortert»');
 
     // skann Emma, tre bilder
-    const r = await api('/api/scan', { code: 'fjt-4b-7k2q' });
-    ok(r.ok && r.person.name === 'Emma Haugland' && !r.blocked, 'skanning (små bokstaver) finner Emma');
+    const r = await api('/api/select', { code: 'FJT-4B-7K2Q' });
+    ok(r.ok && r.person.name === 'Emma Haugland' && !r.blocked, 'klikk på Emma i listen velger henne');
     for (let i = 0; i < 3; i++) { await api('/api/shoot', null); await wait(150); }
     await wait(1500);
     const lib = ls(cfg.libraryDir);
@@ -54,22 +54,29 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('  ✓
     const lib2 = ls(cfg.libraryDir);
     ok(lib2.includes(path.join('FJT2026', '4B', 'FJT-4B-7K2Q_0004.arw')) && lib2.includes(path.join('FJT2026', '4B', 'FJT-4B-7K2Q_0004.jpg')), 'RAW og JPG fra samme bilde får samme nummer (_0004)');
 
-    // ferdig -> neste
+    // klikk på neste navn -> Emma blir ferdig av seg selv
+    const rn = await api('/api/select', { code: 'FJT-1A-7K2Q' });
+    let st0 = await api('/api/state');
+    ok(rn.ok && st0.current === 'FJT-1A-7K2Q' && st0.people.find(p => p.code === 'FJT-4B-7K2Q').status === 'Ferdig', 'klikk på neste navn gjør Emma ferdig og velger Nora');
+    await api('/api/shoot', null); await wait(1200);
+    ok(ls(cfg.libraryDir).includes(path.join('FJT2026', '1A', 'FJT-1A-7K2Q_0001.jpg')), 'neste bilde havner hos Nora');
+
+    // Ferdig-knappen: hopper over barn uten samtykke
     const dn = await api('/api/done', null);
-    ok(dn.ok && dn.next && dn.next.name === 'Nora Haugland', 'Ferdig hopper over barn uten samtykke og foreslår Nora');
+    ok(dn.ok && !dn.next, 'Ferdig hopper over barn uten samtykke (ingen igjen)');
 
     // samtykke nei -> karantene, ikke lastet opp
-    const rb = await api('/api/scan', { code: 'FJT-4B-9752' });
+    const rb = await api('/api/select', { code: 'FJT-4B-9752' });
     ok(rb.blocked === 'Foresatte har svart nei', 'Ella gir stopp: foresatte har svart nei');
     await api('/api/shoot', null); await wait(1200);
     ok(ls(cfg.quarantineDir).length === 1 && !ls(cfg.libraryDir).some(f => f.includes('9752')), 'bilde av Ella lagt i karantene, ikke i biblioteket');
 
     // ukjent kode
-    const ru = await api('/api/scan', { code: 'XYZ' });
-    ok(!ru.ok, 'ukjent kode avvises');
+    const ru = await api('/api/select', { code: 'XYZ' });
+    ok(!ru.ok, 'ukjent person avvises');
 
     const st = await api('/api/state');
-    ok(st.people.find(p => p.code === 'FJT-4B-7K2Q').status === 'Ferdig' && st.uploads.waiting === 0, 'status: Emma ferdig, ingen i opplastingskø');
+    ok(st.people.find(p => p.code === 'FJT-4B-7K2Q').status === 'Ferdig' && st.people.find(p => p.code === 'FJT-1A-7K2Q').status === 'Ferdig' && st.uploads.waiting === 0, 'status: Emma og Nora ferdig, ingen i opplastingskø');
     ok(fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8').includes('/api/events'), 'stasjonsskjermen henter hendelser live');
   } finally { app.close(); }
   console.log(`\n${pass} tester bestått`);

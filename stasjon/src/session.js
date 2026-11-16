@@ -60,13 +60,19 @@ class Session extends EventEmitter {
     this.emit('event', { type: 'log', entry: e });
   }
 
-  scan(code) {
+  // Fotografen klikker på navnet i listen. Klikk på neste navn = forrige er ferdig (hvis det er tatt bilder).
+  select(code) {
     const p = this.find(code);
-    if (!p) { this.note(`Ukjent kode: ${code}`, 'warn'); return { ok: false, error: 'Ukjent kode' }; }
+    if (!p) { this.note(`Fant ikke personen: ${code}`, 'warn'); return { ok: false, error: 'Fant ikke personen' }; }
+    const prev = this.find(this.current);
+    if (prev && prev.code !== p.code && (this.photos[prev.code] || []).length && this.status[prev.code] !== 'Ferdig') {
+      this.status[prev.code] = 'Ferdig';
+      this.note(`Ferdig · ${prev.name} (${this.photos[prev.code].length} bilder)`);
+    }
     this.current = p.code;
     if (this.status[p.code] !== 'Ferdig') this.status[p.code] = 'Pågår';
     const why = this.blockedReason(p);
-    this.note(`Skannet ${p.code} · ${p.name}` + (why ? ` · STOPP: ${why}` : ''), why ? 'stop' : 'info');
+    this.note(`Valgt · ${p.name}` + (why ? ` · STOPP: ${why}` : ''), why ? 'stop' : 'info');
     this.emit('event', { type: 'state' });
     return { ok: true, person: p, blocked: why };
   }
@@ -75,7 +81,9 @@ class Session extends EventEmitter {
     const p = this.find(this.current); if (!p) return { ok: false };
     this.status[p.code] = 'Ferdig'; this.current = null;
     this.note(`Ferdig · ${p.name} (${(this.photos[p.code] || []).length} bilder)`);
+    // neste i listen som ikke er tatt og kan fotograferes, velges med en gang
     const next = this.roster.find(x => !this.status[x.code] && !this.blockedReason(x));
+    if (next) { this.current = next.code; this.status[next.code] = 'Pågår'; this.note(`Valgt · ${next.name}`); }
     this.emit('event', { type: 'state' });
     return { ok: true, next: next || null };
   }
@@ -109,7 +117,7 @@ class Session extends EventEmitter {
     if (!p) {
       const dst = uniquePath(path.join(this.cfg.unsortedDir, original));
       await move(file, dst);
-      this.note(`Bilde uten skannet kode: ${original} lagt i «usortert»`, 'warn');
+      this.note(`Bilde uten valgt person: ${original} lagt i «usortert»`, 'warn');
       this.emit('event', { type: 'photo', photo: { file: dst, unsorted: true } });
       return { unsorted: dst };
     }

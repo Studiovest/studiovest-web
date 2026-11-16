@@ -23,7 +23,7 @@
           (st === 'Fotografert' ? '<p class="small muted">Fotografert. Råfilene lastes opp når du er på wifi.</p>' : '<button class="btn btn-dark bigbtn" data-act="shotDone" data-id="' + j.id + '">' + ic('check') + 'Ferdig fotografert</button>') +
         '</div></details>';
       }).join('') + '</div>' +
-      '<a class="btn btn-ghost bigbtn" href="#/skole/fotograf" style="margin-top:8px">' + ic('qr') + 'Skolefoto-modus</a>';
+      '<a class="btn btn-ghost bigbtn" href="#/skole/fotograf" style="margin-top:8px">' + ic('users') + 'Skolefoto-modus</a>';
   }, { title: 'Dagen' });
   SV.on('shotTick', function (el) { SV.state.shotDone = SV.state.shotDone || {}; var id = el.getAttribute('data-id'); (SV.state.shotDone[id] = SV.state.shotDone[id] || {})[el.getAttribute('data-k')] = el.checked; SV.save(); el.closest('li').classList.toggle('done', el.checked); });
   SV.on('onWay', function (el) { var j = SV.find(SV.jobs(), el.getAttribute('data-id')); SV.toast('SMS til ' + j.seller.split(' ')[0] + ': «Fotografen er på vei, framme ca. om 20 min»'); });

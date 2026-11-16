@@ -40,7 +40,7 @@ function start(cfg) {
         res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }); res.write(': ok\n\n');
         clients.add(res); req.on('close', () => clients.delete(res)); return;
       }
-      if (req.method === 'POST' && u.pathname === '/api/scan') { const b = await body(req); return json(res, 200, session.scan(b.code)); }
+      if (req.method === 'POST' && u.pathname === '/api/select') { const b = await body(req); return json(res, 200, session.select(b.code)); }
       if (req.method === 'POST' && u.pathname === '/api/done') return json(res, 200, session.done());
       if (req.method === 'POST' && u.pathname === '/api/absent') { const b = await body(req); return json(res, 200, session.absent(b.code)); }
       if (req.method === 'POST' && u.pathname === '/api/shoot') {
