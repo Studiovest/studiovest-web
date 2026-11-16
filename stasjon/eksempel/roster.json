@@ -1,0 +1,12 @@
+{
+  "session": "FJT2026",
+  "people": [
+    { "code": "FJT-4B-7K2Q", "name": "Emma Haugland", "group": "4B", "consent": "Ja" },
+    { "code": "FJT-4B-9752", "name": "Ella Tveit", "group": "4B", "consent": "Nei" },
+    { "code": "FJT-4B-2034", "name": "Nora Opsal", "group": "4B", "consent": "Ja" },
+    { "code": "FJT-4B-2675", "name": "Magnus Rabben", "group": "4B", "consent": "Kun gruppebilde" },
+    { "code": "FJT-4B-7584", "name": "Tiril Eide", "group": "4B", "consent": "Ja" },
+    { "code": "FJT-1A-7K2Q", "name": "Nora Haugland", "group": "1A", "consent": "Ja" },
+    { "code": "FJT-1A-4988", "name": "Oskar Nygård", "group": "1A", "consent": "Ikke svart" }
+  ]
+}

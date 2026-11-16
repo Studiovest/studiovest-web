@@ -1,0 +1,14 @@
+{
+  "name": "studiovest-stasjon",
+  "version": "0.1.0",
+  "description": "Studiovest Stasjon: egen tethering- og navngivingsstasjon for skolefoto og portrettdager",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "src/server.js",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/server.js",
+    "sim": "node src/server.js --driver=simulator",
+    "test": "node test/run.js"
+  }
+}

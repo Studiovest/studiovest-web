@@ -1,8 +1,7 @@
 /* Fotostasjon (tethering) for skolefoto og portrettdager i bedrift.
-   Tenkt oppsett: kamera i USB-kabel til PC med Smart Shooter 6. Smart Shooter leser QR-kode
-   (fra live view eller USB-skanner), navngir filen etter koden og melder hvert nye bilde via sitt
-   eksterne API. Et lite Studiovest-program på PC-en kobler bildet til riktig person i portalen
-   og laster det opp. Denne siden viser hvordan stasjonen ser ut og oppfører seg (simulert). */
+   Egen løsning: kamera i TetherPro-kabel (USB-C) til PC som kjører Studiovest Stasjon (mappen stasjon/
+   i repoet). Stasjonen tar imot bildene fra kamera, navngir dem etter skannet QR-kode, sjekker samtykke,
+   tar kopi til SSD og laster opp til portalen. Denne siden viser hvordan det ser ut i portalen (simulert). */
 (function () {
   'use strict';
   var SV = window.SV, D = SV.data, esc = SV.esc, ic = SV.icon;
@@ -53,7 +52,7 @@
         '<p class="hint">' + (S.mode === 'skole' ? 'Ferdig: elevens bilder legges i galleriet til foresatte. Fravær gir automatisk plass på omfotograferingen.' : 'Ferdig: personen får galleriet sitt på e-post med en gang, og velger to bilder til retusj.') + '</p></div></div>';
     }
     var side = '<div class="stack"><div class="card"><div class="card-h"><h3>Utstyr</h3></div><div class="card-b small">' +
-      [['cam', 'Kamera (Sony) · USB-C-kabel', 'Smart Shooter 6 · tilkoblet'], ['qr', 'QR-skanner (USB)', 'Klar'], ['upload', 'Opplasting', S.queue ? S.queue + ' i kø' : 'Alt er synket'], ['box', 'Kopi til SSD', 'Hver fil lagres to steder']].map(function (x) { return '<div class="li" style="padding:8px 0">' + ic(x[0]) + '<span class="li-t"><b>' + x[1] + '</b><small>' + x[2] + '</small></span><i class="ndot n-ok"></i></div>'; }).join('') + '</div></div>' +
+      [['cam', 'Kamera (Sony) · USB-C-kabel', 'Studiovest Stasjon · tilkoblet'], ['qr', 'QR-skanner (USB)', 'Klar'], ['upload', 'Opplasting', S.queue ? S.queue + ' i kø' : 'Alt er synket'], ['box', 'Kopi til SSD', 'Hver fil lagres to steder']].map(function (x) { return '<div class="li" style="padding:8px 0">' + ic(x[0]) + '<span class="li-t"><b>' + x[1] + '</b><small>' + x[2] + '</small></span><i class="ndot n-ok"></i></div>'; }).join('') + '</div></div>' +
       '<div class="card"><div class="card-h"><h3>Filnavn</h3></div><div class="card-b"><input class="inp" id="tplIn" value="' + esc(m.tpl) + '" data-input="stTpl" aria-label="Mal for filnavn" style="font-family:ui-monospace,Menlo,monospace;font-size:13px"><p class="tiny muted" style="margin-top:6px">Eksempel: <b id="tplEx">' + esc(cur ? fname(cur, 1) : fname(subs[0], 1)) + '</b></p><p class="hint">Koden lagres også i bildets metadata, så bildet finner riktig person selv om filen får nytt navn.</p></div></div>' +
       '<div class="card"><div class="card-h"><h3>Logg</h3><span class="small muted">' + doneN + ' av ' + subs.length + ' ferdig</span></div><div class="card-b"><ul class="feed small">' + (S.log.length ? S.log.map(function (l) { return '<li><span>' + l[1] + '</span><time>' + l[0] + '</time></li>'; }).join('') : '<li><span class="muted">Ingen hendelser ennå</span></li>') + '</ul></div></div></div>';
     SV.after(function () { var i = document.getElementById('scanIn'); if (i && !cur) i.focus({ preventScroll: true }); });
@@ -61,12 +60,12 @@
         actions: '<div class="filters" style="margin:0"><button class="fbtn' + (S.mode === 'skole' ? ' on' : '') + '" data-act="stMode" data-m="skole">Skolefoto</button><button class="fbtn' + (S.mode === 'bedrift' ? ' on' : '') + '" data-act="stMode" data-m="bedrift">Portrettdag bedrift</button></div>' }) +
       '<div class="st-grid">' + queue + center + side + '</div>' +
       '<details class="card sec"><summary class="card-h" style="cursor:pointer"><h3>Slik settes stasjonen opp</h3><span class="small muted">utstyr og programmer</span></summary><div class="card-b research"><ul class="new">' +
-        '<li><b>Kamera:</b> USB-C-kabel (Tether Tools TetherPro, 4,6 m) med kabelsikring, så kontakten ikke rives ut. Strøm via batterieliminator på lange dager.</li>' +
-        '<li><b>PC:</b> Bærbar med Smart Shooter 6 (støtter Sony, Canon, Nikon, Fujifilm). Bildene lagres på PC-en og en ekstern SSD samtidig.</li>' +
-        '<li><b>QR:</b> USB-skanner til QR-kortene, eller Smart Shooters egen lesing av koden i live view. Koden settes inn i filnavnet ([Z]) og i metadata.</li>' +
-        '<li><b>Studiovest-programmet:</b> leser hendelsene fra Smart Shooter (eget API-tillegg), henter klasseliste og samtykker fra portalen før dagen, sjekker samtykke ved hver skanning og laster opp bildene. Virker uten nett og synker når nettet er tilbake.</li>' +
-        '<li><b>Flere stasjoner:</b> én PC per stasjon. Portalen ser alle stasjonene live og sørger for at samme person ikke tas to steder.</li>' +
-        '<li><b>Alternativ:</b> Capture One har også tethering og navnemaler, men mangler QR-lesing. Smart Shooter er det Headshot Tools selv anbefaler.</li></ul></div></details>';
+        '<li><b>Kabel:</b> Tether Tools TetherPro Optima 10G, USB-C rett til vinkel (10 Gbit/s). Vinkelen går inn i kameraet, så kontakten ikke belastes. Velg lengde etter rommet; 4,6 m er vanlig for skolefoto. Bruk kabelsikring og batterieliminator på lange dager.</li>' +
+        '<li><b>PC:</b> Bærbar med Studiovest Stasjon, vårt eget program. Det tar imot bildene fra kamera, gir dem navn etter koden, legger koden i metadata (XMP), tar kopi til ekstern SSD og laster opp. Virker uten nett og laster opp når nettet er tilbake.</li>' +
+        '<li><b>Kamera:</b> direkte via kabelen med libgphoto2 (åpen kildekode), eller via kameraprodusentens gratis tether-program som lagrer i en mappe stasjonen følger. Støtte for direkte styring og live view kan bygges med Sony Camera Remote SDK.</li>' +
+        '<li><b>QR:</b> USB-skanner til QR-kortene. Den skriver koden inn som et tastatur, så stasjonen vet hvem som står foran kamera.</li>' +
+        '<li><b>Samtykke:</b> klasseliste og samtykker hentes fra portalen før dagen. Barn med «nei» gir rød stopp, og bilder som likevel tas legges i karantene og lastes ikke opp.</li>' +
+        '<li><b>Flere stasjoner:</b> én PC per stasjon. Portalen ser alle stasjonene live.</li></ul></div></details>';
   }, { title: 'Fotostasjon' });
 
   function rerender() { var y = window.scrollY; SV.render(); window.scrollTo(0, y); }
@@ -106,7 +105,7 @@
   SV.on('stFav', function (el) { S.picks[S.cur] = +el.getAttribute('data-k'); rerender(); });
   SV.on('stTpl', function (el) { MODES[S.mode].tpl = el.value; var subs = subjects(), cur = (S.cur && SV.find(subs, S.cur)) || subs[0]; document.getElementById('tplEx').textContent = fname(cur, 1); });
 
-  // ---------- Bedrift: portrettdag (som Headshot Tools) ----------
+  // ---------- Bedrift: portrettdag ----------
   SV.route('/bedrift/portrettdag', 'studio', function () {
     var subs = subjects.call(null), m = S.mode; S.mode = 'bedrift'; subs = subjects(); S.mode = m;
     var sent = subs.filter(function (s, i) { return i < 5; });

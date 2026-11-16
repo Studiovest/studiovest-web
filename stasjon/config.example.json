@@ -1,0 +1,15 @@
+{
+  "station": "Stasjon 1",
+  "port": 7420,
+  "driver": "folder",
+  "incomingDir": "./data/innkommende",
+  "libraryDir": "./data/bibliotek",
+  "backupDir": "./data/backup",
+  "quarantineDir": "./data/karantene",
+  "unsortedDir": "./data/usortert",
+  "rosterFile": "./data/roster.json",
+  "template": "{skole}/{klasse}/{kode}_{nr}",
+  "portalUrl": "",
+  "portalToken": "",
+  "gphoto2": "gphoto2"
+}

@@ -39,3 +39,7 @@ Studio, Fotograf (dagmodus), Redigering, Megler, Selger, Bedrift, Ansatt (samtyk
 - `portal/js/core.js`: ruter, skall, modaler og ikoner. `studio.js`, `bolig.js`, `bedrift.js`, `skole.js`, `marked.js` og `innsikt.js` har sidene for hvert felt. `roller.js` har mobilsidene for selger, ansatt og foresatt før fotodag, `dag.js` fotografens dagmodus og redigeringsvisningen.
 - `portal/img/`: nedskalerte bilder (720 px) til rutenett. Fullstørrelse brukes bare i forstørret visning.
 - Endringer i demoen lagres bare i nettleseren. «Nullstill» oppe til høyre starter på nytt.
+
+## Studiovest Stasjon (tethering)
+
+Eget program i `stasjon/` for fotodager: kamera i USB-C-kabel til PC, QR-skanning, navngiving etter kode, samtykkestopp, kopi til SSD og opplasting til portalen. Se `stasjon/README.md`. Test: `cd stasjon && npm test`.
