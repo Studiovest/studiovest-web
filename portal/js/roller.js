@@ -15,13 +15,22 @@
     ['Ute', ['Flytt biler fra innkjørselen', 'Sett frem utemøbler, legg bort leker og søppeldunker']]
   ];
   SV.route('/selger/:id', 'selger', function (p) {
-    var j = SV.find(SV.jobs(), p.id) || SV.jobs()[8], o = SV.find(D.offices, j.office), first = j.seller.split(' ')[0];
+    var j = SV.find(SV.jobs(), p.id) || SV.jobs()[8], o = SV.find(D.offices, j.office), first = (j.seller.split('v/ ')[1] || j.seller).split(' ')[0];
     var chosen = (SV.state.sellerTime || {})[j.id], done = (SV.state.prep || {})[j.id] || {};
     var dur = Math.round(SV.minutes(j) / 30) / 2;
     var slots = [[D.W(2), '09:00'], [D.W(2), '12:30'], [D.W(3), '10:00'], [D.W(4), '09:00'], [D.W(4), '13:00']];
     var drone = j.services.indexOf('dr') > -1;
     var pick = chosen ? '<div class="card pad" style="margin-top:16px"><p class="eyebrow">Avtalt</p><p style="font-size:22px;font-family:var(--serif)">' + SV.fdate(chosen[0], true) + ' kl. ' + chosen[1] + '</p><p class="small muted" style="margin-top:4px">Ca. ' + String(dur).replace('.', ',') + ' timer. Megler er varslet.</p><div class="row" style="margin-top:12px"><button class="btn btn-ghost btn-s" data-act="ics">' + ic('cal') + 'Legg i kalender</button><button class="btn btn-ghost btn-s" data-act="sellerMove" data-id="' + j.id + '">Flytt</button></div></div>' :
       '<div style="margin-top:16px"><h2 class="h2"><span class="serif">Velg tid</span></h2>' + slots.map(function (s, i) { return '<label class="choice"><input type="radio" name="t" value="' + s[0] + ' ' + s[1] + '"' + (i === 0 ? ' checked' : '') + '><b>' + SV.fdate(s[0], true) + '</b><small>kl. ' + s[1] + ' · ca. ' + String(dur).replace('.', ',') + ' t</small></label>'; }).join('') + '<button class="btn btn-dark bigbtn" data-act="sellerPick" data-id="' + j.id + '">Bekreft tid</button><p class="hint" style="text-align:center">Passer ingen? <button class="link" data-act="dummy">Foreslå en annen tid</button></p></div>';
+    if (SV.stIdx(j) >= 4) {
+      var ph = SV.boligPhotos(j).slice(0, 6), ap = SV.approval(j);
+      return brand('for ' + o.name) +
+        '<div class="bhead"><h1>Hei ' + esc(first) + '! Bildene av ' + esc(j.addr) + ' er klare.</h1><p>Se gjennom bildene og plantegningen. ' + esc(j.broker) + ' bruker dem i annonsen.</p></div>' +
+        '<div class="gal" style="margin-top:18px;grid-template-columns:repeat(2,1fr)">' + ph.map(function (x) { return '<figure class="gi">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + esc(x.name) + '</span></figure>'; }).join('') + '</div>' +
+        '<div class="card" style="margin-top:14px;aspect-ratio:4/3;position:relative;overflow:hidden;background:#fff">' + SV.planSvg() + '</div>' +
+        (ap ? '<div class="card pad" style="margin-top:16px"><p class="eyebrow">Godkjent</p><p>' + SV.fdate(ap.d, true) + ' av ' + esc(ap.by) + '. Takk!</p></div>' :
+          '<button class="btn btn-acc bigbtn" style="margin-top:16px" data-act="crmApprove" data-id="' + j.id + '" data-by="' + esc(j.seller) + ' (kunde)">' + ic('check') + 'Godkjenn bildene og plantegningen</button><p class="hint" style="text-align:center">Noe som bør endres? Ring eller svar på e-posten, så fikser vi det.</p>');
+    }
     return brand('for ' + o.name) +
       '<div class="bhead"><h1>Hei ' + esc(first) + '! Vi skal fotografere ' + esc(j.addr) + '.</h1><p>' + esc(j.broker) + ' har bestilt ' + SV.svcShort(j).toLowerCase() + '. Her velger du tid og ser hvordan du gjør boligen klar.</p></div>' +
       '<div class="who" style="margin-top:18px">' + SV.avatar('Aleksander Koløy') + '<div><b>Aleksander Koløy</b><br><span class="small muted">Fotografen din · 912 00 000</span></div><a class="btn btn-ghost btn-s" style="margin-left:auto" href="tel:91200000">' + ic('chat') + 'Ring</a></div>' +
@@ -31,7 +40,7 @@
       PREP.map(function (g, gi) { return '<div class="card" style="margin-bottom:10px"><div class="card-h"><h3>' + g[0] + '</h3></div><div class="card-b"><ul class="check">' + g[1].map(function (t, ti) { var k = gi + '-' + ti; return '<li class="' + (done[k] ? 'done' : '') + '"><input type="checkbox" id="pr' + k + '"' + (done[k] ? ' checked' : '') + ' data-change="prep" data-id="' + j.id + '" data-k="' + k + '"><label for="pr' + k + '"><span>' + esc(t) + '</span></label></li>'; }).join('') + '</ul></div></div>'; }).join('') +
       '<p class="hint">Du trenger ikke være hjemme hvis megler har nøkkel. Kjæledyr bør være ute eller i ett rom.</p></div>';
   }, { title: 'Fotografering' });
-  SV.on('sellerPick', function (el) { var v = (document.querySelector('input[name=t]:checked') || {}).value; if (!v) return; SV.state.sellerTime = SV.state.sellerTime || {}; SV.state.sellerTime[el.getAttribute('data-id')] = v.split(' '); SV.state.stage[el.getAttribute('data-id')] = 'Planlagt'; SV.save(); SV.render(); SV.toast('Tiden er bekreftet · megler og fotograf er varslet'); });
+  SV.on('sellerPick', function (el) { var v = (document.querySelector('input[name=t]:checked') || {}).value; if (!v) return; SV.state.sellerTime = SV.state.sellerTime || {}; SV.state.sellerTime[el.getAttribute('data-id')] = v.split(' '); SV.save(); SV.setStage(SV.find(SV.jobs(), el.getAttribute('data-id')), 'Fotografering avtalt', { quiet: true }); SV.toast('Tiden er bekreftet · megler og fotograf er varslet'); });
   SV.on('sellerMove', function (el) { delete SV.state.sellerTime[el.getAttribute('data-id')]; SV.save(); SV.render(); });
   SV.on('ics', function () { SV.toast('Kalenderfil lastet ned'); });
   SV.on('prep', function (el) { SV.state.prep = SV.state.prep || {}; var id = el.getAttribute('data-id'); (SV.state.prep[id] = SV.state.prep[id] || {})[el.getAttribute('data-k')] = el.checked; SV.save(); el.closest('li').classList.toggle('done', el.checked); });

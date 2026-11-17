@@ -5,7 +5,8 @@
 
   SV.jobs = function () {
     var t = SV.state.sellerTime || {};
-    return D.boligJobs.concat(SV.state.newJobs).map(function (j) { return t[j.id] ? Object.assign({}, j, { date: t[j.id][0], time: t[j.id][1], wish: '' }) : j; });
+    var e = SV.state.jobEdit || {}, dl = SV.state.delivered || {};
+    return D.boligJobs.concat(SV.state.newJobs).map(function (j) { var x = t[j.id] ? Object.assign({}, j, { date: t[j.id][0], time: t[j.id][1], wish: '' }) : j; if (e[j.id]) x = Object.assign({}, x, e[j.id]); if (dl[j.id] && !x.delivered) x = Object.assign({}, x, { delivered: dl[j.id] }); return x; });
   };
   SV.stageOf = function (j) { return SV.state.stage[j.id] || j.stage; };
   function job(id) { return SV.find(SV.jobs(), id); }
@@ -34,7 +35,7 @@
   }
   function steps(j) {
     var cur = D.stages.indexOf(SV.stageOf(j));
-    return '<ol class="steps">' + D.stages.map(function (s, i) { return '<li class="' + (i < cur ? 'done' : i === cur ? (s === 'Levert' ? 'done' : 'now') : '') + '"><span>' + s + '</span></li>'; }).join('') + '</ol>';
+    return '<ol class="steps">' + D.stages.map(function (s, i) { return '<li class="' + (i < cur ? 'done' : i === cur ? (s === 'Godkjent' ? 'done' : 'now') : '') + '"><span>' + s + '</span></li>'; }).join('') + '</ol>';
   }
   SV.boligSteps = steps;
   function svcTags(j) { return '<div class="svc">' + j.services.map(function (s) { var v = svc(s); return '<span>' + esc(v ? v.name.replace(', per bilde', '').replace('Boligfoto, ', '').replace('Dronefoto, 8 bilder', 'Drone').replace('Boligvideo, 60–90 sek', 'Video').replace('SoMe-reel 9:16', 'Reel').replace('Plantegning ', 'Plan ').replace('Ekspress, levert innen 24 t', 'Ekspress').replace('Digital møblering', 'Møblering') : s) + '</span>'; }).join('') + '</div>'; }
@@ -49,22 +50,23 @@
     var svcs = '<div class="card tbl-w"><table class="tbl"><thead><tr><th>Tjeneste</th><th class="hide-s">Gruppe</th><th class="hide-s">Tid på stedet</th><th class="r">Pris</th><th class="r">Aktiv</th></tr></thead><tbody>' +
       D.boligServices.map(function (s) { return '<tr><td><b>' + esc(s.name) + '</b><small>' + esc(s.desc) + '</small></td><td class="hide-s">' + s.group + '</td><td class="hide-s">' + (s.min ? s.min + ' min' : '–') + '</td><td class="r num">' + SV.kr(s.price) + '</td><td class="r"><label class="sw"><input type="checkbox"' + (s.on ? ' checked' : '') + ' aria-label="' + esc(s.name) + '"><span></span></label></td></tr>'; }).join('') +
       '</tbody></table></div><p class="hint">Dummy-priser eks. mva. Tid på stedet brukes til å legge oppdrag i kalenderen. Kontoravtaler gir egne priser per kontor.</p>';
-    var off = '<div class="g2">' + D.offices.map(function (o) { return '<div class="card pad"><p class="eyebrow">' + esc(o.town) + '</p><h3 class="h3" style="font-size:18px">' + esc(o.name) + '</h3><dl class="kv" style="margin-top:12px"><dt>Avtale</dt><dd>' + esc(o.agreement) + '</dd><dt>Faktura</dt><dd>' + esc(o.invoice) + '</dd><dt>Meglere</dt><dd>' + o.brokers.map(esc).join(', ') + '</dd><dt>I år</dt><dd>' + SV.kr(o.ytd) + '</dd></dl></div>'; }).join('') + '</div>';
+    var off = '<div class="g2">' + D.offices.map(function (o) { return '<div class="card pad"><p class="eyebrow">' + esc(o.town) + '</p><h3 class="h3" style="font-size:18px">' + esc(o.name) + '</h3><dl class="kv" style="margin-top:12px"><dt>Avtale</dt><dd>' + esc(o.agreement) + '</dd><dt>Faktura</dt><dd>' + esc(o.invoice) + '</dd><dt>Meglere</dt><dd>' + o.brokers.map(esc).join(', ') + '</dd><dt>I år</dt><dd class="num">' + SV.kr(o.ytd) + '</dd></dl></div>'; }).join('') + '</div>';
     SV.after(dnd);
-    var bd = SV.diff(D.iso(D.base)), due = jobs.filter(function (j) { return j.due && SV.diff(j.due) <= bd && SV.stageOf(j) !== 'Levert'; }).length;
-    return SV.head({ eyebrow: SV.dot('bolig') + 'Bolig · ' + jobs.filter(function (j) { return SV.stageOf(j) !== 'Levert'; }).length + ' aktive · ' + due + ' med frist ' + (bd === 0 ? 'i dag' : SV.dayName(D.iso(D.base))), a: 'Bolig', b: 'oppdrag',
-        lead: 'Megler bestiller i sin portal, selger velger tid på SMS, og bildene går til megler i riktige formater så snart de er ferdige. Dra kortene mellom stegene.',
-        actions: '<a class="btn btn-ghost btn-s" href="#/kunde/megler">' + ic('eye') + 'Se meglerportalen</a><a class="btn btn-acc btn-s" href="#/kunde/megler/bestill">' + ic('plus') + 'Nytt oppdrag</a>' }) +
-      SV.tabs('bo', [['t', 'Tavle'], ['s', 'Tjenester og priser', D.boligServices.length], ['k', 'Meglerkontor', D.offices.length]], 't') +
-      SV.panels('bo', { t: '<div class="filters">' + [['alle', 'Alle kontor']].concat(D.offices.map(function (o) { return [o.id, o.name]; })).map(function (x) { return '<a class="fbtn' + (x[0] === f ? ' on' : '') + '" href="#/bolig' + (x[0] === 'alle' ? '' : '/kontor/' + x[0]) + '">' + esc(x[1]) + '</a>'; }).join('') + '</div>' + board, s: svcs, k: off }, 't');
+    var act = jobs.filter(function (j) { return SV.stageOf(j) !== 'Godkjent'; }).length, wait = jobs.filter(function (j) { return SV.stageOf(j) === 'Opprettet'; }).length;
+    var tab = SV.state.boTab || 'o';
+    return SV.head({ eyebrow: SV.dot('bolig') + 'Bolig · ' + act + ' aktive · ' + wait + ' skal kontaktes', a: 'Bolig', b: 'prosjekter',
+        lead: 'Legg inn prosjekter, endre status rett i listen og sett tid for fotografering. Megler og kunde får e-post automatisk, og godkjenner selv når bildene er levert.',
+        actions: '<a class="btn btn-ghost btn-s" href="#/kunde/megler">' + ic('eye') + 'Se meglerportalen</a><button class="btn btn-acc btn-s" data-act="crmNew">' + ic('plus') + 'Nytt prosjekt</button>' }) +
+      SV.tabs('bo', [['o', 'Oversikt', act], ['t', 'Tavle'], ['e', 'E-postvarsler'], ['s', 'Tjenester og priser', D.boligServices.length], ['k', 'Meglerkontor', D.offices.length]], tab) +
+      SV.panels('bo', { o: '<div class="filters">' + [['alle', 'Alle kontor']].concat(D.offices.map(function (o) { return [o.id, o.name]; })).map(function (x) { return '<a class="fbtn' + (x[0] === f ? ' on' : '') + '" href="#/bolig' + (x[0] === 'alle' ? '' : '/kontor/' + x[0]) + '">' + esc(x[1]) + '</a>'; }).join('') + '</div>' + SV.crmDash(jobs), t: board, e: SV.crmMails(), s: svcs, k: off }, tab);
   }, { title: 'Bolig' });
   SV.route('/bolig/kontor/:kontor', 'studio', function (p) { return SV.routes.filter(function (r) { return r.pattern === '/bolig'; })[0].fn(p); }, { title: 'Bolig' });
 
   function card(j) {
     var st = SV.stageOf(j), o = office(j.office);
-    var when = st === 'Bestilt' ? '<span>Ønske: ' + esc(j.wish || '–') + '</span>' : st === 'Levert' ? '<span>Levert ' + SV.fdate(j.delivered || j.date) + '</span>' : (st === 'Planlagt' ? '<span>' + ic('cal') + SV.fdate(j.date) + ' ' + j.time + '</span>' : (j.due ? '<span class="' + (SV.diff(j.due) <= 0 ? 'due' : '') + '">' + ic('clock') + 'Frist ' + SV.rel(j.due) + '</span>' : ''));
+    var si = D.stages.indexOf(st), when = si < 2 ? '<span>' + (j.wish ? 'Ønske: ' + esc(j.wish) : 'Ingen tid ennå') + '</span>' : si >= 4 ? '<span>Levert ' + SV.fdate(j.delivered || j.date) + '</span>' : (st === 'Fotografering avtalt' ? '<span>' + ic('cal') + SV.fdate(j.date) + ' ' + j.time + '</span>' : (j.due ? '<span class="' + (SV.diff(j.due) <= 0 ? 'due' : '') + '">' + ic('clock') + 'Frist ' + SV.rel(j.due) + '</span>' : ''));
     return '<a class="kb-card" draggable="true" data-id="' + j.id + '" href="#/bolig/' + j.id + '"><div class="kb-img">' + SV.pic(j.cover, '50% 60%') + '</div><div class="kb-b"><b>' + esc(j.addr) + '</b><small>' + esc(j.town) + ' · ' + esc(o.name) + '</small>' + svcTags(j) +
-      '<div class="kb-meta">' + when + (st !== 'Levert' ? '<button type="button" class="kb-mv" data-act="stageNext" data-id="' + j.id + '" aria-label="Flytt ' + esc(j.addr) + ' til ' + D.stages[D.stages.indexOf(st) + 1] + '">' + D.stages[D.stages.indexOf(st) + 1] + ' →</button>' : '') + '</div></div></a>';
+      '<div class="kb-meta">' + when + (st !== 'Godkjent' ? '<button type="button" class="kb-mv" data-act="stageNext" data-id="' + j.id + '" aria-label="Flytt ' + esc(j.addr) + ' til ' + D.stages[D.stages.indexOf(st) + 1] + '">' + D.stages[D.stages.indexOf(st) + 1] + ' →</button>' : '') + '</div></div></a>';
   }
   function dnd() {
     var kb = document.getElementById('kb'); if (!kb) return;
@@ -77,18 +79,16 @@
       col.addEventListener('drop', function (e) {
         e.preventDefault(); col.classList.remove('over'); if (!dragId) return;
         var s = col.getAttribute('data-stage'), j = job(dragId); if (SV.stageOf(j) === s) return;
-        SV.state.stage[dragId] = s; SV.save(); SV.render();
-        SV.toast(stageMsg(j, s));
+        if (s === 'Fotografering avtalt' && SV.stIdx(j) < 2) { SV.timeModal(j); return; }
+        SV.setStage(j, s);
       });
     });
-  }
-  function stageMsg(j, s) {
-    return s === 'Levert' ? 'Levert: e-post til ' + j.broker + ' og faktura laget automatisk' : s === 'Planlagt' ? 'Planlagt: SMS med tid og klargjøringsliste sendt til selger' : s === 'Redigering' ? 'Sendt til redigering' : j.addr + ' flyttet til ' + s;
   }
   SV.on('stageNext', function (el, ev) {
     if (ev) { ev.preventDefault(); ev.stopPropagation(); }
     var j = job(el.getAttribute('data-id')), i = D.stages.indexOf(SV.stageOf(j));
-    if (i < D.stages.length - 1) { SV.state.stage[j.id] = D.stages[i + 1]; SV.save(); SV.render(); SV.toast(stageMsg(j, D.stages[i + 1])); }
+    if (i === 1) { SV.timeModal(j); return; }
+    if (i < D.stages.length - 1) SV.setStage(j, D.stages[i + 1]);
   });
 
   // ---------- Studio: ett oppdrag ----------
@@ -98,10 +98,10 @@
     var ov = '<div class="g21"><div class="stack">' +
       '<div class="card"><div class="card-h"><h3>Bestilt</h3><span class="small muted">' + SV.kr(total(j)) + ' eks. mva</span></div><div class="card-b">' + j.services.map(function (s) { var v = svc(s); return '<div class="li"><span class="li-t"><b>' + esc(v.name) + '</b><small>' + esc(v.desc) + '</small></span><span class="li-r num">' + SV.kr(v.price) + '</span></div>'; }).join('') + '</div></div>' +
       '<div class="card"><div class="card-h"><h3>Tidslinje</h3></div><div class="card-b"><ul class="feed">' + timeline(j).map(function (t) { return '<li>' + SV.dot('bolig') + '<span>' + t[1] + '</span><time>' + t[0] + '</time></li>'; }).join('') + '</ul></div></div></div>' +
-      '<div class="stack"><div class="card pad"><dl class="kv"><dt>Oppdragsnr.</dt><dd>' + esc(j.nr) + '</dd><dt>Megler</dt><dd>' + esc(j.broker) + '<br><span class="muted small">' + esc(o.name) + '</span></dd><dt>Selger</dt><dd>' + esc(j.seller) + '<br><span class="muted small">' + esc(j.phone) + '</span></dd><dt>Tilgang</dt><dd>' + esc(j.access) + '</dd><dt>Type</dt><dd>' + esc(j.type) + '</dd><dt>Fotograf</dt><dd>' + esc(SV.find(D.team, j.by).name) + '</dd>' + (j.date ? '<dt>Tid</dt><dd>' + SV.fdate(j.date) + ' kl. ' + j.time + '</dd>' : '') + '</dl></div>' +
+      '<div class="stack">' + SV.crmCard(j) + '<div class="card pad"><dl class="kv"><dt>Oppdragsnr.</dt><dd>' + esc(j.nr) + '</dd><dt>Megler</dt><dd>' + esc(j.broker) + '<br><span class="muted small">' + esc(o.name) + '</span></dd><dt>Selger</dt><dd>' + esc(j.seller) + '<br><span class="muted small">' + esc(j.phone) + '</span></dd><dt>Tilgang</dt><dd>' + esc(j.access) + '</dd><dt>Type</dt><dd>' + esc(j.type) + '</dd><dt>Fotograf</dt><dd>' + esc(SV.find(D.team, j.by).name) + '</dd>' + (j.date ? '<dt>Tid</dt><dd>' + SV.fdate(j.date) + ' kl. ' + j.time + '</dd>' : '') + '</dl></div>' +
       (j.services.indexOf('dr') > -1 ? '<div class="callout">' + ic('wind') + '<span><b>Drone:</b> ' + esc(j.weather || 'Værsjekk dagen før') + '. Over 8 m/s flyttes dronen til ny dag uten kostnad for megler.</span></div>' : '') +
       (lic ? '<div class="callout sage">' + ic('shield') + '<span><b>Bildelisens:</b> ' + lic.text + ' Kreditering: «Foto: Studiovest».</span></div>' : '') +
-      cost(j) + (st === 'Levert' ? '<div class="card pad"><h3 class="h3">Omtale</h3><p class="small muted" style="margin:6px 0 12px">Sendes automatisk 7 dager etter levering, eller nå.</p><button class="btn btn-ghost btn-s" data-act="review">' + ic('star') + 'Be om omtale på Google</button></div>' : '') + '</div></div>';
+      cost(j) + (i >= 4 ? '<div class="card pad"><h3 class="h3">Omtale</h3><p class="small muted" style="margin:6px 0 12px">Sendes automatisk 7 dager etter levering, eller nå.</p><button class="btn btn-ghost btn-s" data-act="review">' + ic('star') + 'Be om omtale på Google</button></div>' : '') + '</div></div>';
     var gal = '<div class="row between" style="margin-bottom:12px"><p class="small muted">' + ph.length + ' bilder · klikk for å velge omslag og rekkefølge</p><button class="btn btn-ghost btn-xs" data-act="dummy">' + ic('upload') + 'Last opp redigerte</button></div><div class="gal">' +
       ph.map(function (x) { return '<figure class="gi" data-act="lightbox" data-src="' + x.src + '" data-pos="' + x.pos + '" data-name="' + esc(x.name) + '">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + String(x.i + 1).padStart(2, '0') + ' ' + esc(x.name) + '</span>' + (x.i === 0 ? '<span class="gi-tag">' + SV.chip('Omslag', 'sand') + '</span>' : x.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : '') + '</figure>'; }).join('') + '</div>';
     var lev = '<div class="g3">' + [['Finn og nett', 'Web-optimalisert, sRGB, liggende og stående', 'down'], ['Trykk', 'Full oppløsning for prospekt og skilt', 'file'], ['SoMe', '4:5 og 9:16, klar til Instagram og Facebook', 'grid'], ['Plantegning', 'PDF og PNG, 2D' + (j.services.indexOf('p3') > -1 ? ' + 3D' : ''), 'plan'], ['Video', j.services.indexOf('vi') > -1 || j.services.indexOf('re') > -1 ? 'MP4 liggende og stående' : 'Ikke bestilt', 'video'], ['Boligside', 'Egen side med bilder, video og plantegning', 'link']].map(function (x) { return '<div class="card pad"><p class="row">' + ic(x[2]) + '<b>' + x[0] + '</b></p><p class="small muted" style="margin-top:6px">' + x[1] + '</p></div>'; }).join('') + '</div>' +
@@ -114,12 +114,12 @@
   }, { title: 'Oppdrag' });
 
   function timeline(j) {
-    var st = D.stages.indexOf(SV.stageOf(j)), t = [['', 'Bestilt av <b>' + esc(j.broker) + '</b> i meglerportalen']];
-    t.push(['', 'Bekreftelse sendt til megler · SMS med forslag til tid sendt til ' + esc(j.seller.split(' ')[0])]);
-    if (st >= 1) t.push([SV.fdate(j.date), 'Tid avtalt: ' + j.time + ' · klargjøringsliste sendt til selger']);
-    if (st >= 2) t.push([SV.fdate(j.date), 'Fotografert av ' + esc(SV.find(D.team, j.by).name) + ' · ' + (j.services.indexOf('f40') > -1 ? 212 : 148) + ' RAW-filer lastet opp']);
-    if (st >= 3) t.push(['', 'Sendt til redigering · frist ' + (j.due ? SV.fdate(j.due) : 'neste virkedag')]);
-    if (st >= 4) t.push([j.delivered ? SV.fdate(j.delivered) : 'i dag', 'Levert · e-post til megler · faktura laget']);
+    var st = SV.stIdx(j), ap = SV.approval(j), t = [[j.created ? SV.fdate(j.created) : '', 'Opprettet · ' + esc(j.broker) + ', ' + esc(SV.find(D.offices, j.office).name)]];
+    if (st >= 1) t.push(['', 'Kunden ' + esc(j.seller) + ' er kontaktet']);
+    if (st >= 2) t.push(['', 'Tid avtalt: ' + SV.fdate(j.date, true) + ' kl. ' + j.time + ' · sjekkliste sendt til kunden']);
+    if (st >= 3) t.push([SV.fdate(j.date), 'Fotografert av ' + esc((SV.find(D.team, j.by) || { name: 'Aleksander' }).name) + ' · ' + (j.services.indexOf('f40') > -1 ? 212 : 148) + ' RAW-filer lastet opp']);
+    if (st >= 4) t.push([j.delivered ? SV.fdate(j.delivered) : 'i dag', 'Levert · megler og kunde kan se gjennom og godkjenne']);
+    if (st >= 5) t.push([ap ? SV.fdate(ap.d) : '', 'Godkjent' + (ap ? ' av ' + esc(ap.by) : '')]);
     return t.reverse();
   }
 
@@ -153,7 +153,7 @@
     document.getElementById('cullN').textContent = SV.state.cull[id].length;
   });
   SV.on('cullAuto', function (el) { if (SV.state.cull) delete SV.state.cull[el.getAttribute('data-id')]; SV.save(); SV.render(); SV.toast('Utvalg foreslått: skarpeste serie per rom, uklare og doble fjernet'); });
-  SV.on('cullSend', function (el) { var j = job(el.getAttribute('data-id')); SV.state.stage[j.id] = 'Redigering'; SV.save(); SV.render(); SV.toast('Utvalget er sendt til redigering · frist neste virkedag kl. 12'); });
+  SV.on('cullSend', function (el) { var j = job(el.getAttribute('data-id')); SV.state.toEdit = SV.state.toEdit || {}; SV.state.toEdit[j.id] = true; SV.save(); SV.render(); SV.toast('Utvalget er sendt til redigering · frist neste virkedag kl. 12'); });
 
   // ---------- Meglerportalen ----------
   SV.clientCfg.megler = { org: 'Fjordmegling Stord', user: 'Kari Lunde', userRole: 'Eiendomsmegler', home: '#/kunde/megler', tabs: [['#/kunde/megler', 'Oppdrag'], ['#/kunde/megler/bestill', 'Bestill'], ['#/kunde/megler/priser', 'Priser'], ['#/kunde/megler/faktura', 'Fakturaer'], ['#/kunde/megler/innstillinger', 'Innstillinger']] };
@@ -166,25 +166,26 @@
 
   function statusLine(j) {
     var st = SV.stageOf(j), lic = license(j);
-    return st === 'Bestilt' ? [ic('clock'), 'Venter på at ' + esc(j.seller.split(' ')[0]) + ' velger tid'] : st === 'Planlagt' ? [ic('cal'), 'Fotografering ' + SV.fdate(j.date, true) + ' kl. ' + j.time] : st === 'Levert' ? [ic('check'), 'Levert ' + SV.fdate(j.delivered || j.date) + (lic && !lic.sold ? ' · lisens til ' + SV.fdate(lic.exp) : '')] : [ic('edit'), 'Redigeres · klare ' + (j.due ? SV.rel(j.due) : 'neste virkedag')];
+    return st === 'Opprettet' ? [ic('clock'), 'Registrert · Studiovest kontakter ' + esc(j.seller.split(' ')[0])] : st === 'Kontaktet' ? [ic('chat'), esc(j.seller.split(' ')[0]) + ' er kontaktet · tid avtales'] : st === 'Fotografering avtalt' ? [ic('cal'), 'Fotografering ' + SV.fdate(j.date, true) + ' kl. ' + j.time] : st === 'Oppdrag levert' ? [ic('eye'), 'Levert ' + SV.fdate(j.delivered || j.date) + ' · se gjennom og godkjenn'] : st === 'Godkjent' ? [ic('check'), 'Godkjent' + (SV.approval(j) ? ' ' + SV.fdate(SV.approval(j).d) : '') + (lic && !lic.sold ? ' · lisens til ' + SV.fdate(lic.exp) : '')] : [ic('edit'), 'Redigeres · klare ' + (j.due ? SV.rel(j.due) : 'neste virkedag')];
   }
-  function prog(j) { var cur = D.stages.indexOf(SV.stageOf(j)); return '<span class="prog5" aria-hidden="true">' + D.stages.map(function (_, i) { return '<i class="' + (i < cur || SV.stageOf(j) === 'Levert' ? 'on' : i === cur ? 'now' : '') + '"></i>'; }).join('') + '</span>'; }
+  function prog(j) { var cur = D.stages.indexOf(SV.stageOf(j)); return '<span class="prog5" aria-hidden="true">' + D.stages.map(function (_, i) { return '<i class="' + (i < cur || SV.stageOf(j) === 'Godkjent' ? 'on' : i === cur ? 'now' : '') + '"></i>'; }).join('') + '</span>'; }
   function jrow(j) {
     var st = SV.stageOf(j), sl = statusLine(j);
     return '<a class="jcard" href="#/kunde/megler/' + j.id + '"><span class="jimg">' + SV.pic(j.cover, '50% 60%') + '</span><span style="min-width:0"><b>' + esc(j.addr) + ', ' + esc(j.town) + '</b><small>' + esc(j.broker) + ' · ' + SV.svcShort(j) + '</small><span class="srow">' + sl[0] + sl[1] + '</span>' + prog(j) + '</span>' +
-      '<span class="jr">' + (st === 'Levert' ? '<span class="btn btn-acc btn-s" data-act="finn" data-id="' + j.id + '">' + ic('down') + 'Last ned til Finn</span>' : SV.chip(st)) + '</span></a>';
+      '<span class="jr">' + (st === 'Oppdrag levert' ? SV.chip('Godkjenn', 'brown') : st === 'Godkjent' ? '<span class="btn btn-acc btn-s" data-act="finn" data-id="' + j.id + '">' + ic('down') + 'Last ned til Finn</span>' : SV.chip(st)) + '</span></a>';
   }
 
   SV.route('/kunde/megler', 'megler', function () {
-    var js = mine(), act = js.filter(function (j) { return SV.stageOf(j) !== 'Levert'; }), done = js.filter(function (j) { return SV.stageOf(j) === 'Levert'; });
-    var waiting = act.filter(function (j) { return SV.stageOf(j) === 'Bestilt'; }).length, ready = done.length;
+    var js = mine(), act = js.filter(function (j) { return SV.stIdx(j) < 4; }), done = js.filter(function (j) { return SV.stIdx(j) >= 4; });
+    var waiting = act.filter(function (j) { return SV.stIdx(j) < 2; }).length, ready = done.length, toApprove = js.filter(function (j) { return SV.stageOf(j) === 'Oppdrag levert'; });
     var full = '<div class="hero-c">' + SV.topo() + '<div><p class="eyebrow" style="color:var(--sand)">Velkommen til meglerportalen</p><h1><span class="serif">Hei, Kari</span></h1><p>Bestill foto på 30 sekunder, følg oppdragene og last ned rett til Finn. Selger får SMS og velger tid selv, så du slipper å koordinere.</p></div><div><a class="btn btn-acc" href="#/kunde/megler/bestill">' + ic('plus') + 'Bestill fotografering</a></div></div>';
-    var compact = '<div class="greet"><div><h1>Hei, Kari</h1><div class="kpis" style="margin-top:8px"><span><b>' + act.length + '</b> pågår</span><span><b>' + waiting + '</b> venter på selger</span><span><b>' + ready + '</b> klare til nedlasting</span></div></div><a class="btn btn-ghost btn-s" href="#/kunde/megler/bestill">' + ic('plus') + 'Ny bestilling</a></div>';
+    var compact = '<div class="greet"><div><h1>Hei, Kari</h1><div class="kpis" style="margin-top:8px"><span><b>' + act.length + '</b> pågår</span><span><b>' + waiting + '</b> venter på tid</span><span><b>' + toApprove.length + '</b> til godkjenning</span></div></div><a class="btn btn-ghost btn-s" href="#/kunde/megler/bestill">' + ic('plus') + 'Ny bestilling</a></div>';
     var p = pkg();
     var quick = '<form class="quickorder" onsubmit="return false"><span><b>Bestill som sist</b><br><span class="small muted">' + esc(pkgName(p)) + ' · ' + SV.kr(pkgPrice(p)) + ' eks. mva</span></span><span class="sugg" style="flex:1;min-width:220px"><input class="inp" id="qAddr" placeholder="Skriv adressen …" autocomplete="off" data-input="addrSugg" data-target="q" aria-label="Adresse"><span class="sugg-list" id="sugg-q"></span></span><input class="inp" id="qPhone" placeholder="Selgers mobil" inputmode="tel" style="max-width:170px;flex:0 1 170px" aria-label="Selgers mobil"><button class="btn btn-acc" data-act="quickOrder">Bestill</button></form>';
     return SV.intro('megler', full, compact) + quick +
+      (toApprove.length ? '<div class="sec"><div class="sec-h"><h2>Til godkjenning</h2></div><div class="card jlist">' + toApprove.map(jrow).join('') + '</div></div>' : '') +
       '<div class="sec"><div class="sec-h"><h2>Pågår · hele kontoret</h2></div><div class="card jlist">' + act.map(jrow).join('') + '</div></div>' +
-      '<div class="sec"><div class="sec-h"><h2>Levert</h2></div><div class="card jlist">' + done.map(jrow).join('') + '</div></div>';
+      '<div class="sec"><div class="sec-h"><h2>Levert</h2></div><div class="card jlist">' + done.filter(function (j) { return SV.stageOf(j) === 'Godkjent'; }).map(jrow).join('') + '</div></div>';
   }, { title: 'Meglerportal' });
 
   SV.on('addrSugg', function (el) {
@@ -202,7 +203,7 @@
   });
   function newJob(o) {
     var id = 'B-' + (2620 + SV.state.newJobs.length);
-    SV.state.newJobs.push(Object.assign({ id: id, office: 'fjm', broker: 'Kari Lunde', stage: 'Bestilt', date: D.W(3), time: '10:00', cover: D.img.stue, by: 'ak', wish: 'Selger velger tid', access: 'Selger hjemme', type: 'Leilighet', seller: 'Selger', phone: '' }, o));
+    SV.state.newJobs.push(Object.assign({ id: id, office: 'fjm', broker: 'Kari Lunde', stage: 'Opprettet', date: D.W(3), time: '10:00', cover: D.img.stue, by: 'ak', wish: 'Selger velger tid', access: 'Selger hjemme', type: 'Leilighet', seller: 'Selger', phone: '' }, o));
     SV.save(); return id;
   }
   SV.on('quickOrder', function () {
@@ -243,21 +244,21 @@
     var v = orderVals(); if (!v.f.addr.value.trim()) { SV.toast('Skriv inn adressen', 'warn'); v.f.addr.focus(); return; }
     if (!v.sel.length) { SV.toast('Velg minst én tjeneste', 'warn'); return; }
     var f = v.f, slot = v.slot === 'selger' ? null : v.slot.split(' ');
-    var id = newJob({ addr: f.addr.value, town: f.town.value || 'Leirvik', nr: f.nr.value || '–', stage: slot ? 'Planlagt' : 'Bestilt', date: slot ? slot[0] : D.W(3), time: slot ? slot[1] : '10:00', services: v.sel, seller: f.seller.value || 'Selger', phone: f.phone.value || '–', access: f.access.value, type: f.type.value, wish: slot ? '' : 'Selger velger tid' });
+    var id = newJob({ addr: f.addr.value, town: f.town.value || 'Leirvik', nr: f.nr.value || '–', stage: slot ? 'Fotografering avtalt' : 'Opprettet', date: slot ? slot[0] : D.W(3), time: slot ? slot[1] : '10:00', services: v.sel, seller: f.seller.value || 'Selger', phone: f.phone.value || '–', access: f.access.value, type: f.type.value, wish: slot ? '' : 'Selger velger tid' });
     SV.go('#/kunde/megler/' + id); SV.toast('Bestilling sendt · selger får SMS');
   });
 
   // oppdrag sett fra megler
   SV.route('/kunde/megler/:id', 'megler', function (p) {
     var j = job(p.id); if (!j) return '<p class="empty">Fant ikke oppdraget.</p>';
-    var st = SV.stageOf(j), ph = photos(j), lic = license(j), done = st === 'Levert', sl = statusLine(j);
+    var st = SV.stageOf(j), ph = photos(j), lic = license(j), done = SV.stIdx(j) >= 4, sl = statusLine(j);
     var head = '<p class="small" style="margin-bottom:12px"><a href="#/kunde/megler" class="muted">← Alle oppdrag</a></p>' +
       SV.head({ eyebrow: esc(j.nr) + ' · ' + esc(j.broker), a: j.addr + ', ' + j.town,
         actions: '<button class="btn btn-ghost btn-s" data-act="share" data-id="' + j.id + '">' + ic('link') + 'Del</button>' + (done ? '<span class="split-btn"><button class="btn btn-acc" data-act="finn" data-id="' + j.id + '">' + ic('down') + 'Last ned til Finn</button><button class="btn btn-acc" data-act="dl" aria-label="Andre formater">' + ic('chev', 'rot90') + '</button></span>' : '') }) +
       '<div class="card pad" style="margin-bottom:22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap"><span class="srow" style="margin:0;font-weight:650">' + sl[0] + sl[1] + '</span><span style="margin-left:auto">' + prog(j) + '</span></div>';
     if (!done) {
       return head + '<div class="g2"><div class="card pad"><h3 class="h3">Detaljer</h3><dl class="kv" style="margin-top:12px"><dt>Selger</dt><dd>' + esc(j.seller) + '</dd><dt>Tilgang</dt><dd>' + esc(j.access) + '</dd><dt>Bestilt</dt><dd>' + SV.svcShort(j) + '</dd><dt>Pris</dt><dd>' + SV.kr(Math.round(total(j) * DISC)) + ' eks. mva · ' + SV.kr(total(j) * DISC * 1.25) + ' inkl.</dd></dl>' +
-        (st === 'Bestilt' ? '<a class="btn btn-ghost btn-s" style="margin-top:14px" href="#/selger/' + j.id + '">' + ic('eye') + 'Se siden selger får</a>' : '') + '</div>' +
+        (SV.stIdx(j) < 2 ? '<a class="btn btn-ghost btn-s" style="margin-top:14px" href="#/selger/' + j.id + '">' + ic('eye') + 'Se siden selger får</a>' : '') + '</div>' +
         '<div class="card pad"><h3 class="h3">Legg til</h3><p class="small muted" style="margin:6px 0 12px">Fram til fotograferingen.</p><div class="opts">' + ['dr', 'kv', 're', 'p3'].filter(function (s) { return j.services.indexOf(s) < 0; }).map(function (s) { var v = svc(s); return '<label class="opt"><input type="checkbox" data-change="addSvc" value="' + s + '"><b>' + esc(v.name) + '</b><span class="price">' + SV.kr(Math.round(v.price * DISC)) + '</span></label>'; }).join('') + '</div>' +
         '<button class="link small" style="margin-top:14px" data-act="dummy">Avlys eller flytt</button></div></div>';
     }
@@ -269,7 +270,9 @@
       '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Boligside</h3><div class="web-prev"><div class="web-bar"><i></i><i></i><i></i><span>bolig.studiovest.no/' + esc(j.addr.toLowerCase().replace(/\s+/g, '-')) + '</span></div><div class="web-hero">' + SV.pic(j.cover) + '<div><b>' + esc(j.addr) + '</b><span class="small">' + esc(j.town) + ' · ' + esc(j.type) + '</span></div></div></div><p class="small muted" style="margin-top:10px">Egen side med bilder, video og plantegning. Del lenken i annonsen eller på SoMe.</p></div>' +
       '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Plantegning</h3><div style="aspect-ratio:4/3;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);position:relative;overflow:hidden">' + planSvg() + '</div></div>' +
       '<div class="card pad"><h3 class="h3">Bruk av bildene</h3><p class="small" style="margin-top:8px">' + lic.text + '</p><p class="small" style="margin-top:8px">Krediter med <b>«Foto: Studiovest»</b>. Bilder merket «Illustrasjon» skal vises med merkingen.</p><div class="row" style="margin-top:14px"><button class="btn btn-ghost btn-xs" data-act="fix">' + ic('edit') + 'Be om endring</button><button class="btn btn-ghost btn-xs" data-act="dummy">' + ic('plus') + 'Bestill digital møblering</button></div></div></div>';
-    return head + gal + extras;
+    var appr = st === 'Oppdrag levert' ? '<div class="card pad appr"><div><h3 class="h3">Se gjennom og godkjenn</h3><p class="small muted" style="margin-top:4px">Sjekk bildene og plantegningen under. Er noe feil, trykk «Be om endring». Er alt riktig, godkjenner du oppdraget.</p></div><div class="row"><button class="btn btn-ghost btn-s" data-act="fix">' + ic('edit') + 'Be om endring</button><button class="btn btn-acc" data-act="crmApprove" data-id="' + j.id + '" data-by="' + esc(j.broker) + ' (megler)">' + ic('check') + 'Godkjenn oppdraget</button></div></div>' :
+      st === 'Godkjent' && SV.approval(j) ? '<p class="small muted" style="margin:-10px 0 18px">' + ic('check') + ' Godkjent ' + SV.fdate(SV.approval(j).d) + ' av ' + esc(SV.approval(j).by) + '</p>' : '';
+    return head + appr + gal + extras;
   }, { title: 'Oppdrag' });
 
   function galDnd() {

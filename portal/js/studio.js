@@ -13,7 +13,7 @@
     var b = D.iso(D.base), isToday = SV.diff(b) === 0;
     var h = new Date().getHours(), hi = h < 10 ? 'God morgen' : h < 17 ? 'God dag' : 'God kveld';
     var jobs = SV.jobs(), todays = jobs.filter(function (j) { return j.date === b; }).sort(function (a, c) { return a.time < c.time ? -1 : 1; });
-    var dueToday = jobs.filter(function (j) { return j.due === b && SV.stageOf(j) !== 'Levert'; });
+    var dueToday = jobs.filter(function (j) { return j.due === b && SV.stIdx(j) < 4; });
     var out = D.invoices.filter(function (i) { return i.status === 'Sendt' || i.status === 'Forfalt'; }).reduce(function (s, i) { return s + i.sum; }, 0);
     var fj = D.schoolDays[0], ord = 0, kr = 0, n = 0;
     fj.classes.forEach(function (c) { c.pupils.forEach(function (p) { n++; if (p.order) { ord++; kr += p.order; } }); });
@@ -36,7 +36,7 @@
     ].map(function (x) { return '<a class="li" href="' + x[0] + '"><i class="ndot n-' + x[1] + '"></i><span class="li-t"><b>' + x[2] + '</b><small>' + x[3] + '</small></span>' + ic('chev') + '</a>'; }).join('');
 
     var areas = [
-      ['#/bolig', 'bolig', 'Bolig', jobs.filter(function (j) { return SV.stageOf(j) !== 'Levert'; }).length + ' aktive oppdrag', dueToday.length + ' med frist ' + (isToday ? 'i dag' : SV.dayName(b))],
+      ['#/bolig', 'bolig', 'Bolig', jobs.filter(function (j) { return SV.stageOf(j) !== 'Godkjent'; }).length + ' aktive oppdrag', dueToday.length + ' med frist ' + (isToday ? 'i dag' : SV.dayName(b))],
       ['#/bedrift', 'bedrift', 'Bedrift', D.bizProjects.filter(function (p) { return p.stage !== 'Levert'; }).length + ' prosjekter', '1 film til gjennomgang'],
       ['#/skole', 'skole', 'Skolefoto', Math.round(ord / n * 100) + ' % har bestilt', 'Fjordtun stenger ' + SV.rel(fj.closes)],
       ['#/marked', 'mark', 'Markedsføring', D.posts.filter(function (p) { return p.status === 'Til godkjenning'; }).length + ' innlegg til godkjenning', '2 kampanjer aktive']
@@ -77,7 +77,7 @@
     var mon = new Date(D.base); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
     var days = []; for (var i = 0; i < 5; i++) days.push(D.iso(D.addDays(mon, i)));
     var START = 7, END = 18, PX = 52, evs = [];
-    SV.jobs().forEach(function (j) { if (days.indexOf(j.date) > -1 && SV.stageOf(j) !== 'Bestilt') evs.push({ d: j.date, s: j.time, m: minutes(j), area: 'bolig', t: j.addr, sub: j.town + ' · ' + j.broker, href: '#/bolig/' + j.id }); });
+    SV.jobs().forEach(function (j) { if (days.indexOf(j.date) > -1 && SV.stIdx(j) >= 2) evs.push({ d: j.date, s: j.time, m: minutes(j), area: 'bolig', t: j.addr, sub: j.town + ' · ' + j.broker, href: '#/bolig/' + j.id }); });
     D.bizProjects.forEach(function (p) { if (days.indexOf(p.date) > -1) evs.push({ d: p.date, s: '09:00', m: 180, area: 'bedrift', t: p.title, sub: SV.find(D.companies, p.company).name, href: '#/bedrift/' + p.id }); });
     D.schoolDays.forEach(function (s) { if (days.indexOf(s.date) > -1) evs.push({ d: s.date, s: '08:15', m: 330, area: 'skole', t: 'Fotodag ' + s.school, sub: s.town, href: '#/skole/' + s.id }); });
     D.posts.forEach(function (p) { if (days.indexOf(p.d) > -1) evs.push({ d: p.d, s: '16:00', m: 40, area: 'mark', t: p.title, sub: D.channels[p.ch], href: '#/marked' }); });
@@ -101,7 +101,7 @@
         return '<button type="button" class="ev a-' + e.area + '" style="' + style + '" data-act="go" data-href="' + e.href + '" title="' + esc(e.t) + '"><b>' + esc(e.t) + '</b>' + e.s + ' · ' + esc(e.sub) + '</button>';
       }).join('') + '</div>';
     }).join('');
-    var unplanned = SV.jobs().filter(function (j) { return SV.stageOf(j) === 'Bestilt'; });
+    var unplanned = SV.jobs().filter(function (j) { return SV.stIdx(j) < 2; });
     return SV.head({ eyebrow: 'Uke ' + weekNo(mon) + ' · ' + SV.fdate(days[0]) + ' – ' + SV.fdate(days[4]), a: 'Kalender', b: 'og løype',
         lead: 'Alle felt i samme uke. Varighet regnes ut fra tjenestene som er bestilt, og kjøretid fra Eidsvik legges inn mellom oppdragene.',
         actions: '<button class="btn btn-ghost btn-s" data-act="dummy">' + ic('link') + 'Synk med Google/Outlook</button>' }) +

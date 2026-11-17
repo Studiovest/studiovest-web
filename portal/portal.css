@@ -196,7 +196,7 @@ ul,ol{margin:0;padding:0;list-style:none}
 .fbtn.on{background:var(--dark);color:var(--light);box-shadow:none}
 
 /* ---------- kanban ---------- */
-.kb{display:grid;grid-template-columns:repeat(5,minmax(200px,1fr));gap:12px;overflow-x:auto;padding-bottom:10px;align-items:start}
+.kb{display:grid;grid-template-columns:repeat(6,minmax(200px,1fr));gap:12px;overflow-x:auto;padding-bottom:10px;align-items:start}
 .kb-col{background:rgba(22,20,18,.035);border-radius:var(--r2);padding:10px;min-height:200px;transition:background .2s}
 .kb-col.over{background:rgba(217,168,102,.22)}
 .kb-h{display:flex;align-items:center;justify-content:space-between;padding:6px 6px 12px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800}
@@ -538,7 +538,7 @@ a.li:hover b{text-decoration:underline;text-underline-offset:3px}
   .mo-d{min-height:84px;padding:3px}
   .post{font-size:10px;padding:3px 4px}
   .post .ch{display:none}
-  .kb{grid-template-columns:repeat(5,minmax(240px,82vw))}
+  .kb{grid-template-columns:repeat(6,minmax(240px,82vw))}
   .cartbar{flex-wrap:wrap}
   .ctop-row{gap:10px}
 }
@@ -770,3 +770,16 @@ a.li:hover b{text-decoration:underline;text-underline-offset:3px}
 .kbd{font-size:11px;font-weight:700;opacity:.65;border:1px solid currentColor;border-radius:5px;padding:0 5px;margin-left:4px}
 @media (max-width:1180px){.st-grid{grid-template-columns:260px minmax(0,1fr)}.st-grid>.stack{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.st-grid>.stack>*+*{margin-top:0}}
 @media (max-width:900px){.st-grid,.st-grid>.stack{grid-template-columns:minmax(0,1fr)}.st-view{height:52vh}}
+
+/* bolig-CRM */
+.tbl.crm td{vertical-align:top}
+.tbl.crm td small{display:block;color:var(--dim);font-size:12.5px;margin-top:2px}
+.tbl.crm a b{color:var(--ink)}
+.crm-st{min-width:190px;font-weight:650;font-size:13.5px;padding:7px 30px 7px 10px;border-radius:9px}
+.crm-st.crm-0{background-color:rgba(22,20,18,.05)}
+.crm-st.crm-1{background-color:rgba(217,168,102,.22)}
+.crm-st.crm-2{background-color:rgba(22,20,18,.10)}
+.crm-st.crm-3{background-color:rgba(122,140,110,.20)}
+.crm-st.crm-4{background-color:rgba(139,90,58,.18)}
+.crm-st.crm-5{background-color:rgba(74,124,89,.20)}
+.appr{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px;box-shadow:inset 0 0 0 2px var(--sand)}

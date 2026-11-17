@@ -6,7 +6,7 @@
   SV.on = function (name, fn) { SV.acts[name] = fn; };
 
   // ---------- tilstand (demo; lagres i nettleseren hvis mulig) ----------
-  var KEY = 'sv-portal-demo-1';
+  var KEY = 'sv-portal-demo-2';
   SV.state = { stage: {}, newJobs: [], cart: [], paid: [], favs: {}, comments: [], autos: {}, consents: {}, approved: {}, postStatus: {}, retake: false, deleteReq: false, read: false };
   try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) Object.assign(SV.state, saved); } catch (e) {}
   SV.save = function () { try { localStorage.setItem(KEY, JSON.stringify(SV.state)); } catch (e) {} };
@@ -32,6 +32,7 @@
 
   var TONE = {
     'Bestilt': 'sand', 'Planlagt': 'ink', 'Fotografert': 'sage', 'Redigering': 'brown', 'Levert': 'ok',
+    'Opprettet': 'mute', 'Kontaktet': 'sand', 'Fotografering avtalt': 'ink', 'Fotografering utført': 'sage', 'Oppdrag levert': 'brown', 'Godkjent': 'ok',
     'Betalt': 'ok', 'Sendt': 'ink', 'Forfalt': 'bad', 'Utkast': 'mute', 'Løpende': 'sage',
     'Ja': 'ok', 'Nei': 'bad', 'Kun gruppebilde': 'sand', 'Ikke svart': 'mute', 'Tatt': 'ok', 'Fravær': 'sand', 'Skal ikke': 'bad', 'Kun gruppe': 'sand',
     'Signert': 'ok', 'Venter': 'sand', 'Ikke sendt': 'mute',
