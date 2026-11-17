@@ -26,10 +26,8 @@
       var ph = SV.boligPhotos(j).slice(0, 6), ap = SV.approval(j);
       return brand('for ' + o.name) +
         '<div class="bhead"><h1>Hei ' + esc(first) + '! Bildene av ' + esc(j.addr) + ' er klare.</h1><p>Se gjennom bildene og plantegningen. ' + esc(j.broker) + ' bruker dem i annonsen.</p></div>' +
-        '<div class="gal" style="margin-top:18px;grid-template-columns:repeat(2,1fr)">' + ph.map(function (x) { return '<figure class="gi">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + esc(x.name) + '</span></figure>'; }).join('') + '</div>' +
-        '<div class="card" style="margin-top:14px;aspect-ratio:4/3;position:relative;overflow:hidden;background:#fff">' + SV.planSvg() + '</div>' +
-        (ap ? '<div class="card pad" style="margin-top:16px"><p class="eyebrow">Godkjent</p><p>' + SV.fdate(ap.d, true) + ' av ' + esc(ap.by) + '. Takk!</p></div>' :
-          '<button class="btn btn-acc bigbtn" style="margin-top:16px" data-act="crmApprove" data-id="' + j.id + '" data-by="' + esc(j.seller) + ' (kunde)">' + ic('check') + 'Godkjenn bildene og plantegningen</button><p class="hint" style="text-align:center">Noe som bør endres? Ring eller svar på e-posten, så fikser vi det.</p>');
+        (ap ? '<div class="gal" style="margin-top:18px;grid-template-columns:repeat(2,1fr)">' + ph.map(function (x) { return '<figure class="gi">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + esc(x.name) + '</span></figure>'; }).join('') + '</div><div class="card pad" style="margin-top:16px"><p class="eyebrow">Godkjent</p><p>' + SV.fdate(ap.d, true) + ' av ' + esc(ap.by) + '. Takk!</p></div>' :
+          '<div style="margin-top:18px">' + SV.reviewBox(j, j.seller + ' (kunde)') + SV.reviewGallery(j, j.seller + ' (kunde)') + '<div class="sec">' + SV.reviewPlan(j, j.seller + ' (kunde)', true) + '</div></div>');
     }
     return brand('for ' + o.name) +
       '<div class="bhead"><h1>Hei ' + esc(first) + '! Vi skal fotografere ' + esc(j.addr) + '.</h1><p>' + esc(j.broker) + ' har bestilt ' + SV.svcShort(j).toLowerCase() + '. Her velger du tid og ser hvordan du gjør boligen klar.</p></div>' +

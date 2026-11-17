@@ -110,6 +110,7 @@
       SV.head({ eyebrow: SV.dot('bolig') + esc(j.id) + ' · ' + esc(o.name) + ' · ' + SV.chip(st), a: j.addr, b: j.town,
         actions: (i < D.stages.length - 1 ? '<button class="btn btn-dark btn-s" data-act="stageNext" data-id="' + j.id + '">Flytt til ' + D.stages[i + 1] + ' ' + ic('chev') + '</button>' : '') + '<a class="btn btn-ghost btn-s" href="#/kunde/megler/' + j.id + '">' + ic('eye') + 'Slik ser megler det</a>' }) +
       '<div class="card pad" style="margin-bottom:22px">' + steps(j) + '</div>' +
+      SV.reviewStudio(j) +
       SV.tabs('job', [['o', 'Oversikt'], ['r', 'Råfiler og utvalg', i >= 2 ? rawCount(j) : null], ['b', 'Redigerte', ph.length], ['l', 'Leveranse']], 'o') + SV.panels('job', { o: ov, r: i >= 2 ? rawView(j) : '<p class="empty">Råfilene kommer når boligen er fotografert.</p>', b: gal, l: lev }, 'o');
   }, { title: 'Oppdrag' });
 
@@ -262,17 +263,17 @@
         '<div class="card pad"><h3 class="h3">Legg til</h3><p class="small muted" style="margin:6px 0 12px">Fram til fotograferingen.</p><div class="opts">' + ['dr', 'kv', 're', 'p3'].filter(function (s) { return j.services.indexOf(s) < 0; }).map(function (s) { var v = svc(s); return '<label class="opt"><input type="checkbox" data-change="addSvc" value="' + s + '"><b>' + esc(v.name) + '</b><span class="price">' + SV.kr(Math.round(v.price * DISC)) + '</span></label>'; }).join('') + '</div>' +
         '<button class="link small" style="margin-top:14px" data-act="dummy">Avlys eller flytt</button></div></div>';
     }
-    var gal = '<div class="row between" style="margin-bottom:10px"><p class="small muted">' + ph.length + ' bilder · dra for å endre rekkefølge, stjernen setter forsidebilde. Rekkefølgen følger med til Finn.</p><button class="link small" data-act="selAll">Velg alle</button></div><div class="gal big" id="mgal" data-id="' + j.id + '">' +
-      ph.map(function (x, n) { return '<figure class="gi" draggable="true" data-i="' + x.i + '">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + String(n + 1).padStart(2, '0') + ' ' + esc(x.name) + '</span>' + (x.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : n === 0 ? '<span class="gi-tag">' + SV.chip('Forsidebilde', 'sand') + '</span>' : '') + '<button type="button" class="gi-cover' + (n === 0 ? ' on' : '') + '" data-act="cover" aria-label="Sett som forsidebilde">' + ic('star') + '</button><button type="button" class="gi-sel" data-act="sel" aria-label="Velg bilde ' + (n + 1) + '">' + ic('check') + '</button></figure>'; }).join('') + '</div>';
-    SV.after(galDnd);
+    var by = j.broker + ' (megler)', live = st === 'Oppdrag levert';
+    var gal = live ? SV.reviewGallery(j, by) : '<p class="small muted" style="margin-bottom:10px">' + ph.length + ' bilder</p><div class="gal big">' +
+      ph.map(function (x, n) { return '<figure class="gi" data-act="lightbox" data-src="' + x.src + '" data-pos="' + x.pos + '" data-name="' + esc(x.name) + '">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + String(n + 1).padStart(2, '0') + ' ' + esc(x.name) + '</span>' + (x.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : '') + '</figure>'; }).join('') + '</div>';
+    var plan = '<div class="sec">' + SV.reviewPlan(j, by, live) + '</div>';
     var extras = '<div class="g2 sec">' +
       (j.services.indexOf('vi') > -1 || j.services.indexOf('re') > -1 ? '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Video</h3><div class="vp">' + SV.pic(j.cover) + '<button class="vp-play" data-act="dummy" aria-label="Spill av">' + ic('play') + '</button></div><p class="small muted" style="margin-top:10px">Liggende 16:9 og stående 9:16 · MP4</p></div>' : '') +
       '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Boligside</h3><div class="web-prev"><div class="web-bar"><i></i><i></i><i></i><span>bolig.studiovest.no/' + esc(j.addr.toLowerCase().replace(/\s+/g, '-')) + '</span></div><div class="web-hero">' + SV.pic(j.cover) + '<div><b>' + esc(j.addr) + '</b><span class="small">' + esc(j.town) + ' · ' + esc(j.type) + '</span></div></div></div><p class="small muted" style="margin-top:10px">Egen side med bilder, video og plantegning. Del lenken i annonsen eller på SoMe.</p></div>' +
-      '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Plantegning</h3><div style="aspect-ratio:4/3;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);position:relative;overflow:hidden">' + planSvg() + '</div></div>' +
-      '<div class="card pad"><h3 class="h3">Bruk av bildene</h3><p class="small" style="margin-top:8px">' + lic.text + '</p><p class="small" style="margin-top:8px">Krediter med <b>«Foto: Studiovest»</b>. Bilder merket «Illustrasjon» skal vises med merkingen.</p><div class="row" style="margin-top:14px"><button class="btn btn-ghost btn-xs" data-act="fix">' + ic('edit') + 'Be om endring</button><button class="btn btn-ghost btn-xs" data-act="dummy">' + ic('plus') + 'Bestill digital møblering</button></div></div></div>';
-    var appr = st === 'Oppdrag levert' ? '<div class="card pad appr"><div><h3 class="h3">Se gjennom og godkjenn</h3><p class="small muted" style="margin-top:4px">Sjekk bildene og plantegningen under. Er noe feil, trykk «Be om endring». Er alt riktig, godkjenner du oppdraget.</p></div><div class="row"><button class="btn btn-ghost btn-s" data-act="fix">' + ic('edit') + 'Be om endring</button><button class="btn btn-acc" data-act="crmApprove" data-id="' + j.id + '" data-by="' + esc(j.broker) + ' (megler)">' + ic('check') + 'Godkjenn oppdraget</button></div></div>' :
+      '<div class="card pad"><h3 class="h3">Bruk av bildene</h3><p class="small" style="margin-top:8px">' + lic.text + '</p><p class="small" style="margin-top:8px">Krediter med <b>«Foto: Studiovest»</b>. Bilder merket «Illustrasjon» skal vises med merkingen.</p><div class="row" style="margin-top:14px"><button class="btn btn-ghost btn-xs" data-act="dummy">' + ic('plus') + 'Bestill digital møblering</button></div></div></div>';
+    var appr = live ? SV.reviewBox(j, by) :
       st === 'Godkjent' && SV.approval(j) ? '<p class="small muted" style="margin:-10px 0 18px">' + ic('check') + ' Godkjent ' + SV.fdate(SV.approval(j).d) + ' av ' + esc(SV.approval(j).by) + '</p>' : '';
-    return head + appr + gal + extras;
+    return head + appr + gal + plan + extras;
   }, { title: 'Oppdrag' });
 
   function galDnd() {
