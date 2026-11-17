@@ -31,13 +31,13 @@
       '<p class="hint">Du trenger ikke være hjemme hvis megler har nøkkel. Kjæledyr bør være ute eller i ett rom.</p></div>';
     var after = '<div class="card pad" style="margin-top:12px"><h3 class="h3">Etter fotograferingen</h3><p class="small muted" style="margin-top:4px">Bildene' + (j.services.indexOf('p2') > -1 ? ' og plantegningen' : '') + ' kommer her, på denne siden, innen ' + (j.services.indexOf('ex') > -1 ? '24 timer' : '2 virkedager') + '. Du får e-post når de er klare. Da kan du kommentere bildene og plantegningen, og ' + esc(j.broker.split(' ')[0]) + ' ser det samme.</p></div>';
     if (i >= 4) {
-      return brand('for ' + o.name) +
+      return '<div class="kdel">' + brand('for ' + o.name) +
         '<div class="bhead"><h1>Hei ' + esc(first) + '! Bildene av ' + esc(j.addr) + ' er klare.</h1><p>' + (ap ? 'Oppdraget er godkjent. Takk!' : 'Se gjennom bildene og plantegningen. ' + esc(j.broker) + ' bruker dem i annonsen.') + '</p></div>' + stepper +
         (ap ? '<div class="card pad" style="margin-top:16px"><p class="eyebrow">Godkjent</p><p>' + SV.fdate(ap.d, true) + ' av ' + esc(ap.by) + '.</p></div>' : '<div style="margin-top:16px">' + SV.reviewBox(j, me) + '</div>') +
         SV.reviewThread(j, 'kunde') +
         '<div class="sec">' + (ap ? '<div class="gal big">' + ph.map(function (x) { return '<figure class="gi">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + esc(x.name) + '</span></figure>'; }).join('') + '</div>' : SV.reviewGallery(j, me)) + '</div>' +
         (j.services.indexOf('p2') > -1 ? '<div class="sec">' + SV.reviewPlan(j, me, !ap) + '</div>' : '') +
-        '<details class="card pad sec"><summary><b>Om oppdraget</b></summary>' + info + '</details>';
+        '<details class="card pad sec"><summary><b>Om oppdraget</b></summary>' + info + '</details></div>';
     }
     return brand('for ' + o.name) +
       '<div class="bhead"><h1>Hei ' + esc(first) + '! Vi skal fotografere ' + esc(j.addr) + '.</h1><p>Her finner du tiden vi har avtalt, hva ' + esc(j.broker) + ' har bestilt, og hvordan du gjør boligen klar.</p></div>' + stepper +

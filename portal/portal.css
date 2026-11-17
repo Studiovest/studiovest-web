@@ -847,3 +847,13 @@ details.card summary{cursor:pointer;list-style:none}
 details.card summary::-webkit-details-marker{display:none}
 details.card summary::after{content:" +";color:var(--dim)}
 details[open].card summary::after{content:" −"}
+
+/* kundeside etter levering: bredere galleri på PC, uendret på mobil */
+@media (min-width:900px){
+  .bpage:has(.kdel){max-width:1180px;padding-left:32px;padding-right:32px}
+  .kdel .bhead,.kdel .kstep,.kdel .appr{max-width:none}
+  .kdel .bhead h1,.kdel .bhead p{max-width:760px}
+  .kdel .gal.big{grid-template-columns:repeat(3,1fr);gap:12px}
+  .kdel .rv-plan,.kdel details.card,.kdel .rv-q{max-width:860px}
+}
+@media (min-width:1240px){.kdel .gal.big{grid-template-columns:repeat(4,1fr)}}
