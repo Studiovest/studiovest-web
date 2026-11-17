@@ -857,3 +857,12 @@ details[open].card summary::after{content:" −"}
   .kdel .rv-plan,.kdel details.card,.kdel .rv-q{max-width:860px}
 }
 @media (min-width:1240px){.kdel .gal.big{grid-template-columns:repeat(4,1fr)}}
+
+/* flere etasjer */
+.rv-ftabs{display:flex;gap:6px;margin:0 0 10px;overflow-x:auto;scrollbar-width:none}
+.rv-ftab{flex:none;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:0;border-radius:99px;background:rgba(22,20,18,.06);font:650 13.5px var(--sans,inherit);color:var(--ink);cursor:pointer}
+.rv-ftab.on{background:var(--ink);color:#fff}
+.rv-fn{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:#C2412D;color:#fff;font-size:11px;font-weight:800}
+.rv-floors{display:grid;gap:14px}
+.rv-fname{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin:0 0 6px}
+@media (min-width:900px){.rv-floors.two{grid-template-columns:repeat(2,minmax(0,1fr))}.rv-floors.two .rv-canvas.sm{max-width:none}}
