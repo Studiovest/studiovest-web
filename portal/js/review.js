@@ -1,88 +1,106 @@
-/* Gjennomgang etter levering: kommentar per bilde, skrive og tegne på plantegningen, sende endringsønsker til Studiovest. */
+/* Gjennomgang etter levering, felles for megler og kunde:
+   kommentar per bilde, skrive og tegne på plantegningen, sende endringsønsker, se svar fra Studiovest.
+   Hver person har sitt eget utkast til det sendes. Sendte ønsker og svar ser både megler, kunde og studio. */
 (function () {
   'use strict';
-  var SV = window.SV, esc = SV.esc, ic = SV.icon;
-  function R(id) { var r = SV.state.review = SV.state.review || {}; r[id] = r[id] || { notes: {}, pins: [], strokes: [], sent: [] }; r[id].texts = r[id].texts || []; r[id].planNote = r[id].planNote || ''; return r[id]; }
+  var SV = window.SV, D = SV.data, esc = SV.esc, ic = SV.icon;
+  function R(id) {
+    var all = SV.state.review = SV.state.review || {}, r = all[id] = all[id] || {};
+    r.drafts = r.drafts || {}; r.requests = r.requests || [];
+    return r;
+  }
+  function dr(id, by) { var d = R(id).drafts, x = d[by] = d[by] || {}; x.notes = x.notes || {}; x.pins = x.pins || []; x.texts = x.texts || []; x.strokes = x.strokes || []; x.planNote = x.planNote || ''; return x; }
   SV.review = R;
   function job(id) { return SV.find(SV.jobs(), id); }
-  function noteCount(r) { return Object.keys(r.notes).reduce(function (a, k) { return a + r.notes[k].length; }, 0); }
-  function planCount(r) { return r.pins.filter(function (p) { return p.t; }).length + (r.texts || []).filter(function (p) { return p.t; }).length + (r.strokes.length ? 1 : 0) + (r.planNote ? 1 : 0); }
-  function openCount(r) { return noteCount(r) + planCount(r); }
-  SV.reviewCount = function (j) { var r = (SV.state.review || {})[j.id]; return r ? openCount(r) : 0; };
-  SV.planCount = function (j) { var r = (SV.state.review || {})[j.id]; return r ? planCount(r) : 0; };
+  function today() { return D.iso(D.base); }
+  function noteCount(x) { return Object.keys(x.notes).reduce(function (a, k) { return a + x.notes[k].length; }, 0); }
+  function planCount(x) { return x.pins.filter(function (p) { return p.t; }).length + x.texts.filter(function (p) { return p.t; }).length + (x.strokes.length ? 1 : 0) + (x.planNote ? 1 : 0); }
+  function count(x) { return noteCount(x) + planCount(x); }
+  function open(j) { return R(j.id).requests.filter(function (q) { return q.status !== 'rettet'; }); }
+  SV.reviewCount = function (j) { return open(j).reduce(function (a, q) { return a + q.items.length; }, 0); };
+  // plantegningsønsker agenten skal jobbe med: siste åpne forespørsel med plantegning
+  SV.reviewPlanSrc = function (j) { var q = open(j).filter(function (x) { return x.plan; }).pop(); return q ? q.plan : null; };
+  SV.reviewOpenPlanReq = function (j) { return open(j).filter(function (x) { return x.plan; }).pop() || null; };
   var mode = 'pin';
+  function keep() { var y = window.scrollY; SV.render(); window.scrollTo(0, y); }
+  function role(by) { return /\(megler\)/.test(by) ? 'megler' : /\(kunde\)/.test(by) ? 'kunde' : 'studio'; }
 
   // ---------- bilder ----------
   SV.reviewGallery = function (j, by) {
-    var r = R(j.id), ph = SV.boligPhotos(j);
+    var x = dr(j.id, by), ph = SV.boligPhotos(j), sent = {};
+    R(j.id).requests.forEach(function (q) { q.items.forEach(function (it) { if (it.i != null) sent[it.i] = (sent[it.i] || 0) + 1; }); });
     return '<div class="row between" style="margin-bottom:10px"><p class="small muted">' + ph.length + ' bilder · trykk på et bilde for å skrive en kommentar</p></div><div class="gal big">' +
-      ph.map(function (x, n) {
-        var c = (r.notes[x.i] || []).length;
-        return '<figure class="gi rv-gi" data-act="rvPhoto" data-id="' + j.id + '" data-i="' + x.i + '" data-n="' + (n + 1) + '" data-by="' + esc(by) + '" tabindex="0" role="button" aria-label="Kommenter bilde ' + (n + 1) + ', ' + esc(x.name) + '">' + SV.pic(x.src, x.pos) +
-          '<span class="gi-n">' + String(n + 1).padStart(2, '0') + ' ' + esc(x.name) + '</span>' + (x.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : '') +
-          (c ? '<span class="rv-badge">' + ic('chat') + c + '</span>' : '<span class="rv-add">' + ic('chat') + 'Kommenter</span>') + '</figure>';
+      ph.map(function (p, n) {
+        var mine = (x.notes[p.i] || []).length, c = mine + (sent[p.i] || 0);
+        return '<figure class="gi rv-gi" data-act="rvPhoto" data-id="' + j.id + '" data-i="' + p.i + '" data-n="' + (n + 1) + '" data-by="' + esc(by) + '" tabindex="0" role="button" aria-label="Kommenter bilde ' + (n + 1) + ', ' + esc(p.name) + '">' + SV.pic(p.src, p.pos) +
+          '<span class="gi-n">' + String(n + 1).padStart(2, '0') + ' ' + esc(p.name) + '</span>' + (p.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : '') +
+          (c ? '<span class="rv-badge' + (mine ? ' draft' : '') + '">' + ic('chat') + c + '</span>' : '<span class="rv-add">' + ic('chat') + 'Kommenter</span>') + '</figure>';
       }).join('') + '</div>';
   };
   SV.on('rvPhoto', function (el) {
-    var j = job(el.getAttribute('data-id')), i = +el.getAttribute('data-i'), by = el.getAttribute('data-by'), x = SV.boligPhotos(j).filter(function (p) { return p.i === i; })[0], list = R(j.id).notes[i] || [];
-    SV.modal('<figure style="margin:0"><img src="' + x.src + '" alt="" style="width:100%;border-radius:10px;max-height:56vh;object-fit:cover;object-position:' + x.pos + '"></figure>' +
-      '<div class="row between" style="margin:12px 0 6px"><b>' + el.getAttribute('data-n') + '. ' + esc(x.name) + '</b><span class="small muted">Foto: Studiovest</span></div>' +
-      (list.length ? '<ul class="rv-notes">' + list.map(function (n, k) { return '<li><span>' + esc(n.t) + '<small>' + esc(n.by) + '</small></span><button class="link small" data-act="rvDel" data-id="' + j.id + '" data-i="' + i + '" data-k="' + k + '">Fjern</button></li>'; }).join('') + '</ul>' : '') +
+    var j = job(el.getAttribute('data-id')), i = +el.getAttribute('data-i'), by = el.getAttribute('data-by'), p = SV.boligPhotos(j).filter(function (q) { return q.i === i; })[0], mine = dr(j.id, by).notes[i] || [];
+    var earlier = []; R(j.id).requests.forEach(function (q) { q.items.forEach(function (it) { if (it.i === i) earlier.push({ t: it.t, by: q.by, st: q.status }); }); });
+    SV.modal('<figure style="margin:0"><img src="' + p.src + '" alt="" style="width:100%;border-radius:10px;max-height:56vh;object-fit:cover;object-position:' + p.pos + '"></figure>' +
+      '<div class="row between" style="margin:12px 0 6px"><b>' + el.getAttribute('data-n') + '. ' + esc(p.name) + '</b><span class="small muted">Foto: Studiovest</span></div>' +
+      (earlier.length ? '<ul class="rv-notes">' + earlier.map(function (n) { return '<li><span>' + esc(n.t) + '<small>' + esc(n.by) + ' · ' + (n.st === 'rettet' ? 'rettet' : 'sendt') + '</small></span></li>'; }).join('') + '</ul>' : '') +
+      (mine.length ? '<ul class="rv-notes" style="margin-top:8px">' + mine.map(function (n, k) { return '<li class="draft"><span>' + esc(n.t) + '<small>Ikke sendt ennå</small></span><button class="link small" data-act="rvDel" data-id="' + j.id + '" data-i="' + i + '" data-k="' + k + '" data-by="' + esc(by) + '">Fjern</button></li>'; }).join('') + '</ul>' : '') +
       '<label class="fld" style="margin-top:8px"><span>Hva bør endres?</span><textarea class="txt" id="rvTxt" rows="3" placeholder="F.eks. fjern ledningen over benken, eller rett opp skjeve linjer"></textarea></label>' +
       '<div class="row" style="justify-content:flex-end"><button class="btn btn-dark" data-act="rvSave" data-id="' + j.id + '" data-i="' + i + '" data-by="' + esc(by) + '">' + ic('chat') + 'Lagre kommentar</button></div>', { wide: true, after: function () { var t = document.getElementById('rvTxt'); if (t) t.focus(); } });
   });
   SV.on('rvSave', function (el) {
     var t = document.getElementById('rvTxt').value.trim(); if (!t) { SV.toast('Skriv hva som bør endres', 'warn'); return; }
-    var r = R(el.getAttribute('data-id')), i = el.getAttribute('data-i');
-    (r.notes[i] = r.notes[i] || []).push({ t: t, by: el.getAttribute('data-by'), d: SV.data.iso(SV.data.base) }); SV.save(); SV.close(); keep(); SV.toast('Kommentar lagret · send endringene når du er ferdig');
+    var x = dr(el.getAttribute('data-id'), el.getAttribute('data-by')), i = el.getAttribute('data-i');
+    (x.notes[i] = x.notes[i] || []).push({ t: t, d: today() }); SV.save(); SV.close(); keep(); SV.toast('Kommentar lagret · trykk «Send endringer» når du er ferdig');
   });
-  SV.on('rvDel', function (el) { var r = R(el.getAttribute('data-id')), l = r.notes[el.getAttribute('data-i')]; l.splice(+el.getAttribute('data-k'), 1); SV.save(); SV.close(); keep(); });
-  function keep() { var y = window.scrollY; SV.render(); window.scrollTo(0, y); }
+  SV.on('rvDel', function (el) { var x = dr(el.getAttribute('data-id'), el.getAttribute('data-by')); x.notes[el.getAttribute('data-i')].splice(+el.getAttribute('data-k'), 1); SV.save(); SV.close(); keep(); });
 
   // ---------- plantegning ----------
-  function overlay(r, edit) {
+  function overlay(m) {
     return '<svg class="rv-ov" viewBox="0 0 400 300" preserveAspectRatio="none" aria-hidden="true">' +
-      r.strokes.map(function (s) { return '<polyline points="' + s.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + '"/>'; }).join('') +
-      (r.texts || []).map(function (p) { return p.t ? '<text class="rv-t" x="' + p.x.toFixed(1) + '" y="' + p.y.toFixed(1) + '">' + esc(p.t) + '</text>' : '<circle class="rv-tc" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3"/>'; }).join('') +
-      r.pins.map(function (p, k) { return '<g transform="translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ')"><circle r="10"/><text y="4">' + (k + 1) + '</text></g>'; }).join('') + '</svg>';
+      m.strokes.map(function (s) { return '<polyline points="' + s.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + '"/>'; }).join('') +
+      m.texts.map(function (p) { return p.t ? '<text class="rv-t" x="' + p.x.toFixed(1) + '" y="' + p.y.toFixed(1) + '">' + esc(p.t) + '</text>' : '<circle class="rv-tc" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3"/>'; }).join('') +
+      m.pins.map(function (p, k) { return '<g transform="translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ')"><circle r="10"/><text y="4">' + (k + 1) + '</text></g>'; }).join('') + '</svg>';
   }
-  SV.reviewPlan = function (j, by, edit) {
-    var r = R(j.id);
-    var tools = edit ? '<div class="rv-tools" role="toolbar" aria-label="Verktøy for plantegning"><button type="button" class="fbtn' + (mode === 'pin' ? ' on' : '') + '" data-act="rvMode" data-m="pin">' + ic('chat') + 'Skriv</button><button type="button" class="fbtn' + (mode === 'text' ? ' on' : '') + '" data-act="rvMode" data-m="text"><b style="font-size:14px;line-height:1">T</b>Tekst</button><button type="button" class="fbtn' + (mode === 'pen' ? ' on' : '') + '" data-act="rvMode" data-m="pen">' + ic('edit') + 'Tegn</button><button type="button" class="fbtn" data-act="rvUndo" data-id="' + j.id + '">Angre</button>' + (r.pins.length || r.strokes.length || r.texts.length ? '<button type="button" class="fbtn" data-act="rvClear" data-id="' + j.id + '">Tøm</button>' : '') + '</div>' : '';
-    return '<div class="card pad rv-plan"><div class="row between" style="margin-bottom:10px;gap:10px;flex-wrap:wrap"><div><h3 class="h3">Plantegning</h3>' + (edit ? '<p class="small muted" style="margin-top:2px">' + (mode === 'pin' ? 'Punkt: trykk der noe er feil, og skriv hva som skal endres.' : mode === 'text' ? 'Tekst: trykk og skriv rett på tegningen, uten punkt.' : 'Tegn: bruk musen eller fingeren for å vise hva du mener.') + '</p>' : '') + '</div>' + tools + '</div>' +
-      '<div class="rv-canvas' + (edit ? ' edit m-' + mode : '') + '" id="' + (edit ? 'rvCanvas' : '') + '" data-id="' + j.id + '" data-by="' + esc(by) + '">' + SV.planSvg(j) + overlay(r, edit) + '</div>' +
-      (r.pins.length ? '<ol class="rv-pins">' + r.pins.map(function (p, k) { return '<li><span class="rv-num">' + (k + 1) + '</span>' + (edit ? '<input class="inp" value="' + esc(p.t) + '" placeholder="Hva er feil her? F.eks. «Dette er bod, ikke soverom»" data-input="rvPin" data-id="' + j.id + '" data-k="' + k + '" aria-label="Kommentar ' + (k + 1) + '"><button type="button" class="link small" data-act="rvPinDel" data-id="' + j.id + '" data-k="' + k + '">Fjern</button>' : '<span>' + (esc(p.t) || '<span class="muted">Uten tekst</span>') + '<small>' + esc(p.by || '') + '</small></span>') + '</li>'; }).join('') + '</ol>' : '') +
-      (r.texts.length ? '<ul class="rv-pins">' + r.texts.map(function (p, k) { return '<li><span class="rv-num rv-numt">T</span>' + (edit ? '<input class="inp" value="' + esc(p.t) + '" placeholder="Skriv teksten som skal stå på tegningen" data-input="rvText" data-id="' + j.id + '" data-k="' + k + '" aria-label="Tekst ' + (k + 1) + '"><button type="button" class="link small" data-act="rvTextDel" data-id="' + j.id + '" data-k="' + k + '">Fjern</button>' : '<span>' + (esc(p.t) || '<span class="muted">Tom</span>') + '</span>') + '</li>'; }).join('') + '</ul>' : '') +
-      (edit ? '<label class="fld" style="margin-top:12px"><span>Kommentar til plantegningen <span class="muted">(uten å markere noe)</span></span><textarea class="txt" rows="2" placeholder="F.eks. Kjøkkenet er 14 m², ikke 12. Boden under trappen mangler." data-input="rvNote" data-id="' + j.id + '">' + esc(r.planNote) + '</textarea></label>' : r.planNote ? '<p class="small" style="margin-top:12px"><b>Kommentar:</b> ' + esc(r.planNote) + '</p>' : '') + '</div>';
+  function markupList(m) {
+    return (m.pins.length ? '<ol class="rv-pins">' + m.pins.map(function (p, k) { return '<li><span class="rv-num">' + (k + 1) + '</span><span>' + (esc(p.t) || '<span class="muted">Uten tekst</span>') + '</span></li>'; }).join('') + '</ol>' : '') +
+      (m.texts.length ? '<ul class="rv-pins">' + m.texts.map(function (p) { return '<li><span class="rv-num rv-numt">T</span><span>' + (esc(p.t) || '<span class="muted">Tom</span>') + '</span></li>'; }).join('') + '</ul>' : '') +
+      (m.planNote ? '<p class="small" style="margin-top:10px"><b>Kommentar:</b> ' + esc(m.planNote) + '</p>' : '');
+  }
+  // vis en plantegning med markeringer (brukes i tråden og hos studio)
+  SV.planMarked = function (j, m, small) {
+    return '<div class="rv-canvas' + (small ? ' sm' : '') + '">' + SV.planSvg(j) + overlay(m) + '</div>' + markupList(m);
   };
+  SV.reviewPlan = function (j, by, edit) {
+    if (!edit) return '<div class="card pad rv-plan"><h3 class="h3" style="margin-bottom:10px">Plantegning</h3><div class="rv-canvas">' + SV.planSvg(j) + '</div></div>';
+    var x = dr(j.id, by), a = ' data-id="' + j.id + '" data-by="' + esc(by) + '"';
+    var tools = '<div class="rv-tools" role="toolbar" aria-label="Verktøy for plantegning"><button type="button" class="fbtn' + (mode === 'pin' ? ' on' : '') + '" data-act="rvMode" data-m="pin">' + ic('chat') + 'Punkt</button><button type="button" class="fbtn' + (mode === 'text' ? ' on' : '') + '" data-act="rvMode" data-m="text"><b style="font-size:14px;line-height:1">T</b>Tekst</button><button type="button" class="fbtn' + (mode === 'pen' ? ' on' : '') + '" data-act="rvMode" data-m="pen">' + ic('edit') + 'Tegn</button><button type="button" class="fbtn" data-act="rvUndo"' + a + '>Angre</button>' + (x.pins.length || x.strokes.length || x.texts.length ? '<button type="button" class="fbtn" data-act="rvClear"' + a + '>Tøm</button>' : '') + '</div>';
+    return '<div class="card pad rv-plan"><div class="row between" style="margin-bottom:10px;gap:10px;flex-wrap:wrap"><div><h3 class="h3">Plantegning</h3><p class="small muted" style="margin-top:2px">' + (mode === 'pin' ? 'Punkt: trykk der noe er feil, og skriv hva som skal endres.' : mode === 'text' ? 'Tekst: trykk og skriv rett på tegningen, uten punkt.' : 'Tegn: bruk musen eller fingeren for å vise hva du mener.') + '</p></div>' + tools + '</div>' +
+      '<div class="rv-canvas edit m-' + mode + '" id="rvCanvas"' + a + '>' + SV.planSvg(j) + overlay(x) + '</div>' +
+      (x.pins.length ? '<ol class="rv-pins">' + x.pins.map(function (p, k) { return '<li><span class="rv-num">' + (k + 1) + '</span><input class="inp" value="' + esc(p.t) + '" placeholder="Hva er feil her? F.eks. «Dette er bod, ikke soverom»" data-input="rvPin"' + a + ' data-k="' + k + '" aria-label="Kommentar ' + (k + 1) + '"><button type="button" class="link small" data-act="rvPinDel"' + a + ' data-k="' + k + '">Fjern</button></li>'; }).join('') + '</ol>' : '') +
+      (x.texts.length ? '<ul class="rv-pins">' + x.texts.map(function (p, k) { return '<li><span class="rv-num rv-numt">T</span><input class="inp" value="' + esc(p.t) + '" placeholder="Skriv teksten som skal stå på tegningen" data-input="rvText"' + a + ' data-k="' + k + '" aria-label="Tekst ' + (k + 1) + '"><button type="button" class="link small" data-act="rvTextDel"' + a + ' data-k="' + k + '">Fjern</button></li>'; }).join('') + '</ul>' : '') +
+      '<label class="fld" style="margin-top:12px"><span>Kommentar til plantegningen <span class="muted">(uten å markere noe)</span></span><textarea class="txt" rows="2" placeholder="F.eks. Kjøkkenet er 14 m², ikke 12. Boden under trappen mangler." data-input="rvNote"' + a + '>' + esc(x.planNote) + '</textarea></label></div>';
+  };
+  function X(el) { return dr(el.getAttribute('data-id'), el.getAttribute('data-by')); }
   SV.on('rvMode', function (el) { mode = el.getAttribute('data-m'); keep(); });
-  SV.on('rvUndo', function (el) { var r = R(el.getAttribute('data-id')); if (mode === 'pen' && r.strokes.length) r.strokes.pop(); else if (r.pins.length) r.pins.pop(); else r.strokes.pop(); SV.save(); keep(); });
-  SV.on('rvClear', function (el) { var r = R(el.getAttribute('data-id')); r.pins = []; r.strokes = []; r.texts = []; SV.save(); keep(); });
-  SV.on('rvPin', function (el) { R(el.getAttribute('data-id')).pins[+el.getAttribute('data-k')].t = el.value; SV.save(); });
-  SV.on('rvText', function (el) { R(el.getAttribute('data-id')).texts[+el.getAttribute('data-k')].t = el.value; SV.save(); var t = document.querySelectorAll('#rvCanvas .rv-t, #rvCanvas .rv-tc')[+el.getAttribute('data-k')]; if (t && el.value) { if (t.tagName === 'text') t.textContent = el.value; } });
-  SV.on('rvTextDel', function (el) { R(el.getAttribute('data-id')).texts.splice(+el.getAttribute('data-k'), 1); SV.save(); keep(); });
-  SV.on('rvNote', function (el) { R(el.getAttribute('data-id')).planNote = el.value; SV.save(); });
-  SV.on('rvPinDel', function (el) { R(el.getAttribute('data-id')).pins.splice(+el.getAttribute('data-k'), 1); SV.save(); keep(); });
-  // tegning og nåler (pointer events: mus, finger, penn)
+  SV.on('rvUndo', function (el) { var x = X(el); if (mode === 'pen' && x.strokes.length) x.strokes.pop(); else if (mode === 'text' && x.texts.length) x.texts.pop(); else if (x.pins.length) x.pins.pop(); else x.strokes.pop(); SV.save(); keep(); });
+  SV.on('rvClear', function (el) { var x = X(el); x.pins = []; x.strokes = []; x.texts = []; SV.save(); keep(); });
+  SV.on('rvPin', function (el) { X(el).pins[+el.getAttribute('data-k')].t = el.value; SV.save(); });
+  SV.on('rvText', function (el) { X(el).texts[+el.getAttribute('data-k')].t = el.value; SV.save(); var t = document.querySelectorAll('#rvCanvas .rv-t, #rvCanvas .rv-tc')[+el.getAttribute('data-k')]; if (t && t.tagName === 'text' && el.value) t.textContent = el.value; });
+  SV.on('rvTextDel', function (el) { X(el).texts.splice(+el.getAttribute('data-k'), 1); SV.save(); keep(); });
+  SV.on('rvNote', function (el) { X(el).planNote = el.value; SV.save(); });
+  SV.on('rvPinDel', function (el) { X(el).pins.splice(+el.getAttribute('data-k'), 1); SV.save(); keep(); });
+  // tegning og punkter (pointer events: mus, finger, penn)
   function pt(c, e) { var b = c.getBoundingClientRect(); return [Math.max(0, Math.min(400, (e.clientX - b.left) / b.width * 400)), Math.max(0, Math.min(300, (e.clientY - b.top) / b.height * 300))]; }
+  function focusLast(sel) { setTimeout(function () { var ins = document.querySelectorAll(sel); if (ins.length) ins[ins.length - 1].focus({ preventScroll: true }); }, 60); }
   var drawing = null;
   document.addEventListener('pointerdown', function (e) {
     var c = e.target.closest && e.target.closest('#rvCanvas'); if (!c) return;
-    var r = R(c.getAttribute('data-id')), p = pt(c, e);
-    if (mode === 'text') {
-      r.texts.push({ x: p[0], y: p[1], t: '', by: c.getAttribute('data-by') }); SV.save(); keep();
-      setTimeout(function () { var ins = document.querySelectorAll('[data-input=rvText]'); if (ins.length) ins[ins.length - 1].focus({ preventScroll: true }); }, 60);
-      return;
-    }
-    if (mode === 'pin') {
-      r.pins.push({ x: p[0], y: p[1], t: '', by: c.getAttribute('data-by') }); SV.save(); keep();
-      // fokus etter at klikket er ferdig, ellers tar klikket fokus tilbake
-      setTimeout(function () { var ins = document.querySelectorAll('.rv-pins input'); if (ins.length) ins[ins.length - 1].focus({ preventScroll: true }); }, 60);
-      return;
-    }
+    var x = X(c), p = pt(c, e);
+    if (mode === 'text') { x.texts.push({ x: p[0], y: p[1], t: '' }); SV.save(); keep(); focusLast('[data-input=rvText]'); return; }
+    if (mode === 'pin') { x.pins.push({ x: p[0], y: p[1], t: '' }); SV.save(); keep(); focusLast('[data-input=rvPin]'); return; }
     e.preventDefault(); c.setPointerCapture && c.setPointerCapture(e.pointerId);
-    drawing = { c: c, r: r, s: [p], el: null };
-    var svg = c.querySelector('.rv-ov'), pl = document.createElementNS('http://www.w3.org/2000/svg', 'polyline'); svg.appendChild(pl); drawing.el = pl;
+    var svg = c.querySelector('.rv-ov'), pl = document.createElementNS('http://www.w3.org/2000/svg', 'polyline'); svg.appendChild(pl);
+    drawing = { c: c, x: x, s: [p], el: pl };
   });
   document.addEventListener('pointermove', function (e) {
     if (!drawing) return; var p = pt(drawing.c, e), l = drawing.s[drawing.s.length - 1];
@@ -91,40 +109,58 @@
   });
   document.addEventListener('pointerup', function () {
     if (!drawing) return; var d = drawing; drawing = null;
-    if (d.s.length > 1) { d.r.strokes.push(d.s); SV.save(); keep(); }
+    if (d.s.length > 1) { d.x.strokes.push(d.s); SV.save(); keep(); }
   });
 
   // ---------- send og godkjenn ----------
   SV.reviewBox = function (j, by) {
-    var r = R(j.id), n = openCount(r), last = r.sent[r.sent.length - 1];
+    var n = count(dr(j.id, by)), op = open(j).length;
     return '<div class="card pad appr"><div style="flex:1;min-width:260px"><h3 class="h3">Se gjennom og godkjenn</h3><p class="small muted" style="margin-top:4px">Ser du feil, ting som burde vært ryddet bort, eller noe annet som bør endres? Skriv en kommentar på bildet det gjelder. Er plantegningen feil, kan du skrive og tegne rett på den. Ser alt bra ut, godkjenner du oppdraget.</p>' +
-      (last ? '<p class="small" style="margin-top:8px">' + ic('check') + ' Endringer sendt ' + SV.fdate(last.d) + '. Vi gir beskjed når de er rettet.</p>' : '') + '</div>' +
+      (op ? '<p class="small" style="margin-top:8px">' + ic('clock') + ' ' + op + ' endringsønske' + (op > 1 ? 'r' : '') + ' er sendt og venter på Studiovest.</p>' : '') + '</div>' +
       '<div class="row"><button class="btn btn-ghost btn-s" data-act="rvSend" data-id="' + j.id + '" data-by="' + esc(by) + '"' + (n ? '' : ' disabled') + '>' + ic('mail') + 'Send endringer' + (n ? ' (' + n + ')' : '') + '</button><button class="btn btn-acc" data-act="crmApprove" data-id="' + j.id + '" data-by="' + esc(by) + '">' + ic('check') + 'Godkjenn oppdraget</button></div></div>';
   };
   SV.on('rvSend', function (el) {
-    var j = job(el.getAttribute('data-id')), r = R(j.id), n = openCount(r), by = el.getAttribute('data-by');
-    r.sent.push({ d: SV.data.iso(SV.data.base), by: by, n: n });
+    var j = job(el.getAttribute('data-id')), by = el.getAttribute('data-by'), x = dr(j.id, by), ph = SV.boligPhotos(j), r = R(j.id), items = [];
+    Object.keys(x.notes).forEach(function (i) { var p = ph.filter(function (q) { return q.i === +i; })[0]; x.notes[i].forEach(function (n) { items.push({ i: +i, name: p.name, t: n.t }); }); });
+    var hasPlan = planCount(x) > 0;
+    if (hasPlan) items.push({ plan: true, t: 'Plantegning: ' + [x.pins.filter(function (p) { return p.t; }).length + x.texts.filter(function (p) { return p.t; }).length ? (x.pins.filter(function (p) { return p.t; }).length + x.texts.filter(function (p) { return p.t; }).length) + ' markeringer' : '', x.strokes.length ? 'tegning' : '', x.planNote ? 'kommentar' : ''].filter(Boolean).join(', ') });
+    var q = { id: 'q' + (r.requests.length + 1), by: by, role: role(by), d: today(), items: items, plan: hasPlan ? { pins: x.pins, texts: x.texts, strokes: x.strokes, planNote: x.planNote } : null, status: 'sendt' };
+    r.requests.push(q); delete r.drafts[by];
     var S = SV.state; S.mailLog = S.mailLog || [];
-    S.mailLog.unshift({ id: j.id, t: SV.fdate(SV.data.iso(SV.data.base)), to: 'Deg', mail: 'varsel i portalen', subj: 'Endringsønske (' + n + '): ' + j.addr + ' fra ' + by, k: 'endring' });
+    S.mailLog.unshift({ id: j.id, t: SV.fdate(today()), to: 'Deg', mail: 'varsel i portalen', subj: 'Endringsønske (' + items.length + '): ' + j.addr + ' fra ' + by, k: 'endring' });
+    if (q.role === 'kunde') S.mailLog.unshift({ id: j.id, t: SV.fdate(today()), to: j.broker, mail: 'megler', subj: j.seller + ' har sendt endringsønsker: ' + j.addr, k: 'endring' });
     // plantegningsagenten starter av seg selv når det er ønsker på plantegningen
-    if (planCount(r)) SV.runAgent(j);
-    SV.save(); keep(); SV.toast('Sendt til Studiovest · du får beskjed når det er rettet');
+    if (hasPlan) SV.runAgent(j);
+    SV.save(); keep(); SV.toast('Sendt til Studiovest · ' + (q.role === 'kunde' ? 'megler ser det også' : 'kunden ser det også'));
   });
 
-  // ---------- studio: endringsønsker på prosjektsiden ----------
+  // ---------- tråd: synlig for megler, kunde og studio ----------
+  SV.reviewThread = function (j, viewer) {
+    var qs = R(j.id).requests; if (!qs.length) return '';
+    return '<div class="sec"><div class="sec-h"><h2>Endringsønsker og svar</h2><span class="small muted">Megler og kunde ser det samme</span></div><div class="stack">' +
+      qs.slice().reverse().map(function (q) { return qCard(j, q, viewer); }).join('') + '</div></div>';
+  };
+  function qCard(j, q, viewer) {
+    var ph = SV.boligPhotos(j), studio = viewer === 'studio';
+    var items = q.items.filter(function (it) { return !it.plan; }).map(function (it) { var p = ph.filter(function (x) { return x.i === it.i; })[0]; return '<li><span class="rv-th">' + SV.pic(p.src, p.pos) + '</span><span><b>' + esc(it.name) + '</b><br>' + esc(it.t) + '</span></li>'; }).join('');
+    var head = '<div class="row between" style="gap:10px;margin-bottom:10px"><span>' + SV.avatar(q.by.replace(/ \(.+\)$/, '')) + ' <b>' + esc(q.by) + '</b> <span class="small muted">· ' + SV.fdate(q.d) + '</span></span>' + SV.chip(q.status === 'rettet' ? 'Rettet' : 'Sendt', q.status === 'rettet' ? 'ok' : 'sand') + '</div>';
+    var plan = q.plan ? '<div style="margin-top:12px"><p class="eyebrow" style="margin-bottom:6px">Plantegning</p>' + SV.planMarked(j, q.plan, true) + '</div>' : '';
+    var agent = studio && q.plan && q.status !== 'rettet' ? '<div style="margin-top:14px">' + ((SV.state.agent || {})[j.id] ? SV.agentCard(j) : q.planVer ? '<p class="small">' + ic('check') + ' Plantegning versjon ' + q.planVer + ' er publisert.</p>' : '<button class="btn btn-ghost btn-s" data-act="agRun" data-id="' + j.id + '">' + ic('bolt') + 'La agenten lage forslag</button>') + '</div>' : '';
+    var ans = q.answer ? '<div class="rv-ans"><b>Studiovest</b> <span class="small muted">· ' + SV.fdate(q.ad) + '</span><p>' + esc(q.answer) + '</p></div>' : '';
+    var form = studio && q.status !== 'rettet' ? '<div style="margin-top:14px"><label class="fld"><span>Svar til ' + (q.role === 'kunde' ? 'kunde og megler' : 'megler og kunde') + '</span><textarea class="txt" rows="2" id="ans-' + q.id + '" placeholder="F.eks. Ledningen er fjernet og soverommet er endret til bod.">' + esc(q.draft || (q.planVer ? 'Plantegningen er oppdatert (versjon ' + q.planVer + ').' : '')) + '</textarea></label><div class="row" style="justify-content:flex-end"><button class="btn btn-dark btn-s" data-act="rvDone" data-id="' + j.id + '" data-q="' + q.id + '">' + ic('check') + 'Rettet · send svar</button></div></div>' : '';
+    return '<div class="card pad rv-q' + (q.status === 'rettet' ? ' done' : '') + '">' + head + (items ? '<ul class="rv-list">' + items + '</ul>' : '') + plan + agent + ans + form + '</div>';
+  }
   SV.reviewStudio = function (j) {
-    var r = (SV.state.review || {})[j.id]; if (!r || !openCount(r)) return '';
-    var ph = SV.boligPhotos(j), items = [];
-    Object.keys(r.notes).forEach(function (i) { var x = ph.filter(function (p) { return p.i === +i; })[0]; r.notes[i].forEach(function (n) { items.push('<li><span class="rv-th">' + SV.pic(x.src, x.pos) + '</span><span><b>' + esc(x.name) + '</b><br>' + esc(n.t) + '<small>' + esc(n.by) + '</small></span></li>'); }); });
-    var last = r.sent[r.sent.length - 1];
-    return '<div class="card sec"><div class="card-h"><h3>Endringsønsker</h3><span class="small muted">' + (last ? 'Sendt ' + SV.fdate(last.d) + ' av ' + esc(last.by) : 'Ikke sendt ennå') + '</span></div><div class="card-b">' +
-      (items.length ? '<ul class="rv-list">' + items.join('') + '</ul>' : '') +
-      (planCount(r) ? '<div style="margin-top:14px">' + SV.reviewPlan(j, '', false) + '</div>' + ((SV.state.agent || {})[j.id] ? '<div style="margin-top:14px">' + SV.agentCard(j) + '</div>' : '<div class="row" style="margin-top:12px"><button class="btn btn-ghost btn-s" data-act="agRun" data-id="' + j.id + '">' + ic('bolt') + 'La agenten lage forslag</button></div>') : '') +
-      '<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn btn-dark btn-s" data-act="rvDone" data-id="' + j.id + '">' + ic('check') + 'Rettet · gi beskjed</button></div></div></div>';
+    var qs = R(j.id).requests; if (!qs.length) return '';
+    var op = open(j).length;
+    return '<div class="sec"><div class="sec-h"><h2>Endringsønsker</h2><span class="small muted">' + (op ? op + ' venter på deg' : 'Alt er rettet') + ' · megler og kunde ser svarene</span></div><div class="stack">' + qs.slice().reverse().map(function (q) { return qCard(j, q, 'studio'); }).join('') + '</div></div>';
   };
   SV.on('rvDone', function (el) {
-    var j = job(el.getAttribute('data-id')); SV.state.review[j.id] = { notes: {}, pins: [], strokes: [], texts: [], planNote: '', sent: [] };
-    var S = SV.state; S.mailLog.unshift({ id: j.id, t: SV.fdate(SV.data.iso(SV.data.base)), to: j.broker, mail: 'megler', subj: 'Endringene er gjort: ' + j.addr, k: 'rettet' });
-    SV.save(); keep(); SV.toast('Megler får e-post om at endringene er gjort');
+    var j = job(el.getAttribute('data-id')), q = R(j.id).requests.filter(function (x) { return x.id === el.getAttribute('data-q'); })[0], t = document.getElementById('ans-' + q.id).value.trim();
+    if (!t) { SV.toast('Skriv et kort svar', 'warn'); return; }
+    q.status = 'rettet'; q.answer = t; q.ad = today();
+    var S = SV.state;
+    [[j.broker, 'megler'], [j.seller, j.email || 'kunde']].forEach(function (p) { S.mailLog.unshift({ id: j.id, t: SV.fdate(today()), to: p[0], mail: p[1], subj: 'Endringene er gjort: ' + j.addr, k: 'rettet' }); });
+    SV.save(); keep(); SV.toast('Svar sendt · megler og kunde får e-post');
   });
 })();

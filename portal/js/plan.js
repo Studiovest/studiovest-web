@@ -60,7 +60,7 @@
   function kindsIn(t) { var low = ' ' + t.toLowerCase() + ' ', out = []; KINDS.forEach(function (k) { var i = low.search(new RegExp('[^a-zæøå]' + k[0] + '(?:et|en|a|ene|ets)?[^a-zæøå]')); if (i > -1 && out.every(function (o) { return o.name !== k[1]; })) out.push({ name: k[1], i: i }); }); return out.sort(function (a, b) { return a.i - b.i; }); }
   function roomAt(rooms, x, y) { return rooms.filter(function (r) { return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h; })[0]; }
   SV.planAgent = function (j) {
-    var r = SV.review(j.id), before = SV.planModel(j).rooms, rooms = before.map(function (x) { return Object.assign({}, x); });
+    var r = SV.reviewPlanSrc(j) || { pins: [], texts: [], strokes: [], planNote: '' }, before = SV.planModel(j).rooms, rooms = before.map(function (x) { return Object.assign({}, x); });
     var changes = [], manual = [];
     var items = r.pins.filter(function (p) { return p.t; }).map(function (p, k) { return { t: p.t, x: p.x, y: p.y, src: 'Punkt ' + (k + 1) }; })
       .concat((r.texts || []).filter(function (p) { return p.t; }).map(function (p) { return { t: p.t, x: p.x, y: p.y, src: 'Tekst på tegningen' }; }))
@@ -96,7 +96,7 @@
     p.after.forEach(function (r) { cur.rooms[r.id] = { name: r.name, area: r.area }; }); cur.n++; v[j.id] = cur;
     var st = SV.state.agentStats = SV.state.agentStats || { ok: 0, rejected: 0 }; st.ok++;
     delete SV.state.agent[j.id];
-    var rv = SV.review(j.id); rv.pins = []; rv.texts = []; rv.planNote = ''; rv.strokes = p.manual.length ? rv.strokes : [];
+    var q = SV.reviewOpenPlanReq(j); if (q) q.planVer = cur.n;
     SV.state.mailLog.unshift({ id: j.id, t: SV.fdate(D.iso(D.base)), to: j.broker, mail: 'megler', subj: 'Ny versjon av plantegningen: ' + j.addr, k: 'plan' });
     SV.save(); SV.render(); SV.toast('Plantegning versjon ' + cur.n + ' er publisert · megler får e-post');
   });

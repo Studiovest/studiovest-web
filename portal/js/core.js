@@ -6,7 +6,7 @@
   SV.on = function (name, fn) { SV.acts[name] = fn; };
 
   // ---------- tilstand (demo; lagres i nettleseren hvis mulig) ----------
-  var KEY = 'sv-portal-demo-2';
+  var KEY = 'sv-portal-demo-3';
   SV.state = { stage: {}, newJobs: [], cart: [], paid: [], favs: {}, comments: [], autos: {}, consents: {}, approved: {}, postStatus: {}, retake: false, deleteReq: false, read: false };
   try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) Object.assign(SV.state, saved); } catch (e) {}
   SV.save = function () { try { localStorage.setItem(KEY, JSON.stringify(SV.state)); } catch (e) {} };
@@ -180,7 +180,7 @@
 
   var ROLES = [
     ['studio', 'Studio', '#/'], ['dag', 'Fotograf', '#/dag'], ['red', 'Redigering', '#/redigering'], '|',
-    ['megler', 'Megler', '#/kunde/megler'], ['selger', 'Selger', '#/selger/B-2614'], '|',
+    ['megler', 'Megler', '#/kunde/megler'], ['selger', 'Selger', '#/selger/B-2611'], '|',
     ['bedrift', 'Bedrift', '#/kunde/bedrift'], ['ansatt', 'Ansatt', '#/samtykke'], '|',
     ['skole', 'Skole', '#/kunde/skole'], ['foresatt', 'Foresatt', '#/kunde/foresatt']
   ];

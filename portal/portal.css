@@ -830,3 +830,20 @@ a.li:hover b{text-decoration:underline;text-underline-offset:3px}
 .ag-list.man .ic{color:var(--brown)}
 .ag-list small{display:block;color:var(--dim);font-size:12.5px;margin-top:2px}
 @media (max-width:640px){.ag-cmp{grid-template-columns:1fr}}
+
+/* kundeside og tråd */
+.kstep{display:flex;gap:6px;margin-top:16px;flex-wrap:wrap}
+.kstep span{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:650;color:var(--dim);padding:6px 10px;border-radius:99px;background:rgba(22,20,18,.05)}
+.kstep i{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.4}
+.kstep .done{color:var(--ink)}.kstep .done i{opacity:1;background:#4A7C59}
+.kstep .now{color:#161412;background:var(--sand)}.kstep .now i{opacity:1}
+.rv-q.done{opacity:.85}
+.rv-ans{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(74,124,89,.10);font-size:14px}
+.rv-ans p{margin:4px 0 0}
+.rv-canvas.sm{max-width:420px;margin:0}
+.rv-badge.draft{background:var(--ink);color:#fff}
+.rv-notes li.draft{background:rgba(217,168,102,.18)}
+details.card summary{cursor:pointer;list-style:none}
+details.card summary::-webkit-details-marker{display:none}
+details.card summary::after{content:" +";color:var(--dim)}
+details[open].card summary::after{content:" −"}

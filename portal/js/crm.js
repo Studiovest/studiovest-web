@@ -27,12 +27,12 @@
   var RULES = [
     { k: 'opprettet_megler', stage: 'Opprettet', to: 'megler', subj: function (j) { return 'Bestilling mottatt: ' + j.addr; }, body: 'Vi har registrert oppdraget og kontakter kunden for å avtale tid.' },
     { k: 'kontaktet_megler', stage: 'Kontaktet', to: 'megler', subj: function (j) { return 'Kunden er kontaktet: ' + j.addr; }, body: 'Vi har snakket med kunden og avtaler tid for fotografering.', off: true },
-    { k: 'avtalt_kunde', stage: 'Fotografering avtalt', to: 'kunde', subj: function (j) { return 'Fotografering ' + when(j) + ': ' + j.addr; }, body: 'Tid, adresse, hvor lenge det tar og en sjekkliste for å gjøre boligen klar. Med lenke for å legge tiden i kalenderen.' },
+    { k: 'avtalt_kunde', stage: 'Fotografering avtalt', to: 'kunde', subj: function (j) { return 'Fotografering ' + when(j) + ': ' + j.addr; }, body: 'Lenke til kundesiden: avtalt tid, hva som er bestilt og hvordan du gjør boligen klar. Bildene leveres på samme lenke. Sendes også når du legger inn e-post på et prosjekt som allerede har tid.' },
     { k: 'avtalt_megler', stage: 'Fotografering avtalt', to: 'megler', subj: function (j) { return 'Tid avtalt ' + when(j) + ': ' + j.addr; }, body: 'Tiden er avtalt med kunden.' },
     { k: 'paminn_kunde', stage: 'Fotografering avtalt', to: 'kunde', subj: function (j) { return 'Påminnelse i morgen: fotografering ' + j.addr; }, body: 'Sendes dagen før kl. 16, med sjekklisten på nytt.', later: 'dagen før' },
     { k: 'utfort_megler', stage: 'Fotografering utført', to: 'megler', subj: function (j) { return 'Fotografert: ' + j.addr; }, body: 'Boligen er fotografert. Bildene og plantegningen leveres innen avtalt frist.' },
     { k: 'levert_megler', stage: 'Oppdrag levert', to: 'megler', subj: function (j) { return 'Klart til gjennomgang: ' + j.addr; }, body: 'Bilder og plantegning er klare. Se gjennom og trykk «Godkjenn» i portalen.' },
-    { k: 'levert_kunde', stage: 'Oppdrag levert', to: 'kunde', subj: function (j) { return 'Bildene av ' + j.addr + ' er klare'; }, body: 'Se bildene og plantegningen, og godkjenn dem med ett trykk.' },
+    { k: 'levert_kunde', stage: 'Oppdrag levert', to: 'kunde', subj: function (j) { return 'Bildene av ' + j.addr + ' er klare'; }, body: 'Samme lenke som før: se bildene og plantegningen, kommenter, eller godkjenn.' },
     { k: 'levert_paminn', stage: 'Oppdrag levert', to: 'megler', subj: function (j) { return 'Påminnelse: godkjenn ' + j.addr; }, body: 'Sendes etter 3 dager hvis oppdraget ikke er godkjent.', later: 'etter 3 dager' },
     { k: 'godkjent_meg', stage: 'Godkjent', to: 'meg', subj: function (j) { return 'Godkjent: ' + j.addr; }, body: 'Varsel til deg når megler eller kunde godkjenner. Husk faktura.' },
     { k: 'godkjent_megler', stage: 'Godkjent', to: 'megler', subj: function (j) { return 'Takk! ' + j.addr + ' er godkjent'; }, body: 'Bekreftelse med lenke til nedlasting og bildelisens.' },
@@ -194,7 +194,12 @@
   SV.on('crmEditSave', function (el) {
     var f = document.getElementById('ceF'), id = el.getAttribute('data-id');
     if (f.email.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.value.trim())) { SV.toast('Sjekk e-postadressen', 'warn'); return; }
-    S.jobEdit[id] = { seller: f.seller.value.trim(), email: f.email.value.trim(), phone: f.phone.value.trim() }; SV.save(); SV.close(); keep(); SV.toast('Kunden er oppdatert');
+    var before = SV.find(SV.jobs(), id), had = before.email;
+    S.jobEdit[id] = { seller: f.seller.value.trim(), email: f.email.value.trim(), phone: f.phone.value.trim() };
+    var j = SV.find(SV.jobs(), id), who = [];
+    // e-post lagt til på et prosjekt som allerede har tid: kunden får lenken med en gang
+    if (j.email && j.email !== had && SV.stIdx(j) >= 2) who = send(j, RULES.filter(function (r) { return r.k === 'avtalt_kunde'; }));
+    SV.save(); SV.close(); keep(); SV.toast(who.length ? 'Lenke til kundesiden er sendt til ' + j.email : 'Kunden er oppdatert');
   });
 
   // ---------- godkjenning ----------

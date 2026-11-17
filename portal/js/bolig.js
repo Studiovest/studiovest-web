@@ -259,7 +259,7 @@
       '<div class="card pad" style="margin-bottom:22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap"><span class="srow" style="margin:0;font-weight:650">' + sl[0] + sl[1] + '</span><span style="margin-left:auto">' + prog(j) + '</span></div>';
     if (!done) {
       return head + '<div class="g2"><div class="card pad"><h3 class="h3">Detaljer</h3><dl class="kv" style="margin-top:12px"><dt>Selger</dt><dd>' + esc(j.seller) + '</dd><dt>Tilgang</dt><dd>' + esc(j.access) + '</dd><dt>Bestilt</dt><dd>' + SV.svcShort(j) + '</dd><dt>Pris</dt><dd>' + SV.kr(Math.round(total(j) * DISC)) + ' eks. mva · ' + SV.kr(total(j) * DISC * 1.25) + ' inkl.</dd></dl>' +
-        (SV.stIdx(j) < 2 ? '<a class="btn btn-ghost btn-s" style="margin-top:14px" href="#/selger/' + j.id + '">' + ic('eye') + 'Se siden selger får</a>' : '') + '</div>' +
+        '<a class="btn btn-ghost btn-s" style="margin-top:14px" href="#/selger/' + j.id + '">' + ic('eye') + 'Se kundens side</a>' + '</div>' +
         '<div class="card pad"><h3 class="h3">Legg til</h3><p class="small muted" style="margin:6px 0 12px">Fram til fotograferingen.</p><div class="opts">' + ['dr', 'kv', 're', 'p3'].filter(function (s) { return j.services.indexOf(s) < 0; }).map(function (s) { var v = svc(s); return '<label class="opt"><input type="checkbox" data-change="addSvc" value="' + s + '"><b>' + esc(v.name) + '</b><span class="price">' + SV.kr(Math.round(v.price * DISC)) + '</span></label>'; }).join('') + '</div>' +
         '<button class="link small" style="margin-top:14px" data-act="dummy">Avlys eller flytt</button></div></div>';
     }
@@ -273,7 +273,7 @@
       '<div class="card pad"><h3 class="h3">Bruk av bildene</h3><p class="small" style="margin-top:8px">' + lic.text + '</p><p class="small" style="margin-top:8px">Krediter med <b>«Foto: Studiovest»</b>. Bilder merket «Illustrasjon» skal vises med merkingen.</p><div class="row" style="margin-top:14px"><button class="btn btn-ghost btn-xs" data-act="dummy">' + ic('plus') + 'Bestill digital møblering</button></div></div></div>';
     var appr = live ? SV.reviewBox(j, by) :
       st === 'Godkjent' && SV.approval(j) ? '<p class="small muted" style="margin:-10px 0 18px">' + ic('check') + ' Godkjent ' + SV.fdate(SV.approval(j).d) + ' av ' + esc(SV.approval(j).by) + '</p>' : '';
-    return head + appr + gal + plan + extras;
+    return head + appr + SV.reviewThread(j, 'megler') + '<div class="sec">' + gal + '</div>' + (j.services.indexOf('p2') > -1 ? plan : '') + extras;
   }, { title: 'Oppdrag' });
 
   function galDnd() {
