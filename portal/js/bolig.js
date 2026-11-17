@@ -57,8 +57,8 @@
     return SV.head({ eyebrow: SV.dot('bolig') + 'Bolig · ' + act + ' aktive · ' + wait + ' skal kontaktes', a: 'Bolig', b: 'prosjekter',
         lead: 'Legg inn prosjekter, endre status rett i listen og sett tid for fotografering. Megler og kunde får e-post automatisk, og godkjenner selv når bildene er levert.',
         actions: '<a class="btn btn-ghost btn-s" href="#/kunde/megler">' + ic('eye') + 'Se meglerportalen</a><button class="btn btn-acc btn-s" data-act="crmNew">' + ic('plus') + 'Nytt prosjekt</button>' }) +
-      SV.tabs('bo', [['o', 'Oversikt', act], ['t', 'Tavle'], ['e', 'E-postvarsler'], ['s', 'Tjenester og priser', D.boligServices.length], ['k', 'Meglerkontor', D.offices.length]], tab) +
-      SV.panels('bo', { o: '<div class="filters">' + [['alle', 'Alle kontor']].concat(D.offices.map(function (o) { return [o.id, o.name]; })).map(function (x) { return '<a class="fbtn' + (x[0] === f ? ' on' : '') + '" href="#/bolig' + (x[0] === 'alle' ? '' : '/kontor/' + x[0]) + '">' + esc(x[1]) + '</a>'; }).join('') + '</div>' + SV.crmDash(jobs), t: board, e: SV.crmMails(), s: svcs, k: off }, tab);
+      SV.tabs('bo', [['o', 'Oversikt', act], ['t', 'Tavle'], ['e', 'E-postvarsler'], ['p', 'Plantegning og agent'], ['s', 'Tjenester og priser', D.boligServices.length], ['k', 'Meglerkontor', D.offices.length]], tab) +
+      SV.panels('bo', { o: '<div class="filters">' + [['alle', 'Alle kontor']].concat(D.offices.map(function (o) { return [o.id, o.name]; })).map(function (x) { return '<a class="fbtn' + (x[0] === f ? ' on' : '') + '" href="#/bolig' + (x[0] === 'alle' ? '' : '/kontor/' + x[0]) + '">' + esc(x[1]) + '</a>'; }).join('') + '</div>' + SV.crmDash(jobs), t: board, e: SV.crmMails(), p: SV.planSettings(), s: svcs, k: off }, tab);
   }, { title: 'Bolig' });
   SV.route('/bolig/kontor/:kontor', 'studio', function (p) { return SV.routes.filter(function (r) { return r.pattern === '/bolig'; })[0].fn(p); }, { title: 'Bolig' });
 
