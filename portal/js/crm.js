@@ -12,9 +12,12 @@
 
   // Utefotografering har egne statuser for oppdrag med «Ekstra utefotografering». De ligger mellom «Fotografering utført» og «Oppdrag levert».
   D.outStages = ['Utefotografering avtalt', 'Utefotografering utført'];
-  SV.stagesFor = function (j) { return j && SV.hasOut(j) ? ST.slice(0, 4).concat(D.outStages, ST.slice(4)) : ST; };
-  SV.stIdx = function (j) { var s = SV.stageOf(j); return D.outStages.indexOf(s) > -1 ? 3 : ST.indexOf(s); };
-  SV.colOf = function (j) { var s = SV.stageOf(j); return D.outStages.indexOf(s) > -1 ? 'Fotografering utført' : s; };
+  // «Utsatt»: fotograferingen er utsatt og ny tid er ikke avtalt. Regnes som ikke planlagt (som «Kontaktet»).
+  SV.stagesFor = function (j) { var L = ST.slice(0, 2).concat(['Utsatt'], ST.slice(2)); return j && SV.hasOut(j) ? L.slice(0, 5).concat(D.outStages, L.slice(5)) : L; };
+  SV.stIdx = function (j) { var s = SV.stageOf(j); return D.outStages.indexOf(s) > -1 ? 3 : s === 'Utsatt' ? 1 : ST.indexOf(s); };
+  SV.colOf = function (j) { var s = SV.stageOf(j); return D.outStages.indexOf(s) > -1 ? 'Fotografering utført' : s === 'Utsatt' ? 'Kontaktet' : s; };
+  S.postponed = S.postponed || {};
+  SV.postInfo = function (j) { return SV.stageOf(j) === 'Utsatt' ? S.postponed[j.id] || { reason: 'Utsatt' } : null; };
   function svc(id) { return SV.find(D.boligServices, id); }
   function office(id) { return SV.find(D.offices, id); }
   function total(j) { return SV.svcTotal(j); }
@@ -42,6 +45,7 @@
     { k: 'godkjent_meg', stage: 'Godkjent', to: 'meg', subj: function (j) { return 'Godkjent: ' + j.addr; }, body: 'Varsel til deg når megler eller kunde godkjenner. Husk faktura.' },
     { k: 'godkjent_megler', stage: 'Godkjent', to: 'megler', subj: function (j) { return 'Takk! ' + j.addr + ' er godkjent'; }, body: 'Bekreftelse med lenke til nedlasting og bildelisens.' },
     { k: 'flytt', stage: '', to: 'begge', subj: function (j) { return 'Ny tid for fotografering: ' + j.addr; }, body: 'Sendes når du endrer en tid som allerede er avtalt.' },
+    { k: 'utsatt', stage: 'Utsatt', to: 'begge', subj: function (j) { return 'Fotograferingen er utsatt: ' + j.addr; }, body: 'Med årsak. Vi tar kontakt for ny tid.' },
     { k: 'ute', stage: '', to: 'begge', subj: function (j) { return 'Utefotografering ' + SV.outWhen(j) + ': ' + j.addr; }, body: 'Sendes når tiden for ekstra utefotografering settes eller endres.' }
   ];
   SV.mailRules = RULES;
@@ -89,7 +93,7 @@
     list.sort(function (a, b) { var x = SV.stIdx(a), y = SV.stIdx(b); return x - y || (a.date + a.time < b.date + b.time ? -1 : 1); });
     var b = today(), wk = jobs.filter(function (j) { var d = SV.diff(j.date) - SV.diff(b); return SV.stageOf(j) === 'Fotografering avtalt' && d >= 0 && d < 7; }).length;
     var stats = '<div class="g4" style="margin-bottom:18px">' +
-      SV.stat('chat', 'Skal kontaktes', jobs.filter(function (j) { return SV.stageOf(j) === 'Opprettet'; }).length, 'Status «Opprettet»') +
+      SV.stat('chat', 'Skal kontaktes', jobs.filter(function (j) { return SV.stageOf(j) === 'Opprettet' || (SV.postInfo(j) && SV.postInfo(j).follow && SV.diff(SV.postInfo(j).follow) <= 0); }).length, 'Opprettet, eller utsatt med oppfølging i dag') +
       SV.stat('cal', 'Fotograferinger', wk, 'Neste 7 dager') +
       SV.stat('eye', 'Venter på godkjenning', jobs.filter(function (j) { return SV.stageOf(j) === 'Oppdrag levert'; }).length, 'Megler eller kunde') +
       SV.stat('wallet', 'Ikke fakturert', jobs.filter(function (j) { return matches(j, 'ufakt'); }).length, 'Levert eller godkjent · bare du ser dette', true) + '</div>';
@@ -100,6 +104,8 @@
     var rows = list.map(function (j) {
       var i = SV.stIdx(j), o = office(j.office), inv = S.inv[j.id] || {}, ap = SV.approval(j);
       var tm = i >= 2 ? '<button class="link small" data-act="crmTime" data-id="' + j.id + '" style="white-space:nowrap">' + SV.fdate(j.date) + ' kl. ' + j.time + '</button>' : '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Sett tid</button>';
+      var pi = SV.postInfo(j); if (pi) tm = '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Ny tid</button><small>' + esc(pi.reason) + (pi.follow ? ' · følg opp ' + SV.fdate(pi.follow) : '') + '</small>';
+      else if (i >= 2 && i < 3) tm += '<small><button class="link" data-act="crmPost" data-id="' + j.id + '">Utsett</button></small>';
       if (SV.hasOut(j)) tm += '<small>' + (j.date2 ? '<button class="link" data-act="crmTime" data-id="' + j.id + '" style="white-space:nowrap">Ute: ' + SV.fdate(j.date2) + ' kl. ' + j.time2 + '</button>' : 'Ute: <button class="link" data-act="crmTime" data-id="' + j.id + '">sett tid</button>') + '</small>';
       return '<tr><td><a href="#/bolig/' + j.id + '"><b>' + esc(j.addr) + '</b></a><small>' + esc(j.town) + ' · ' + esc(j.type) + ' · ' + esc(j.nr) + '</small></td>' +
         '<td class="hide-s">' + esc(j.broker) + '<small>' + esc(o ? o.name : '') + '</small></td>' +
@@ -139,9 +145,50 @@
       '<p class="small muted">Ca. ' + String(Math.round(SV.minutes(j) / 30) / 2).replace('.', ',') + ' timer på stedet ut fra produktene. Kommer i kalenderen og i fotografens dagliste.</p>' +
       (SV.hasOut(j) ? '<p class="eyebrow" style="margin:14px 0 8px">Ekstra utefotografering · egen tid</p><div class="g2"><label class="fld"><span>Dato</span><input class="inp" type="date" name="d2" value="' + esc(j.date2 || '') + '"></label><label class="fld"><span>Klokkeslett</span><input class="inp" type="time" name="t2" step="900" value="' + esc(j.time2 || '') + '"></label></div><p class="small muted">Kan stå tom og settes senere, f.eks. når været er bra.</p>' : '') +
       '<label class="opt" style="margin-top:12px"><input type="checkbox" name="mail" checked><b>Send e-post til kunde og megler</b><small>' + (has ? 'Ny tid' : 'Tid, adresse og sjekkliste for å gjøre boligen klar') + '</small></label>' +
-      '<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn btn-dark" data-act="crmTimeSave" data-id="' + j.id + '">' + ic('check') + 'Lagre tid</button></div></form>');
+      '<div class="row" style="justify-content:' + (has ? 'space-between' : 'flex-end') + ';margin-top:16px">' + (has ? '<button type="button" class="btn btn-ghost" data-act="crmPost" data-id="' + j.id + '">' + ic('clock') + 'Utsett</button>' : '') + '<button class="btn btn-dark" data-act="crmTimeSave" data-id="' + j.id + '">' + ic('check') + 'Lagre tid</button></div></form>');
   }
   SV.timeModal = timeModal;
+  // ---------- utsett ----------
+  var REASONS = ['Selger er ikke klar', 'Boligen er ikke klar', 'Været', 'Sykdom', 'Megler ba om det', 'Annet'];
+  function postModal(j) {
+    var out = SV.hasOut(j) && j.date2;
+    SV.modal('<p class="eyebrow">' + esc(j.addr) + ', ' + esc(j.town) + '</p><h2 class="h2"><span class="serif">Utsett fotografering</span></h2>' +
+      '<form id="poF" onsubmit="return false" style="margin-top:14px">' +
+      (out ? '<p class="eyebrow" style="margin:0 0 8px">Hva utsettes?</p><div class="opts" style="margin-bottom:12px"><label class="opt radio"><input type="radio" name="what" value="main" checked><b>Hovedfotografering</b><small>' + SV.fdate(j.date, true) + ' kl. ' + j.time + '</small></label><label class="opt radio"><input type="radio" name="what" value="out"><b>Utefotografering</b><small>' + SV.outWhen(j) + '</small></label></div>' : '') +
+      '<label class="fld"><span>Årsak</span><select class="sel" name="reason">' + REASONS.map(function (r) { return '<option>' + r + '</option>'; }).join('') + '</select></label>' +
+      '<label class="fld"><span>Notat <span class="muted">(valgfritt, vises for megler og kunde)</span></span><input class="inp" name="note" placeholder="F.eks. oppussing på badet blir ferdig om to uker"></label>' +
+      '<p class="eyebrow" style="margin:14px 0 8px">Ny tid</p><div class="opts" style="margin-bottom:10px"><label class="opt radio"><input type="radio" name="when" value="later" checked data-change="poWhen"><b>Avtales senere</b><small>Status blir «Utsatt»</small></label><label class="opt radio"><input type="radio" name="when" value="now" data-change="poWhen"><b>Ny tid nå</b><small>Status står som avtalt</small></label></div>' +
+      '<div id="poLater"><label class="fld"><span>Følg opp</span><input class="inp" type="date" name="follow" value="' + D.W(7) + '"></label><p class="small muted">Du får påminnelse den dagen om å avtale ny tid.</p></div>' +
+      '<div id="poNow" hidden><div class="g2"><label class="fld"><span>Ny dato</span><input class="inp" type="date" name="d"></label><label class="fld"><span>Klokkeslett</span><input class="inp" type="time" name="t" step="900" value="' + esc(j.time) + '"></label></div></div>' +
+      '<label class="opt" style="margin-top:12px"><input type="checkbox" name="mail" checked><b>Send e-post til kunde og megler</b><small>Med årsak og notat</small></label>' +
+      '<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn btn-dark" data-act="crmPostSave" data-id="' + j.id + '">' + ic('clock') + 'Utsett</button></div></form>');
+  }
+  SV.on('crmPost', function (el, ev) { if (ev) ev.preventDefault(); SV.close(); var j = SV.find(SV.jobs(), el.getAttribute('data-id')); setTimeout(function () { postModal(j); }, 0); });
+  SV.on('poWhen', function () { var f = document.getElementById('poF'), now = f.when.value === 'now'; document.getElementById('poLater').hidden = now; document.getElementById('poNow').hidden = !now; });
+  SV.on('crmPostSave', function (el) {
+    var f = document.getElementById('poF'), j = SV.find(SV.jobs(), el.getAttribute('data-id')), out = f.what && f.what.value === 'out', now = f.when.value === 'now', mail = f.mail.checked;
+    var reason = f.reason.value, note = f.note.value.trim();
+    if (now && (!f.d.value || !f.t.value)) { SV.toast('Velg ny dato og klokkeslett', 'warn'); return; }
+    var log = function (subj) { if (!mail) return []; var who = []; [[j.broker, 'megler'], [j.seller, j.email || '']].forEach(function (p) { if (!p[1] && p[0] === j.seller) return; S.mailLog.unshift({ id: j.id, t: now0(), to: p[0], mail: p[1] || 'megler', subj: subj, k: 'utsatt' }); who.push(p[0]); }); return who; };
+    var who, tag = reason + (note ? ' · ' + note : '');
+    S.outTime = S.outTime || {}; S.sellerTime = S.sellerTime || {};
+    if (out) {
+      S.outTime[j.id] = now ? [f.d.value, f.t.value] : null;
+      who = log('Utefotograferingen er ' + (now ? 'flyttet til ' + SV.fdate(f.d.value, true) + ' kl. ' + f.t.value : 'utsatt') + ': ' + j.addr + ' (' + tag + ')');
+      if (!now && SV.stageOf(j) === 'Utefotografering avtalt') S.stage[j.id] = 'Fotografering utført';
+      SV.save(); SV.close(); SV.render(); SV.toast('Utefoto ' + (now ? 'flyttet' : 'utsatt') + (who.length ? ' · e-post til ' + who.join(' og ') : '')); return;
+    }
+    if (now) {
+      S.sellerTime[j.id] = [f.d.value, f.t.value];
+      who = log('Fotograferingen er flyttet til ' + SV.fdate(f.d.value, true) + ' kl. ' + f.t.value + ': ' + j.addr + ' (' + tag + ')');
+      SV.save(); SV.close(); SV.render(); SV.toast('Flyttet til ' + SV.fdate(f.d.value) + ' kl. ' + f.t.value + (who.length ? ' · e-post til ' + who.join(' og ') : '')); return;
+    }
+    S.postponed[j.id] = { reason: reason, note: note, follow: f.follow.value, d: D.iso(D.base), from: j.date + ' ' + j.time };
+    delete S.sellerTime[j.id];
+    var keep = Object.assign({}, S.mailRules); if (!mail) S.mailRules.utsatt = false;
+    SV.close(); SV.setStage(j, 'Utsatt'); S.mailRules = keep; SV.save();
+  });
+  function now0() { var d = new Date(); return SV.fdate(D.iso(D.base)) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
   SV.on('crmTime', function (el, ev) { if (ev) ev.preventDefault(); timeModal(SV.find(SV.jobs(), el.getAttribute('data-id'))); });
   SV.on('crmTimeSave', function (el) {
     var f = document.getElementById('tmF'), j = SV.find(SV.jobs(), el.getAttribute('data-id'));
@@ -153,9 +200,10 @@
       S.outTime = S.outTime || {};
       outNew = f.d2.value ? [f.d2.value, f.t2.value] : null;
       outChanged = (outNew ? outNew.join(' ') : '') !== (j.date2 ? j.date2 + ' ' + j.time2 : '');
-      if (outNew) S.outTime[j.id] = outNew; else delete S.outTime[j.id];
+      S.outTime[j.id] = outNew;
     }
     var had = SV.stIdx(j) >= 2, mail = f.mail.checked, rules = S.mailRules;
+    if (S.postponed[j.id]) delete S.postponed[j.id];
     S.sellerTime = S.sellerTime || {}; S.sellerTime[j.id] = [f.d.value, f.t.value]; SV.close();
     var wantOut = S.pendOut === j.id; delete S.pendOut;
     if (had && outNew && (wantOut || SV.stageOf(j) === 'Fotografering utført')) { SV.close(); SV.setStage(SV.find(SV.jobs(), j.id), 'Utefotografering avtalt'); return; }
@@ -237,7 +285,7 @@
     var i = SV.stIdx(j), inv = S.inv[j.id] || {}, ap = SV.approval(j), log = S.mailLog.filter(function (m) { return m.id === j.id; });
     return '<div class="card"><div class="card-h"><h3>Status og kunde</h3>' + SV.chip(SV.stageOf(j)) + '</div><div class="card-b">' +
       '<label class="fld"><span>Status</span><select class="sel crm-st crm-' + i + '" data-change="crmStage" data-id="' + j.id + '">' + SV.stagesFor(j).map(function (s) { return '<option' + (s === SV.stageOf(j) ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></label>' +
-      '<dl class="kv" style="margin-top:6px"><dt>Fotografering</dt><dd>' + (i >= 2 ? SV.fdate(j.date, true) + ' kl. ' + j.time + ' <button class="link small" data-act="crmTime" data-id="' + j.id + '">Endre</button>' : '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Avtal tid</button>') + '</dd>' +
+      '<dl class="kv" style="margin-top:6px">' + (SV.postInfo(j) ? '<dt>Utsatt</dt><dd>' + esc(SV.postInfo(j).reason) + (SV.postInfo(j).note ? '<br><span class="small muted">' + esc(SV.postInfo(j).note) + '</span>' : '') + (SV.postInfo(j).follow ? '<br><span class="small muted">Følg opp ' + SV.fdate(SV.postInfo(j).follow) + '</span>' : '') + '</dd>' : '') + '<dt>Fotografering</dt><dd>' + (i >= 2 ? SV.fdate(j.date, true) + ' kl. ' + j.time + ' <button class="link small" data-act="crmTime" data-id="' + j.id + '">Endre</button>' + (i < 3 ? ' · <button class="link small" data-act="crmPost" data-id="' + j.id + '">Utsett</button>' : '') : '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Avtal tid</button>') + '</dd>' +
       (SV.hasOut(j) ? '<dt>Utefoto</dt><dd>' + (j.date2 ? SV.outWhen(j) + ' <button class="link small" data-act="crmTime" data-id="' + j.id + '">Endre</button>' : '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Sett tid</button>') + '</dd>' : '') +
       '<dt>Kunde</dt><dd>' + esc(j.seller) + '<br><span class="small muted">' + (j.email ? esc(j.email) : 'Ingen e-post') + ' · ' + esc(j.phone) + '</span> <button class="link small" data-act="crmEdit" data-id="' + j.id + '">Endre</button></dd>' +
       '<dt>Megler</dt><dd>' + esc(j.broker) + '<br><span class="small muted">' + esc(brokerMail(j)) + '</span></dd>' +
@@ -253,7 +301,7 @@
       RULES.map(function (r) { var ex = SV.jobs()[0]; return '<tr><td>' + (r.stage ? SV.chip(r.stage) : '<span class="small">Ny tid</span>') + (r.later ? '<small>' + esc(r.later) + '</small>' : '') + '</td><td>' + ({ megler: 'Megler', kunde: 'Kunde', meg: 'Deg (varsel)', begge: 'Megler og kunde' })[r.to] + '</td><td><b>' + esc(r.subj(ex)) + '</b><small>' + esc(r.body) + '</small></td><td class="r"><label class="sw"><input type="checkbox" data-change="crmRule" data-k="' + r.k + '"' + (ruleOn(r) ? ' checked' : '') + ' aria-label="' + esc(r.k) + '"><span></span></label></td></tr>'; }).join('') + '</tbody></table></div>';
     var log = '<div class="card tbl-w sec"><div class="card-h"><h3>Sendt</h3><span class="small muted">' + S.mailLog.length + '</span></div><table class="tbl"><thead><tr><th>Tid</th><th>Prosjekt</th><th>Til</th><th>Emne</th></tr></thead><tbody>' +
       (S.mailLog.length ? S.mailLog.slice(0, 40).map(function (m) { var j = SV.find(SV.jobs(), m.id); return '<tr><td class="small" style="white-space:nowrap">' + esc(m.t) + '</td><td><a href="#/bolig/' + m.id + '">' + esc(j ? j.addr : m.id) + '</a></td><td>' + esc(m.to) + '<small>' + esc(m.mail) + '</small></td><td>' + esc(m.subj) + (m.later ? '<small>Planlagt ' + esc(m.later) + '</small>' : '') + '</td></tr>'; }).join('') : '<tr><td colspan="4" class="muted" style="padding:24px;text-align:center">Ingen e-post ennå. Endre en status for å se hva som sendes.</td></tr>') + '</tbody></table></div>';
-    return rules + '<p class="hint">Avsender: post@studiovest.no. Svar fra megler eller kunde havner i innboksen din og under prosjektet.</p>' + log;
+    return rules + '<p class="hint">Sendes fra Studiovest sin e-post hos one.com (SMTP: send.one.com). Svar fra megler eller kunde hentes fra innboksen (IMAP: imap.one.com) og vises under prosjektet.</p>' + log;
   };
   SV.on('crmRule', function (el) { S.mailRules[el.getAttribute('data-k')] = el.checked; SV.save(); SV.toast(el.checked ? 'Varselet er på' : 'Varselet er av'); });
 })();
