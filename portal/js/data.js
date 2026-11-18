@@ -42,24 +42,27 @@
 
   // ---------- tjenester bolig ----------
   var boligServices = [
-    { id: 'f20', name: 'Boligfoto, 20 bilder', price: 3490, min: 60, group: 'Foto', on: true, desc: 'Interiør og eksteriør. Passer leiligheter.' },
-    { id: 'f30', name: 'Boligfoto, 30 bilder', price: 4290, min: 90, group: 'Foto', on: true, desc: 'Eneboliger og større leiligheter.' },
-    { id: 'f40', name: 'Boligfoto, 40 bilder', price: 5190, min: 120, group: 'Foto', on: true, desc: 'Store eiendommer, gårdsbruk, næring.' },
+    { id: 'f20', name: 'Liten fotopakke', price: 4000, min: 60, group: 'Fotopakke', on: true, desc: '20 bilder.' },
+    { id: 'f30', name: 'Standard fotopakke', price: 4700, min: 90, group: 'Fotopakke', on: true, desc: 'Ubegrenset antall bilder, det som passer boligen.' },
+    { id: 'f40', name: 'Premium fotopakke', price: 6700, min: 120, group: 'Fotopakke', on: true, desc: 'Ubegrenset antall bilder + 5 kveldsbilder (redigert til kveldsbilder fra bilder tatt på dagen).' },
+    { id: 'ut', name: 'Ekstra utefotografering', price: 2500, min: 30, group: 'Tilleggsprodukter', on: true, desc: 'Egen runde ute, f.eks. ved annet lys eller årstid.' },
+    { id: 'to', name: 'Tomtefoto', price: 2500, min: 30, group: 'Tilleggsprodukter', on: true, desc: 'Bilder av tomten.' },
+    { id: 'vm', name: 'Virtuell møblering', price: 500, min: 0, group: 'Tilleggsprodukter', on: true, desc: 'Merkes alltid «Illustrasjon» i leveransen.' },
+    { id: 'kv', name: 'Kveldsbilde (redigert ut fra dagbilde)', price: 500, min: 0, group: 'Tilleggsprodukter', on: true, desc: 'Dagbilde redigert til kveldsbilde.' },
     { id: 'dr', name: 'Dronefoto, 8 bilder', price: 1900, min: 30, group: 'Luft', on: true, desc: 'Avhengig av vær. Flyttes kostnadsfritt ved regn og vind.' },
-    { id: 'kv', name: 'Kveldsbilde', price: 1200, min: 30, group: 'Foto', on: true, desc: 'Ekte skumring på stedet, eller digital kveld merket som illustrasjon.' },
     { id: 'vi', name: 'Boligvideo, 60–90 sek', price: 6900, min: 90, group: 'Video', on: true, desc: 'Liggende til Finn og nettside.' },
     { id: 're', name: 'SoMe-reel 9:16', price: 2900, min: 45, group: 'Video', on: true, desc: 'Stående klipp til Instagram, Facebook og TikTok.' },
     { id: 'p2', name: 'Plantegning 2D', price: 1490, min: 30, group: 'Plantegning', on: true, desc: 'Målt opp på stedet, levert innen 2 virkedager.' },
     { id: 'p3', name: 'Plantegning 3D', price: 2490, min: 30, group: 'Plantegning', on: true, desc: 'Møblert 3D, i tillegg til 2D.' },
     { id: '36', name: '360°-visning', price: 2900, min: 45, group: 'Video', on: false, desc: 'Virtuell visning. Aktiveres når utstyr er på plass.' },
-    { id: 'vm', name: 'Digital møblering, per bilde', price: 390, min: 0, group: 'Etterarbeid', on: true, desc: 'Merkes alltid «Illustrasjon» i leveransen.' },
-    { id: 'ex', name: 'Ekspress, levert innen 24 t', price: 900, min: 0, group: 'Tillegg', on: true, desc: 'Prioritert redigering.' }
+    { id: 'ex', name: 'Ekspress, levert innen 24 t', price: 900, min: 0, group: 'Levering', on: true, desc: 'Prioritert redigering.' }
   ];
 
+
   var offices = [
-    { id: 'fjm', name: 'Fjordmegling Stord', town: 'Leirvik', agreement: 'Kontorpris −8 %', invoice: 'Samlefaktura til kontoret, EHF', brokers: ['Kari Lunde', 'Jonas Myklebust', 'Sigrid Tveit'], ytd: 312400 },
+    { id: 'fjm', name: 'Fjordmegling Stord', town: 'Leirvik', agreement: 'Listepris', invoice: 'Samlefaktura til kontoret, EHF', brokers: ['Kari Lunde', 'Jonas Myklebust', 'Sigrid Tveit'], ytd: 312400 },
     { id: 'kmh', name: 'Kystmegleren Haugesund', town: 'Haugesund', agreement: 'Listepris', invoice: 'Per oppdrag, til megler', brokers: ['Eirik Sæther', 'Line Hovda'], ytd: 188900 },
-    { id: 'sue', name: 'Sunnhordland Eiendom', town: 'Husnes', agreement: 'Kontorpris −5 %', invoice: 'Samlefaktura månedlig', brokers: ['Tone Rydland', 'Martin Opsal'], ytd: 241300 },
+    { id: 'sue', name: 'Sunnhordland Eiendom', town: 'Husnes', agreement: 'Listepris', invoice: 'Samlefaktura månedlig', brokers: ['Tone Rydland', 'Martin Opsal'], ytd: 241300 },
     { id: 'hbm', name: 'Hardanger Boligmegling', town: 'Rosendal', agreement: 'Listepris', invoice: 'Per oppdrag', brokers: ['Ole Bjørkås'], ytd: 64200 }
   ];
 
