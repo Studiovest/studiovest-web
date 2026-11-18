@@ -212,9 +212,9 @@
     var set = '<div class="g2"><div class="card pad"><h3 class="h3">Avsender</h3><label class="fld" style="margin-top:12px"><span>Navn</span><input class="inp" value="Studiovest"></label><label class="fld"><span>E-post</span><input class="inp" value="kontakt@studiovest.no"></label><label class="fld"><span>SMS-avsender</span><input class="inp" value="Studiovest" maxlength="11"></label><p class="hint">Domenet må verifiseres (SPF og DKIM) hos one.com ved lansering, så e-posten ikke havner i søppelpost.</p></div>' +
       '<div class="card pad"><h3 class="h3">Kanaler per felt</h3><table class="tbl" style="margin-top:8px"><thead><tr><th>Felt</th><th>E-post</th><th>SMS</th></tr></thead><tbody>' + ['bolig', 'bedrift', 'skole', 'mark'].map(function (k) { return '<tr><td>' + SV.dot(k) + ' ' + SV.areaName[k] + '</td><td><label class="sw"><input type="checkbox" checked aria-label="E-post ' + k + '"><span></span></label></td><td><label class="sw"><input type="checkbox"' + (k === 'bolig' || k === 'skole' ? ' checked' : '') + ' aria-label="SMS ' + k + '"><span></span></label></td></tr>'; }).join('') + '</tbody></table></div></div>';
     SV.after(tplLive);
-    return SV.head({ eyebrow: 'Sendt siste 30 dager: 1 284 e-poster · 316 SMS', a: 'E-post', b: 'og varsler', lead: 'Alle meldinger har samme Studiovest-uttrykk. Flettefeltene fylles inn automatisk fra oppdraget.' }) +
+    return SV.head({ eyebrow: 'Sendt siste 30 dager: 1 284 e-poster · 316 SMS', a: 'Maler', b: 'og varsler', lead: 'Alle meldinger har samme Studiovest-uttrykk. Flettefeltene fylles inn automatisk fra oppdraget.' }) +
       SV.tabs('ep', [['m', 'Maler'], ['l', 'Utboks', D.outbox.length], ['s', 'Innstillinger']], 'm') + SV.panels('ep', { m: tpl, l: log, s: set }, 'm');
-  }, { title: 'E-post og varsler' });
+  }, { title: 'Maler og varsler' });
   function tplLive() {
     var s = document.getElementById('tplSubj'), b = document.getElementById('tplBody'), p = document.getElementById('tplPrev'); if (!s) return;
     var sms = s.value === 'SMS';

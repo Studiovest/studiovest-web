@@ -6,7 +6,7 @@
   SV.on = function (name, fn) { SV.acts[name] = fn; };
 
   // ---------- tilstand (demo; lagres i nettleseren hvis mulig) ----------
-  var KEY = 'sv-portal-demo-7';
+  var KEY = 'sv-portal-demo-8';
   SV.state = { stage: {}, newJobs: [], cart: [], paid: [], favs: {}, comments: [], autos: {}, consents: {}, approved: {}, postStatus: {}, retake: false, deleteReq: false, read: false };
   try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) Object.assign(SV.state, saved); } catch (e) {}
   SV.save = function () { try { localStorage.setItem(KEY, JSON.stringify(SV.state)); } catch (e) {} };
@@ -189,7 +189,7 @@
   var NAV = [
     { h: '' , items: [['#/', 'home', 'Oversikt']] },
     { h: 'Felt', items: [['#/bolig', 'house', 'Bolig', 'bolig'], ['#/bedrift', 'brief', 'Bedrift', 'bedrift'], ['#/skole', 'school', 'Skolefoto', 'skole'], ['#/marked', 'mega', 'Markedsføring', 'mark']] },
-    { h: 'Drift', items: [['#/kalender', 'cal', 'Kalender'], ['#/stasjon', 'cam', 'Fotostasjon'], ['#/kunder', 'users', 'Kunder'], ['#/lagring', 'box', 'Lagring'], ['#/automatisering', 'bolt', 'Automatisering'], ['#/epost', 'mail', 'E-post og varsler'], ['#/okonomi', 'wallet', 'Økonomi']] },
+    { h: 'Drift', items: [['#/kalender', 'cal', 'Kalender'], ['#/stasjon', 'cam', 'Fotostasjon'], ['#/kunder', 'users', 'Kunder'], ['#/lagring', 'box', 'Lagring'], ['#/automatisering', 'bolt', 'Automatisering'], ['#/post', 'mail', 'E-post'], ['#/epost', 'file', 'Maler og varsler'], ['#/okonomi', 'wallet', 'Økonomi']] },
     { h: 'Om portalen', items: [['#/innsikt', 'info', 'Behov og innsikt']] }
   ];
 
@@ -214,7 +214,7 @@
     var navHtml = NAV.map(function (g) {
       return '<div class="nav-g">' + (g.h ? '<p class="nav-h">' + g.h + '</p>' : '') + g.items.map(function (it) {
         var active = it[0] === '#/' ? (hash === '#/' || hash === '') : (hash === it[0] || hash.indexOf(it[0] + '/') === 0);
-        return '<a href="' + it[0] + '" class="nav-a' + (active ? ' on' : '') + '"' + (active ? ' aria-current="page"' : '') + '>' + SV.icon(it[1]) + '<span>' + it[2] + '</span>' + (it[3] ? '<i class="adot a-' + it[3] + '"></i>' : '') + '</a>';
+        return '<a href="' + it[0] + '" class="nav-a' + (active ? ' on' : '') + '"' + (active ? ' aria-current="page"' : '') + '>' + SV.icon(it[1]) + '<span>' + it[2] + '</span>' + (it[0] === '#/post' && SV.mailUnread && SV.mailUnread() ? '<b class="nav-n">' + SV.mailUnread() + '</b>' : '') + (it[3] ? '<i class="adot a-' + it[3] + '"></i>' : '') + '</a>';
       }).join('') + '</div>';
     }).join('');
     return demoBar('studio') +

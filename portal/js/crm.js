@@ -218,10 +218,11 @@
   });
 
   // ---------- nytt prosjekt ----------
-  function projModal() {
+  // pre: forhåndsutfylling, f.eks. fra en e-postbestilling (samme felt som e-postagenten skal levere senere)
+  function projModal(pre) {
     var groups = {}; D.boligServices.filter(function (s) { return s.on; }).forEach(function (s) { (groups[s.group] = groups[s.group] || []).push(s); });
     SV.modal('<p class="eyebrow">' + SV.dot('bolig') + 'Bolig</p><h2 class="h2"><span class="serif">Nytt prosjekt</span></h2>' +
-      '<form id="npF" onsubmit="return false" style="margin-top:14px">' +
+      '<form id="npF" onsubmit="return false" style="margin-top:14px"><div class="callout" id="npSrc" hidden></div><p class="small muted" style="margin-bottom:6px">Ingen felt er påkrevd. Fyll inn det du vet.</p>' +
       '<p class="eyebrow" style="margin:6px 0 8px">Boligen</p><div class="g2"><label class="fld"><span>Adresse</span><input class="inp" name="addr" required placeholder="Gate og nummer"></label><label class="fld"><span>Sted</span><input class="inp" name="town" placeholder="F.eks. Leirvik"></label>' +
       '<label class="fld"><span>Boligtype</span><select class="sel" name="type"><option>Enebolig</option><option>Leilighet</option><option>Rekkehus</option><option>Fritidsbolig</option><option>Gårdsbruk</option><option>Tomt</option></select></label><label class="fld"><span>Oppdragsnummer</span><input class="inp" name="nr" placeholder="Fra megler"></label></div>' +
       '<p class="eyebrow" style="margin:14px 0 8px">Megler</p><div class="g2"><label class="fld"><span>Meglerkontor</span><select class="sel" name="office" data-change="npOffice">' + D.offices.map(function (o) { return '<option value="' + o.id + '">' + esc(o.name) + '</option>'; }).join('') + '</select></label><label class="fld"><span>Megler</span><select class="sel" name="broker" id="npBroker">' + D.offices[0].brokers.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join('') + '</select></label></div>' +
@@ -232,23 +233,35 @@
       '<div id="npOut" hidden><p class="eyebrow" style="margin:14px 0 8px">Ekstra utefotografering · egen tid <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(valgfritt)</span></p><div class="g2"><label class="fld"><span>Dato</span><input class="inp" type="date" name="d2"></label><label class="fld"><span>Klokkeslett</span><input class="inp" type="time" name="t2" step="900"></label></div></div>' +
       '<label class="fld"><span>Notat</span><input class="inp" name="note" placeholder="F.eks. drone avhenger av vind"></label>' +
       '<div class="stack" style="margin-top:6px"><label class="opt"><input type="checkbox" name="mailB" checked><b>Send bekreftelse til megler</b><small>«Bestilling mottatt»</small></label><label class="opt"><input type="checkbox" name="mailK" checked><b>Send e-post til kunden når tiden er satt</b><small>Tid og sjekkliste</small></label></div>' +
-      '<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn btn-acc" data-act="npSave">' + ic('plus') + 'Opprett prosjekt</button></div></form>', { wide: true, after: npSum });
+      '<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn btn-acc" data-act="npSave">' + ic('plus') + 'Opprett prosjekt</button></div></form>', { wide: true, after: function () { if (pre) npFill(pre); npSum(); } });
   }
   function npVals() { var f = document.getElementById('npF'), sel = [].slice.call(f.querySelectorAll('input[name=foto]:checked,input[name=s]:checked')).map(function (x) { return x.value; }); return { f: f, sel: sel, qty: SV.formQty(f, sel) }; }
   function npSum() { var v = npVals(), n = document.getElementById('npSum'), o = document.getElementById('npOut'); if (o) o.hidden = v.sel.indexOf('ut') < 0; if (n) n.textContent = SV.kr(v.sel.reduce(function (a, id) { return a + svc(id).price * (v.qty[id] || 1); }, 0)); }
   SV.on('npSum', npSum);
   SV.on('npOffice', function (el) { var o = office(el.value); document.getElementById('npBroker').innerHTML = o.brokers.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join(''); });
-  SV.on('crmNew', function () { projModal(); });
+  function npFill(pre) {
+    var f = document.getElementById('npF'); if (!f) return;
+    ['addr', 'town', 'type', 'nr', 'seller', 'email', 'phone', 'note'].forEach(function (k) { if (pre[k] && f[k]) f[k].value = pre[k]; });
+    if (pre.office) { f.office.value = pre.office; SV.acts.npOffice(f.office); }
+    if (pre.broker) f.broker.value = pre.broker;
+    if (pre.services) { [].forEach.call(f.querySelectorAll('input[name=foto],input[name=s]'), function (x) { x.checked = pre.services.indexOf(x.value) > -1; }); Object.keys(pre.qty || {}).forEach(function (k) { var q = f.querySelector('[name=q_' + k + ']'); if (q) q.value = pre.qty[k]; }); }
+    var note = document.getElementById('npSrc'); if (note && pre.src) note.innerHTML = ic('mail') + '<span>' + esc(pre.src) + '. Sjekk feltene: alt kan endres, og ingenting er påkrevd.</span>';
+    if (note && pre.src) note.hidden = false;
+    S.npPre = pre;
+  }
+  SV.crmNew = function (pre) { S.npPre = null; projModal(pre); };
+  SV.on('crmNew', function () { S.npPre = null; projModal(); });
   SV.on('npSave', function () {
     var v = npVals(), f = v.f;
-    if (!f.addr.value.trim()) { SV.toast('Skriv inn adressen', 'warn'); f.addr.focus(); return; }
-    if (!v.sel.length) { SV.toast('Velg minst ett produkt', 'warn'); return; }
     if (f.email.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.value.trim())) { SV.toast('Sjekk e-postadressen', 'warn'); f.email.focus(); return; }
     var timed = f.d.value && f.t.value, n = S.newJobs.length, id = 'B-' + (2620 + n);
-    var j = { id: id, addr: f.addr.value.trim(), town: f.town.value.trim() || 'Leirvik', office: f.office.value, broker: f.broker.value, nr: f.nr.value.trim() || '–', stage: 'Opprettet', date: timed ? f.d.value : D.W(3), time: timed ? f.t.value : '10:00', services: v.sel, qty: v.qty, seller: f.seller.value.trim() || 'Kunde', email: f.email.value.trim(), phone: f.phone.value.trim() || '–', access: f.access.value, type: f.type.value, cover: [D.img.stue, D.img.kjokken, D.img.tomanns, D.img.loft][n % 4], by: 'ak', wish: f.note.value.trim(), created: today() };
+    var j = { id: id, addr: f.addr.value.trim() || 'Uten adresse', town: f.town.value.trim(), office: f.office.value, broker: f.broker.value, nr: f.nr.value.trim() || '–', stage: 'Opprettet', date: timed ? f.d.value : D.W(3), time: timed ? f.t.value : '10:00', services: v.sel, qty: v.qty, seller: f.seller.value.trim() || 'Kunde', email: f.email.value.trim(), phone: f.phone.value.trim() || '–', access: f.access.value, type: f.type.value, cover: [D.img.stue, D.img.kjokken, D.img.tomanns, D.img.loft][n % 4], by: 'ak', wish: f.note.value.trim(), created: today() };
     if (v.sel.indexOf('ut') > -1 && f.d2.value && f.t2.value) { j.date2 = f.d2.value; j.time2 = f.t2.value; }
+    if (S.npPre && S.npPre.thread) { j.source = 'e-post'; j.mailThread = S.npPre.thread; }
     S.newJobs.push(j);
     var who = f.mailB.checked ? send(j, RULES.filter(function (r) { return r.k === 'opprettet_megler'; })) : [];
+    if (j.mailThread && SV.mailLinkJob) SV.mailLinkJob(j.mailThread, j.id);
+    S.npPre = null;
     SV.close();
     if (timed) {
       if (!f.mailK.checked) { var keepR = Object.assign({}, S.mailRules); S.mailRules.avtalt_kunde = false; SV.setStage(j, 'Fotografering avtalt'); S.mailRules = keepR; SV.save(); }

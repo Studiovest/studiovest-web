@@ -226,8 +226,7 @@
   }
   SV.on('quickOrder', function () {
     var a = document.getElementById('qAddr').value.trim(), ph = document.getElementById('qPhone').value.trim();
-    if (!a) { SV.toast('Skriv inn adressen', 'warn'); document.getElementById('qAddr').focus(); return; }
-    var parts = a.split(','), id = newJob({ addr: parts[0].trim(), town: (parts[1] || 'Leirvik').trim(), nr: '1126-04' + (40 + SV.state.newJobs.length), services: pkg().slice(), phone: ph || '–', seller: 'Selger' });
+    var parts = a.split(','), id = newJob({ addr: parts[0].trim() || 'Uten adresse', town: (parts[1] || '').trim(), nr: '1126-04' + (40 + SV.state.newJobs.length), services: pkg().slice(), phone: ph || '–', seller: 'Selger' });
     SV.go('#/kunde/megler/' + id); SV.toast('Bestilt · Studiovest avtaler tid med selger');
   });
 
@@ -236,7 +235,7 @@
     var groups = {}; D.boligServices.filter(function (s) { return s.on; }).forEach(function (s) { (groups[s.group] = groups[s.group] || []).push(s); });
     var p = pkg();
     SV.after(orderCalc);
-    return SV.head({ eyebrow: 'Fjordmegling Stord · priser eks. mva', a: 'Bestill fotografering', lead: 'Adressen hentes fra Vitec når du begynner å skrive. Standardpakken din er valgt på forhånd. Studiovest avtaler tid med selgeren etter at du har bestilt.' }) +
+    return SV.head({ eyebrow: 'Fjordmegling Stord · priser eks. mva', a: 'Bestill fotografering', lead: 'Ingen felt er påkrevd: fyll inn det du har, så tar vi resten. Standardpakken din er valgt på forhånd. Studiovest avtaler tid med selgeren etter at du har bestilt.' }) +
       '<form id="order" class="g21" onsubmit="return false"><div class="stack">' +
         '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Boligen</h3><div class="g2"><label class="fld sugg"><span>Adresse</span><input class="inp" name="addr" required autocomplete="off" placeholder="Begynn å skrive …" data-input="addrSugg" data-target="o"><span class="sugg-list" id="sugg-o"></span></label><label class="fld"><span>Sted</span><input class="inp" name="town"></label><label class="fld"><span>Oppdragsnummer</span><input class="inp" name="nr"></label><label class="fld"><span>Boligtype</span><select class="sel" name="type"><option>Enebolig</option><option selected>Leilighet</option><option>Rekkehus</option><option>Fritidsbolig</option><option>Gårdsbruk</option><option>Næring</option></select></label></div></div>' +
         '<div class="card pad"><div class="row between" style="margin-bottom:4px"><h3 class="h3">Tjenester</h3><button type="button" class="link small" data-act="usePkg">Bruk standardpakken</button></div>' + Object.keys(groups).map(function (g) { return '<p class="eyebrow" style="margin:14px 0 8px">' + g + '</p><div class="opts">' + groups[g].map(function (s) { return SV.svcOpt(s, 's', p.indexOf(s.id) > -1, DISC, 'orderCalc', true); }).join('') + '</div>'; }).join('') + '</div>' +
@@ -257,10 +256,9 @@
   SV.on('orderCalc', orderCalc);
   SV.on('usePkg', function () { var p = pkg(); document.querySelectorAll('#order input[name=foto],#order input[name=s]').forEach(function (x) { x.checked = p.indexOf(x.value) > -1; }); orderCalc(); });
   SV.on('orderSend', function () {
-    var v = orderVals(); if (!v.f.addr.value.trim()) { SV.toast('Skriv inn adressen', 'warn'); v.f.addr.focus(); return; }
-    if (!v.sel.length) { SV.toast('Velg minst én tjeneste', 'warn'); return; }
+    var v = orderVals();
     var f = v.f;
-    var id = newJob({ addr: f.addr.value, town: f.town.value || 'Leirvik', nr: f.nr.value || '–', stage: 'Opprettet', date: D.W(3), time: '10:00', services: v.sel, qty: v.qty, seller: f.seller.value || 'Selger', phone: f.phone.value || '–', access: f.access.value, type: f.type.value, wish: '' });
+    var id = newJob({ addr: f.addr.value.trim() || 'Uten adresse', town: f.town.value.trim(), nr: f.nr.value || '–', stage: 'Opprettet', date: D.W(3), time: '10:00', services: v.sel, qty: v.qty, seller: f.seller.value || 'Selger', phone: f.phone.value || '–', access: f.access.value, type: f.type.value, wish: '' });
     SV.go('#/kunde/megler/' + id); SV.toast('Bestilling sendt · Studiovest avtaler tid med selger');
   });
 
