@@ -10,7 +10,11 @@
   S.mailRules = S.mailRules || {};
   S.delivered = S.delivered || {};
 
-  SV.stIdx = function (j) { return ST.indexOf(SV.stageOf(j)); };
+  // Utefotografering har egne statuser for oppdrag med «Ekstra utefotografering». De ligger mellom «Fotografering utført» og «Oppdrag levert».
+  D.outStages = ['Utefotografering avtalt', 'Utefotografering utført'];
+  SV.stagesFor = function (j) { return j && SV.hasOut(j) ? ST.slice(0, 4).concat(D.outStages, ST.slice(4)) : ST; };
+  SV.stIdx = function (j) { var s = SV.stageOf(j); return D.outStages.indexOf(s) > -1 ? 3 : ST.indexOf(s); };
+  SV.colOf = function (j) { var s = SV.stageOf(j); return D.outStages.indexOf(s) > -1 ? 'Fotografering utført' : s; };
   function svc(id) { return SV.find(D.boligServices, id); }
   function office(id) { return SV.find(D.offices, id); }
   function total(j) { return SV.svcTotal(j); }
@@ -31,16 +35,18 @@
     { k: 'avtalt_megler', stage: 'Fotografering avtalt', to: 'megler', subj: function (j) { return 'Tid avtalt ' + when(j) + ': ' + j.addr; }, body: 'Tiden er avtalt med kunden.' },
     { k: 'paminn_kunde', stage: 'Fotografering avtalt', to: 'kunde', subj: function (j) { return 'Påminnelse i morgen: fotografering ' + j.addr; }, body: 'Sendes dagen før kl. 16, med sjekklisten på nytt.', later: 'dagen før' },
     { k: 'utfort_megler', stage: 'Fotografering utført', to: 'megler', subj: function (j) { return 'Fotografert: ' + j.addr; }, body: 'Boligen er fotografert. Bildene og plantegningen leveres innen avtalt frist.' },
+    { k: 'ute_utfort', stage: 'Utefotografering utført', to: 'megler', subj: function (j) { return 'Utebildene er tatt: ' + j.addr; }, body: 'Utefotograferingen er gjort. Alt leveres samlet.' },
     { k: 'levert_megler', stage: 'Oppdrag levert', to: 'megler', subj: function (j) { return 'Klart til gjennomgang: ' + j.addr; }, body: 'Bilder og plantegning er klare. Se gjennom og trykk «Godkjenn» i portalen.' },
     { k: 'levert_kunde', stage: 'Oppdrag levert', to: 'kunde', subj: function (j) { return 'Bildene av ' + j.addr + ' er klare'; }, body: 'Samme lenke som før: se bildene og plantegningen, kommenter, eller godkjenn.' },
     { k: 'levert_paminn', stage: 'Oppdrag levert', to: 'megler', subj: function (j) { return 'Påminnelse: godkjenn ' + j.addr; }, body: 'Sendes etter 3 dager hvis oppdraget ikke er godkjent.', later: 'etter 3 dager' },
     { k: 'godkjent_meg', stage: 'Godkjent', to: 'meg', subj: function (j) { return 'Godkjent: ' + j.addr; }, body: 'Varsel til deg når megler eller kunde godkjenner. Husk faktura.' },
     { k: 'godkjent_megler', stage: 'Godkjent', to: 'megler', subj: function (j) { return 'Takk! ' + j.addr + ' er godkjent'; }, body: 'Bekreftelse med lenke til nedlasting og bildelisens.' },
-    { k: 'flytt', stage: '', to: 'begge', subj: function (j) { return 'Ny tid for fotografering: ' + j.addr; }, body: 'Sendes når du endrer en tid som allerede er avtalt.' }
+    { k: 'flytt', stage: '', to: 'begge', subj: function (j) { return 'Ny tid for fotografering: ' + j.addr; }, body: 'Sendes når du endrer en tid som allerede er avtalt.' },
+    { k: 'ute', stage: '', to: 'begge', subj: function (j) { return 'Utefotografering ' + SV.outWhen(j) + ': ' + j.addr; }, body: 'Sendes når tiden for ekstra utefotografering settes eller endres.' }
   ];
   SV.mailRules = RULES;
   function ruleOn(r) { return S.mailRules[r.k] == null ? !r.off : S.mailRules[r.k]; }
-  function when(j) { return SV.fdate(j.date, true) + ' kl. ' + j.time; }
+  function when(j) { return SV.fdate(j.date, true) + ' kl. ' + j.time + (j.date2 ? ', utefoto ' + SV.outWhen(j) : ''); }
   function recips(j, to) { return to === 'megler' ? [[j.broker, brokerMail(j)]] : to === 'kunde' ? (clientMail(j) ? [[j.seller, clientMail(j)]] : []) : to === 'begge' ? recips(j, 'megler').concat(recips(j, 'kunde')) : [['Deg', 'varsel i portalen']]; }
   function send(j, rules) {
     var sent = [];
@@ -87,19 +93,20 @@
       SV.stat('cal', 'Fotograferinger', wk, 'Neste 7 dager') +
       SV.stat('eye', 'Venter på godkjenning', jobs.filter(function (j) { return SV.stageOf(j) === 'Oppdrag levert'; }).length, 'Megler eller kunde') +
       SV.stat('wallet', 'Ikke fakturert', jobs.filter(function (j) { return matches(j, 'ufakt'); }).length, 'Levert eller godkjent · bare du ser dette', true) + '</div>';
-    var pills = '<div class="filters" style="flex-wrap:wrap">' + [['aktive', 'Aktive'], ['alle', 'Alle']].concat(ST.map(function (s) { return [s, s]; })).concat([['ufakt', 'Ikke fakturert']]).map(function (x) {
+    var pills = '<div class="filters" style="flex-wrap:wrap">' + [['aktive', 'Aktive'], ['alle', 'Alle']].concat(SV.stagesFor({ services: ['ut'] }).map(function (s) { return [s, s]; })).concat([['ufakt', 'Ikke fakturert']]).map(function (x) {
       var n = jobs.filter(function (j) { return matches(j, x[0]); }).length;
       return '<button class="fbtn' + (x[0] === f ? ' on' : '') + '" data-act="crmF" data-f="' + esc(x[0]) + '">' + esc(x[1]) + ' <span class="muted">' + n + '</span></button>';
     }).join('') + '</div>';
     var rows = list.map(function (j) {
       var i = SV.stIdx(j), o = office(j.office), inv = S.inv[j.id] || {}, ap = SV.approval(j);
       var tm = i >= 2 ? '<button class="link small" data-act="crmTime" data-id="' + j.id + '" style="white-space:nowrap">' + SV.fdate(j.date) + ' kl. ' + j.time + '</button>' : '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Sett tid</button>';
+      if (SV.hasOut(j)) tm += '<small>' + (j.date2 ? '<button class="link" data-act="crmTime" data-id="' + j.id + '" style="white-space:nowrap">Ute: ' + SV.fdate(j.date2) + ' kl. ' + j.time2 + '</button>' : 'Ute: <button class="link" data-act="crmTime" data-id="' + j.id + '">sett tid</button>') + '</small>';
       return '<tr><td><a href="#/bolig/' + j.id + '"><b>' + esc(j.addr) + '</b></a><small>' + esc(j.town) + ' · ' + esc(j.type) + ' · ' + esc(j.nr) + '</small></td>' +
         '<td class="hide-s">' + esc(j.broker) + '<small>' + esc(o ? o.name : '') + '</small></td>' +
         '<td class="hide-s">' + esc(j.seller) + '<small>' + (j.email ? esc(j.email) : '<button class="link" data-act="crmEdit" data-id="' + j.id + '">Legg til e-post</button>') + '</small></td>' +
         '<td class="hide-s small" style="max-width:180px">' + SV.svcShort(j) + '<small>' + SV.kr(total(j)) + '</small></td>' +
         '<td>' + tm + '</td>' +
-        '<td><select class="sel crm-st crm-' + i + '" data-change="crmStage" data-id="' + j.id + '" aria-label="Status for ' + esc(j.addr) + '">' + ST.map(function (s) { return '<option' + (s === SV.stageOf(j) ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' + (ap ? '<small>av ' + esc(ap.by) + '</small>' : '') + (SV.reviewCount(j) ? '<small><a href="#/bolig/' + j.id + '" style="color:var(--brown);font-weight:700">' + SV.reviewCount(j) + (SV.reviewCount(j) === 1 ? ' endringsønske' : ' endringsønsker') + '</a></small>' : '') + '</td>' +
+        '<td><select class="sel crm-st crm-' + i + '" data-change="crmStage" data-id="' + j.id + '" aria-label="Status for ' + esc(j.addr) + '">' + SV.stagesFor(j).map(function (s) { return '<option' + (s === SV.stageOf(j) ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' + (ap ? '<small>av ' + esc(ap.by) + '</small>' : '') + (SV.reviewCount(j) ? '<small><a href="#/bolig/' + j.id + '" style="color:var(--brown);font-weight:700">' + SV.reviewCount(j) + (SV.reviewCount(j) === 1 ? ' endringsønske' : ' endringsønsker') + '</a></small>' : '') + '</td>' +
         '<td class="r"><label class="sw" title="Faktura sendt"><input type="checkbox" data-change="crmInv" data-id="' + j.id + '"' + (inv.sent ? ' checked' : '') + ' aria-label="Faktura sendt for ' + esc(j.addr) + '"><span></span></label>' + (inv.sent && inv.d ? '<small>' + SV.fdate(inv.d) + '</small>' : '') + '</td></tr>';
     }).join('');
     return stats + '<div class="row between" style="margin-bottom:10px;gap:10px;flex-wrap:wrap">' + pills + '<label class="search" style="flex:1 1 220px;max-width:320px;margin:0">' + ic('search') + '<input id="crmQ" placeholder="Søk adresse, megler, kunde" value="' + esc(q) + '" data-input="crmQ" aria-label="Søk i prosjekter"></label></div>' +
@@ -116,6 +123,7 @@
   SV.on('crmStage', function (el) {
     var j = SV.find(SV.jobs(), el.getAttribute('data-id')), s = el.value;
     if (s === 'Fotografering avtalt' && SV.stIdx(j) < 2) { el.value = SV.stageOf(j); timeModal(j, true); return; }
+    if (s === 'Utefotografering avtalt' && !j.date2) { el.value = SV.stageOf(j); S.pendOut = j.id; timeModal(j, true); return; }
     var y = window.scrollY; SV.setStage(j, s, { by: 'Studiovest' }); window.scrollTo(0, y);
   });
   SV.on('crmInv', function (el) {
@@ -129,6 +137,7 @@
     SV.modal('<p class="eyebrow">' + esc(j.addr) + ', ' + esc(j.town) + '</p><h2 class="h2"><span class="serif">' + (has ? 'Endre tid' : 'Avtal tid') + '</span></h2>' +
       '<form id="tmF" onsubmit="return false"><div class="g2" style="margin-top:14px"><label class="fld"><span>Dato</span><input class="inp" type="date" name="d" value="' + esc(has ? j.date : D.W(2)) + '" required></label><label class="fld"><span>Klokkeslett</span><input class="inp" type="time" name="t" step="900" value="' + esc(has ? j.time : '10:00') + '" required></label></div>' +
       '<p class="small muted">Ca. ' + String(Math.round(SV.minutes(j) / 30) / 2).replace('.', ',') + ' timer på stedet ut fra produktene. Kommer i kalenderen og i fotografens dagliste.</p>' +
+      (SV.hasOut(j) ? '<p class="eyebrow" style="margin:14px 0 8px">Ekstra utefotografering · egen tid</p><div class="g2"><label class="fld"><span>Dato</span><input class="inp" type="date" name="d2" value="' + esc(j.date2 || '') + '"></label><label class="fld"><span>Klokkeslett</span><input class="inp" type="time" name="t2" step="900" value="' + esc(j.time2 || '') + '"></label></div><p class="small muted">Kan stå tom og settes senere, f.eks. når været er bra.</p>' : '') +
       '<label class="opt" style="margin-top:12px"><input type="checkbox" name="mail" checked><b>Send e-post til kunde og megler</b><small>' + (has ? 'Ny tid' : 'Tid, adresse og sjekkliste for å gjøre boligen klar') + '</small></label>' +
       '<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn btn-dark" data-act="crmTimeSave" data-id="' + j.id + '">' + ic('check') + 'Lagre tid</button></div></form>');
   }
@@ -137,14 +146,26 @@
   SV.on('crmTimeSave', function (el) {
     var f = document.getElementById('tmF'), j = SV.find(SV.jobs(), el.getAttribute('data-id'));
     if (!f.d.value || !f.t.value) { SV.toast('Velg dato og klokkeslett', 'warn'); return; }
+    // utefotografering: egen tid, kan settes nå eller senere
+    var outNew = null, outChanged = false;
+    if (f.d2) {
+      if (!!f.d2.value !== !!f.t2.value) { SV.toast('Velg både dato og klokkeslett for utefotografering, eller la begge stå tomme', 'warn'); return; }
+      S.outTime = S.outTime || {};
+      outNew = f.d2.value ? [f.d2.value, f.t2.value] : null;
+      outChanged = (outNew ? outNew.join(' ') : '') !== (j.date2 ? j.date2 + ' ' + j.time2 : '');
+      if (outNew) S.outTime[j.id] = outNew; else delete S.outTime[j.id];
+    }
     var had = SV.stIdx(j) >= 2, mail = f.mail.checked, rules = S.mailRules;
     S.sellerTime = S.sellerTime || {}; S.sellerTime[j.id] = [f.d.value, f.t.value]; SV.close();
+    var wantOut = S.pendOut === j.id; delete S.pendOut;
+    if (had && outNew && (wantOut || SV.stageOf(j) === 'Fotografering utført')) { SV.close(); SV.setStage(SV.find(SV.jobs(), j.id), 'Utefotografering avtalt'); return; }
     if (!had) {
       if (!mail) { var keepR = Object.assign({}, rules); RULES.forEach(function (r) { if (r.stage === 'Fotografering avtalt') rules[r.k] = false; }); SV.setStage(j, 'Fotografering avtalt'); S.mailRules = keepR; SV.save(); }
       else SV.setStage(j, 'Fotografering avtalt');
     } else {
-      var fresh = SV.find(SV.jobs(), j.id), who = mail ? send(fresh, RULES.filter(function (r) { return r.k === 'flytt'; })) : [];
-      SV.save(); keep(); SV.toast('Ny tid ' + SV.fdate(f.d.value) + ' kl. ' + f.t.value + (who.length ? ' · e-post til ' + who.join(' og ') : ''));
+      var fresh = SV.find(SV.jobs(), j.id), mainChanged = f.d.value + ' ' + f.t.value !== j.date + ' ' + j.time;
+      var who = mail ? send(fresh, RULES.filter(function (r) { return (r.k === 'flytt' && mainChanged) || (r.k === 'ute' && outChanged && outNew); })) : [];
+      SV.save(); keep(); SV.toast((mainChanged ? 'Ny tid ' + SV.fdate(f.d.value) + ' kl. ' + f.t.value : outChanged && outNew ? 'Utefoto ' + SV.fdate(outNew[0]) + ' kl. ' + outNew[1] : 'Lagret') + (who.length ? ' · e-post til ' + who.filter(function (x, i, a) { return a.indexOf(x) === i; }).join(' og ') : ''));
     }
   });
 
@@ -160,12 +181,13 @@
       '<p class="small" style="margin:4px 0 0">Sum eks. mva: <b id="npSum" class="num"></b> </p>' +
       '<p class="eyebrow" style="margin:16px 0 8px">Kunde (selger)</p><div class="g2"><label class="fld"><span>Navn</span><input class="inp" name="seller" placeholder="Navn"></label><label class="fld"><span>E-post</span><input class="inp" type="email" name="email" placeholder="navn@epost.no" autocomplete="off"></label><label class="fld"><span>Mobil</span><input class="inp" name="phone" inputmode="tel" placeholder="8 siffer"></label><label class="fld"><span>Tilgang</span><select class="sel" name="access"><option>Selger hjemme</option><option>Nøkkel hos megler</option><option>Nøkkelboks</option></select></label></div>' +
       '<p class="eyebrow" style="margin:14px 0 8px">Fotografering <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(valgfritt, kan settes senere)</span></p><div class="g2"><label class="fld"><span>Dato</span><input class="inp" type="date" name="d"></label><label class="fld"><span>Klokkeslett</span><input class="inp" type="time" name="t" step="900"></label></div>' +
+      '<div id="npOut" hidden><p class="eyebrow" style="margin:14px 0 8px">Ekstra utefotografering · egen tid <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(valgfritt)</span></p><div class="g2"><label class="fld"><span>Dato</span><input class="inp" type="date" name="d2"></label><label class="fld"><span>Klokkeslett</span><input class="inp" type="time" name="t2" step="900"></label></div></div>' +
       '<label class="fld"><span>Notat</span><input class="inp" name="note" placeholder="F.eks. drone avhenger av vind"></label>' +
       '<div class="stack" style="margin-top:6px"><label class="opt"><input type="checkbox" name="mailB" checked><b>Send bekreftelse til megler</b><small>«Bestilling mottatt»</small></label><label class="opt"><input type="checkbox" name="mailK" checked><b>Send e-post til kunden når tiden er satt</b><small>Tid og sjekkliste</small></label></div>' +
       '<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn btn-acc" data-act="npSave">' + ic('plus') + 'Opprett prosjekt</button></div></form>', { wide: true, after: npSum });
   }
   function npVals() { var f = document.getElementById('npF'), sel = [].slice.call(f.querySelectorAll('input[name=foto]:checked,input[name=s]:checked')).map(function (x) { return x.value; }); return { f: f, sel: sel, qty: SV.formQty(f, sel) }; }
-  function npSum() { var v = npVals(), n = document.getElementById('npSum'); if (n) n.textContent = SV.kr(v.sel.reduce(function (a, id) { return a + svc(id).price * (v.qty[id] || 1); }, 0)); }
+  function npSum() { var v = npVals(), n = document.getElementById('npSum'), o = document.getElementById('npOut'); if (o) o.hidden = v.sel.indexOf('ut') < 0; if (n) n.textContent = SV.kr(v.sel.reduce(function (a, id) { return a + svc(id).price * (v.qty[id] || 1); }, 0)); }
   SV.on('npSum', npSum);
   SV.on('npOffice', function (el) { var o = office(el.value); document.getElementById('npBroker').innerHTML = o.brokers.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join(''); });
   SV.on('crmNew', function () { projModal(); });
@@ -176,6 +198,7 @@
     if (f.email.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.value.trim())) { SV.toast('Sjekk e-postadressen', 'warn'); f.email.focus(); return; }
     var timed = f.d.value && f.t.value, n = S.newJobs.length, id = 'B-' + (2620 + n);
     var j = { id: id, addr: f.addr.value.trim(), town: f.town.value.trim() || 'Leirvik', office: f.office.value, broker: f.broker.value, nr: f.nr.value.trim() || '–', stage: 'Opprettet', date: timed ? f.d.value : D.W(3), time: timed ? f.t.value : '10:00', services: v.sel, qty: v.qty, seller: f.seller.value.trim() || 'Kunde', email: f.email.value.trim(), phone: f.phone.value.trim() || '–', access: f.access.value, type: f.type.value, cover: [D.img.stue, D.img.kjokken, D.img.tomanns, D.img.loft][n % 4], by: 'ak', wish: f.note.value.trim(), created: today() };
+    if (v.sel.indexOf('ut') > -1 && f.d2.value && f.t2.value) { j.date2 = f.d2.value; j.time2 = f.t2.value; }
     S.newJobs.push(j);
     var who = f.mailB.checked ? send(j, RULES.filter(function (r) { return r.k === 'opprettet_megler'; })) : [];
     SV.close();
@@ -213,8 +236,9 @@
   SV.crmCard = function (j) {
     var i = SV.stIdx(j), inv = S.inv[j.id] || {}, ap = SV.approval(j), log = S.mailLog.filter(function (m) { return m.id === j.id; });
     return '<div class="card"><div class="card-h"><h3>Status og kunde</h3>' + SV.chip(SV.stageOf(j)) + '</div><div class="card-b">' +
-      '<label class="fld"><span>Status</span><select class="sel crm-st crm-' + i + '" data-change="crmStage" data-id="' + j.id + '">' + ST.map(function (s) { return '<option' + (s === SV.stageOf(j) ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></label>' +
+      '<label class="fld"><span>Status</span><select class="sel crm-st crm-' + i + '" data-change="crmStage" data-id="' + j.id + '">' + SV.stagesFor(j).map(function (s) { return '<option' + (s === SV.stageOf(j) ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></label>' +
       '<dl class="kv" style="margin-top:6px"><dt>Fotografering</dt><dd>' + (i >= 2 ? SV.fdate(j.date, true) + ' kl. ' + j.time + ' <button class="link small" data-act="crmTime" data-id="' + j.id + '">Endre</button>' : '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Avtal tid</button>') + '</dd>' +
+      (SV.hasOut(j) ? '<dt>Utefoto</dt><dd>' + (j.date2 ? SV.outWhen(j) + ' <button class="link small" data-act="crmTime" data-id="' + j.id + '">Endre</button>' : '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Sett tid</button>') + '</dd>' : '') +
       '<dt>Kunde</dt><dd>' + esc(j.seller) + '<br><span class="small muted">' + (j.email ? esc(j.email) : 'Ingen e-post') + ' · ' + esc(j.phone) + '</span> <button class="link small" data-act="crmEdit" data-id="' + j.id + '">Endre</button></dd>' +
       '<dt>Megler</dt><dd>' + esc(j.broker) + '<br><span class="small muted">' + esc(brokerMail(j)) + '</span></dd>' +
       '<dt>Godkjent</dt><dd>' + (ap ? SV.fdate(ap.d) + ' av ' + esc(ap.by) : i === 4 ? 'Venter på megler eller kunde <button class="btn btn-ghost btn-xs" style="margin-top:6px" data-act="crmApprove" data-id="' + j.id + '" data-by="Studiovest">' + ic('check') + 'Godkjenn selv</button>' : '–') + '</dd></dl>' +

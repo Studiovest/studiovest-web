@@ -77,7 +77,7 @@
     var mon = new Date(D.base); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
     var days = []; for (var i = 0; i < 5; i++) days.push(D.iso(D.addDays(mon, i)));
     var START = 7, END = 18, PX = 52, evs = [];
-    SV.jobs().forEach(function (j) { if (days.indexOf(j.date) > -1 && SV.stIdx(j) >= 2) evs.push({ d: j.date, s: j.time, m: minutes(j), area: 'bolig', t: j.addr, sub: j.town + ' · ' + j.broker, href: '#/bolig/' + j.id }); });
+    SV.jobs().forEach(function (j) { if (days.indexOf(j.date) > -1 && SV.stIdx(j) >= 2) evs.push({ d: j.date, s: j.time, m: minutes(j), area: 'bolig', t: j.addr, sub: j.town + ' · ' + j.broker, href: '#/bolig/' + j.id }); if (j.date2 && days.indexOf(j.date2) > -1 && SV.stIdx(j) >= 2 && SV.stIdx(j) < 4) evs.push({ d: j.date2, s: j.time2, m: 45, area: 'bolig', t: 'Utefoto · ' + j.addr, sub: j.town, href: '#/bolig/' + j.id }); });
     D.bizProjects.forEach(function (p) { if (days.indexOf(p.date) > -1) evs.push({ d: p.date, s: '09:00', m: 180, area: 'bedrift', t: p.title, sub: SV.find(D.companies, p.company).name, href: '#/bedrift/' + p.id }); });
     D.schoolDays.forEach(function (s) { if (days.indexOf(s.date) > -1) evs.push({ d: s.date, s: '08:15', m: 330, area: 'skole', t: 'Fotodag ' + s.school, sub: s.town, href: '#/skole/' + s.id }); });
     D.posts.forEach(function (p) { if (days.indexOf(p.d) > -1) evs.push({ d: p.d, s: '16:00', m: 40, area: 'mark', t: p.title, sub: D.channels[p.ch], href: '#/marked' }); });
