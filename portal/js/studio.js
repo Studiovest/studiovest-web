@@ -66,7 +66,7 @@
 
   function stat(icn, k, v, s, dark) { return '<div class="card stat' + (dark ? ' dark' : '') + '">' + (dark ? SV.topo() : '') + '<p class="k">' + ic(icn) + k + '</p><p class="v">' + v + '</p><p class="s">' + esc(s) + '</p></div>'; }
   SV.stat = stat;
-  function svcShort(j) { return j.services.map(function (s) { var x = SV.find(D.boligServices, s); return x ? x.name.replace(/, .*/, '').replace(/ \(.*\)/, '').replace(' fotopakke', ' foto').replace('Dronefoto', 'Drone') : s; }).join(' · '); }
+  function svcShort(j) { return j.services.map(function (s) { var x = SV.find(D.boligServices, s); return x ? (x.unit && SV.qtyOf ? SV.qtyOf(j, s) + ' × ' : '') + x.name.replace(/, .*/, '').replace(/ \(.*\)/, '').replace(' fotopakke', ' foto').replace('Dronefoto', 'Drone') : s; }).join(' · '); }
   SV.svcShort = svcShort;
   function weekNo(d) { var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); var dn = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - dn); var y = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y) / 864e5 + 1) / 7); }
   SV.weekNo = weekNo;

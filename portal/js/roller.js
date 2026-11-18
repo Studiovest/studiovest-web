@@ -29,14 +29,14 @@
     var prep = '<div style="margin-top:24px"><h2 class="h2"><span class="serif">Slik gjør du boligen klar</span></h2><p class="small muted" style="margin-bottom:10px">Kryss av mens du går. Det tar ca. en time.</p>' +
       PREP.map(function (g, gi) { return '<div class="card" style="margin-bottom:10px"><div class="card-h"><h3>' + g[0] + '</h3></div><div class="card-b"><ul class="check">' + g[1].map(function (t, ti) { var k = gi + '-' + ti; return '<li class="' + (done[k] ? 'done' : '') + '"><input type="checkbox" id="pr' + k + '"' + (done[k] ? ' checked' : '') + ' data-change="prep" data-id="' + j.id + '" data-k="' + k + '"><label for="pr' + k + '"><span>' + esc(t) + '</span></label></li>'; }).join('') + '</ul></div></div>'; }).join('') +
       '<p class="hint">Du trenger ikke være hjemme hvis megler har nøkkel. Kjæledyr bør være ute eller i ett rom.</p></div>';
-    var after = '<div class="card pad" style="margin-top:12px"><h3 class="h3">Etter fotograferingen</h3><p class="small muted" style="margin-top:4px">Bildene' + (j.services.indexOf('p2') > -1 ? ' og plantegningen' : '') + ' kommer her, på denne siden, innen ' + (j.services.indexOf('ex') > -1 ? '24 timer' : '2 virkedager') + '. Du får e-post når de er klare. Da kan du kommentere bildene og plantegningen, og ' + esc(j.broker.split(' ')[0]) + ' ser det samme.</p></div>';
+    var after = '<div class="card pad" style="margin-top:12px"><h3 class="h3">Etter fotograferingen</h3><p class="small muted" style="margin-top:4px">Bildene' + ' og plantegningen' + ' kommer her, på denne siden, innen ' + (j.services.indexOf('ex') > -1 ? '24 timer' : '2 virkedager') + '. Du får e-post når de er klare. Da kan du kommentere bildene og plantegningen, og ' + esc(j.broker.split(' ')[0]) + ' ser det samme.</p></div>';
     if (i >= 4) {
       return '<div class="kdel">' + brand('for ' + o.name) +
         '<div class="bhead"><h1>Hei ' + esc(first) + '! Bildene av ' + esc(j.addr) + ' er klare.</h1><p>' + (ap ? 'Oppdraget er godkjent. Takk!' : 'Se gjennom bildene og plantegningen. ' + esc(j.broker) + ' bruker dem i annonsen.') + '</p></div>' + stepper +
         (ap ? '<div class="card pad" style="margin-top:16px"><p class="eyebrow">Godkjent</p><p>' + SV.fdate(ap.d, true) + ' av ' + esc(ap.by) + '.</p></div>' : '<div style="margin-top:16px">' + SV.reviewBox(j, me) + '</div>') +
         SV.reviewThread(j, 'kunde') +
         '<div class="sec">' + (ap ? '<div class="gal big">' + ph.map(function (x) { return '<figure class="gi">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + esc(x.name) + '</span></figure>'; }).join('') + '</div>' : SV.reviewGallery(j, me)) + '</div>' +
-        (j.services.indexOf('p2') > -1 ? '<div class="sec">' + SV.reviewPlan(j, me, !ap) + '</div>' : '') +
+        '<div class="sec">' + SV.reviewPlan(j, me, !ap) + '</div>' +
         '<details class="card pad sec"><summary><b>Om oppdraget</b></summary>' + info + '</details></div>';
     }
     return brand('for ' + o.name) +

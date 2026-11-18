@@ -12,7 +12,18 @@
   function job(id) { return SV.find(SV.jobs(), id); }
   function office(id) { return SV.find(D.offices, id); }
   function svc(id) { return SV.find(D.boligServices, id); }
-  function total(j) { return j.services.reduce(function (s, x) { var v = svc(x); return s + (v ? v.price : 0); }, 0); }
+  // produkter med pris per bilde har antall i j.qty
+  SV.qtyOf = function (j, id) { var v = svc(id); return v && v.unit ? Math.max(1, +((j.qty || {})[id]) || 1) : 1; };
+  SV.svcTotal = function (j) { return j.services.reduce(function (s, x) { var v = svc(x); return s + (v ? v.price * SV.qtyOf(j, x) : 0); }, 0); };
+  SV.unitPrice = function (v, disc) { return SV.kr(Math.round(v.price * (disc || 1))) + (v.unit ? ' / ' + v.unit : ''); };
+  // avkrysning med antall-felt for produkter som har pris per bilde
+  SV.svcOpt = function (s, name, checked, disc, change, desc) {
+    var radio = s.group === 'Fotopakke';
+    return '<label class="opt' + (radio ? ' radio' : '') + '"><input type="' + (radio ? 'radio' : 'checkbox') + '" name="' + (radio ? 'foto' : name) + '" value="' + s.id + '"' + (checked ? ' checked' : '') + ' data-change="' + change + '"><b>' + esc(s.name) + '</b>' + (desc ? '<small>' + esc(s.desc) + '</small>' : '') + '<span class="price">' + SV.unitPrice(s, disc) + '</span>' +
+      (s.unit ? '<span class="qty"><input class="inp" type="number" min="1" max="60" value="1" name="q_' + s.id + '" data-change="' + change + '" data-input="' + change + '" aria-label="Antall bilder, ' + esc(s.name) + '"> bilder</span>' : '') + '</label>';
+  };
+  SV.formQty = function (f, sel) { var q = {}; sel.forEach(function (id) { var v = svc(id), el = f.querySelector('[name=q_' + id + ']'); if (v.unit && el) q[id] = Math.max(1, Math.min(60, parseInt(el.value, 10) || 1)); }); return q; };
+  function total(j) { return SV.svcTotal(j); }
   var POS = ['50% 50%', '20% 50%', '80% 40%', '50% 80%', '35% 30%', '65% 60%', '10% 60%', '90% 50%'];
   function photos(j) {
     var srcs = j.type === 'Fritidsbolig' || j.type === 'Gårdsbruk' ? [D.img.hytte, D.img.stue, D.img.kjokken, D.img.loft, D.img.tomanns] : j.type === 'Leilighet' ? [D.img.stue, D.img.kjokken, D.img.loft, D.img.stue, D.img.tomanns] : [D.img.tomanns, D.img.stue, D.img.kjokken, D.img.loft, D.img.hytte];
@@ -48,7 +59,7 @@
       return '<div class="kb-col" data-stage="' + s + '"><div class="kb-h">' + s + '<span>' + list.length + '</span></div>' + list.map(card).join('') + '</div>';
     }).join('') + '</div>';
     var svcs = '<div class="card tbl-w"><table class="tbl"><thead><tr><th>Tjeneste</th><th class="hide-s">Gruppe</th><th class="hide-s">Tid på stedet</th><th class="r">Pris</th><th class="r">Aktiv</th></tr></thead><tbody>' +
-      D.boligServices.map(function (s) { return '<tr><td><b>' + esc(s.name) + '</b><small>' + esc(s.desc) + '</small></td><td class="hide-s">' + s.group + '</td><td class="hide-s">' + (s.min ? s.min + ' min' : '–') + '</td><td class="r num">' + SV.kr(s.price) + '</td><td class="r"><label class="sw"><input type="checkbox"' + (s.on ? ' checked' : '') + ' aria-label="' + esc(s.name) + '"><span></span></label></td></tr>'; }).join('') +
+      D.boligServices.map(function (s) { return '<tr><td><b>' + esc(s.name) + '</b><small>' + esc(s.desc) + '</small></td><td class="hide-s">' + s.group + '</td><td class="hide-s">' + (s.min ? s.min + ' min' : '–') + '</td><td class="r num">' + SV.unitPrice(s) + '</td><td class="r"><label class="sw"><input type="checkbox"' + (s.on ? ' checked' : '') + ' aria-label="' + esc(s.name) + '"><span></span></label></td></tr>'; }).join('') +
       '</tbody></table></div><p class="hint">Dummy-priser eks. mva. Tid på stedet brukes til å legge oppdrag i kalenderen. Kontoravtaler gir egne priser per kontor.</p>';
     var off = '<div class="g2">' + D.offices.map(function (o) { return '<div class="card pad"><p class="eyebrow">' + esc(o.town) + '</p><h3 class="h3" style="font-size:18px">' + esc(o.name) + '</h3><dl class="kv" style="margin-top:12px"><dt>Avtale</dt><dd>' + esc(o.agreement) + '</dd><dt>Faktura</dt><dd>' + esc(o.invoice) + '</dd><dt>Meglere</dt><dd>' + o.brokers.map(esc).join(', ') + '</dd><dt>I år</dt><dd class="num">' + SV.kr(o.ytd) + '</dd></dl></div>'; }).join('') + '</div>';
     SV.after(dnd);
@@ -96,7 +107,7 @@
     var j = job(p.id); if (!j) return '<p class="empty">Fant ikke oppdraget.</p>';
     var o = office(j.office), st = SV.stageOf(j), ph = photos(j), lic = license(j), i = D.stages.indexOf(st);
     var ov = '<div class="g21"><div class="stack">' +
-      '<div class="card"><div class="card-h"><h3>Bestilt</h3><span class="small muted">' + SV.kr(total(j)) + ' eks. mva</span></div><div class="card-b">' + j.services.map(function (s) { var v = svc(s); return '<div class="li"><span class="li-t"><b>' + esc(v.name) + '</b><small>' + esc(v.desc) + '</small></span><span class="li-r num">' + SV.kr(v.price) + '</span></div>'; }).join('') + '</div></div>' +
+      '<div class="card"><div class="card-h"><h3>Bestilt</h3><span class="small muted">' + SV.kr(total(j)) + ' eks. mva</span></div><div class="card-b">' + j.services.map(function (s) { var v = svc(s), n = SV.qtyOf(j, s); return '<div class="li"><span class="li-t"><b>' + esc(v.name) + (v.unit ? ' × ' + n : '') + '</b><small>' + esc(v.desc) + (v.unit ? ' ' + SV.unitPrice(v) + '.' : '') + '</small></span><span class="li-r num">' + SV.kr(v.price * n) + '</span></div>'; }).join('') + '</div></div>' +
       '<div class="card"><div class="card-h"><h3>Tidslinje</h3></div><div class="card-b"><ul class="feed">' + timeline(j).map(function (t) { return '<li>' + SV.dot('bolig') + '<span>' + t[1] + '</span><time>' + t[0] + '</time></li>'; }).join('') + '</ul></div></div></div>' +
       '<div class="stack">' + SV.crmCard(j) + '<div class="card pad"><dl class="kv"><dt>Oppdragsnr.</dt><dd>' + esc(j.nr) + '</dd><dt>Megler</dt><dd>' + esc(j.broker) + '<br><span class="muted small">' + esc(o.name) + '</span></dd><dt>Selger</dt><dd>' + esc(j.seller) + '<br><span class="muted small">' + esc(j.phone) + '</span></dd><dt>Tilgang</dt><dd>' + esc(j.access) + '</dd><dt>Type</dt><dd>' + esc(j.type) + '</dd><dt>Fotograf</dt><dd>' + esc(SV.find(D.team, j.by).name) + '</dd>' + (j.date ? '<dt>Tid</dt><dd>' + SV.fdate(j.date) + ' kl. ' + j.time + '</dd>' : '') + '</dl></div>' +
       (j.services.indexOf('dr') > -1 ? '<div class="callout">' + ic('wind') + '<span><b>Drone:</b> ' + esc(j.weather || 'Værsjekk dagen før') + '. Over 8 m/s flyttes dronen til ny dag uten kostnad for megler.</span></div>' : '') +
@@ -160,7 +171,7 @@
   SV.clientCfg.megler = { org: 'Fjordmegling Stord', user: 'Kari Lunde', userRole: 'Eiendomsmegler', home: '#/kunde/megler', tabs: [['#/kunde/megler', 'Oppdrag'], ['#/kunde/megler/bestill', 'Bestill'], ['#/kunde/megler/priser', 'Priser'], ['#/kunde/megler/faktura', 'Fakturaer'], ['#/kunde/megler/innstillinger', 'Innstillinger']] };
   function mine() { return SV.jobs().filter(function (j) { return j.office === 'fjm'; }); }
   var DISC = 1; // ingen kontorrabatt: listepris
-  function pkg() { return (SV.state.megler && SV.state.megler.pkg) || ['f30', 'dr', 'p2']; }
+  function pkg() { return (SV.state.megler && SV.state.megler.pkg) || ['f30']; }
   function pkgName(list) { return list.map(function (s) { var v = svc(s); return v ? v.name.replace('Boligfoto, ', '').replace(', 8 bilder', '').replace(', per bilde', '') : s; }).join(' + '); }
   function pkgPrice(list) { return list.reduce(function (a, s) { return a + Math.round(svc(s).price * DISC); }, 0); }
   var ADDR = [['Hamnegata 8', 'Leirvik', 'Leilighet', '1126-0436'], ['Hamnegata 12', 'Leirvik', 'Enebolig', '1126-0437'], ['Hamnavegen 3', 'Husnes', 'Rekkehus', '1126-0438'], ['Heiane 14', 'Stord', 'Enebolig', '1126-0439'], ['Havnegata 2B', 'Sagvåg', 'Leilighet', '1126-0440']];
@@ -179,7 +190,7 @@
   SV.route('/kunde/megler', 'megler', function () {
     var js = mine(), act = js.filter(function (j) { return SV.stIdx(j) < 4; }), done = js.filter(function (j) { return SV.stIdx(j) >= 4; });
     var waiting = act.filter(function (j) { return SV.stIdx(j) < 2; }).length, ready = done.length, toApprove = js.filter(function (j) { return SV.stageOf(j) === 'Oppdrag levert'; });
-    var full = '<div class="hero-c">' + SV.topo() + '<div><p class="eyebrow" style="color:var(--sand)">Velkommen til meglerportalen</p><h1><span class="serif">Hei, Kari</span></h1><p>Bestill foto på 30 sekunder, følg oppdragene og last ned rett til Finn. Selger får SMS og velger tid selv, så du slipper å koordinere.</p></div><div><a class="btn btn-acc" href="#/kunde/megler/bestill">' + ic('plus') + 'Bestill fotografering</a></div></div>';
+    var full = '<div class="hero-c">' + SV.topo() + '<div><p class="eyebrow" style="color:var(--sand)">Velkommen til meglerportalen</p><h1><span class="serif">Hei, Kari</span></h1><p>Bestill foto på 30 sekunder, følg oppdragene og last ned rett til Finn. Studiovest avtaler tid med selger, så du slipper å koordinere.</p></div><div><a class="btn btn-acc" href="#/kunde/megler/bestill">' + ic('plus') + 'Bestill fotografering</a></div></div>';
     var compact = '<div class="greet"><div><h1>Hei, Kari</h1><div class="kpis" style="margin-top:8px"><span><b>' + act.length + '</b> pågår</span><span><b>' + waiting + '</b> venter på tid</span><span><b>' + toApprove.length + '</b> til godkjenning</span></div></div><a class="btn btn-ghost btn-s" href="#/kunde/megler/bestill">' + ic('plus') + 'Ny bestilling</a></div>';
     var p = pkg();
     var quick = '<form class="quickorder" onsubmit="return false"><span><b>Bestill som sist</b><br><span class="small muted">' + esc(pkgName(p)) + ' · ' + SV.kr(pkgPrice(p)) + ' eks. mva</span></span><span class="sugg" style="flex:1;min-width:220px"><input class="inp" id="qAddr" placeholder="Skriv adressen …" autocomplete="off" data-input="addrSugg" data-target="q" aria-label="Adresse"><span class="sugg-list" id="sugg-q"></span></span><input class="inp" id="qPhone" placeholder="Selgers mobil" inputmode="tel" style="max-width:170px;flex:0 1 170px" aria-label="Selgers mobil"><button class="btn btn-acc" data-act="quickOrder">Bestill</button></form>';
@@ -204,49 +215,47 @@
   });
   function newJob(o) {
     var id = 'B-' + (2620 + SV.state.newJobs.length);
-    SV.state.newJobs.push(Object.assign({ id: id, office: 'fjm', broker: 'Kari Lunde', stage: 'Opprettet', date: D.W(3), time: '10:00', cover: D.img.stue, by: 'ak', wish: 'Selger velger tid', access: 'Selger hjemme', type: 'Leilighet', seller: 'Selger', phone: '' }, o));
+    SV.state.newJobs.push(Object.assign({ id: id, office: 'fjm', broker: 'Kari Lunde', stage: 'Opprettet', date: D.W(3), time: '10:00', cover: D.img.stue, by: 'ak', wish: '', access: 'Selger hjemme', type: 'Leilighet', seller: 'Selger', phone: '' }, o));
     SV.save(); return id;
   }
   SV.on('quickOrder', function () {
     var a = document.getElementById('qAddr').value.trim(), ph = document.getElementById('qPhone').value.trim();
     if (!a) { SV.toast('Skriv inn adressen', 'warn'); document.getElementById('qAddr').focus(); return; }
     var parts = a.split(','), id = newJob({ addr: parts[0].trim(), town: (parts[1] || 'Leirvik').trim(), nr: '1126-04' + (40 + SV.state.newJobs.length), services: pkg().slice(), phone: ph || '–', seller: 'Selger' });
-    SV.go('#/kunde/megler/' + id); SV.toast('Bestilt · selger får SMS og velger tid selv');
+    SV.go('#/kunde/megler/' + id); SV.toast('Bestilt · Studiovest avtaler tid med selger');
   });
 
   // full bestilling
   SV.route('/kunde/megler/bestill', 'megler', function () {
     var groups = {}; D.boligServices.filter(function (s) { return s.on; }).forEach(function (s) { (groups[s.group] = groups[s.group] || []).push(s); });
-    var slots = []; for (var i = 1; i <= 4; i++) { var d = D.W(i); ['09:00', '12:30'].forEach(function (t, k) { if (!(i === 2 && k === 0)) slots.push([d, t]); }); }
     var p = pkg();
     SV.after(orderCalc);
-    return SV.head({ eyebrow: 'Fjordmegling Stord · priser eks. mva', a: 'Bestill fotografering', lead: 'Adressen hentes fra Vitec når du begynner å skrive. Standardpakken din er valgt på forhånd.' }) +
+    return SV.head({ eyebrow: 'Fjordmegling Stord · priser eks. mva', a: 'Bestill fotografering', lead: 'Adressen hentes fra Vitec når du begynner å skrive. Standardpakken din er valgt på forhånd. Studiovest avtaler tid med selgeren etter at du har bestilt.' }) +
       '<form id="order" class="g21" onsubmit="return false"><div class="stack">' +
         '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Boligen</h3><div class="g2"><label class="fld sugg"><span>Adresse</span><input class="inp" name="addr" required autocomplete="off" placeholder="Begynn å skrive …" data-input="addrSugg" data-target="o"><span class="sugg-list" id="sugg-o"></span></label><label class="fld"><span>Sted</span><input class="inp" name="town"></label><label class="fld"><span>Oppdragsnummer</span><input class="inp" name="nr"></label><label class="fld"><span>Boligtype</span><select class="sel" name="type"><option>Enebolig</option><option selected>Leilighet</option><option>Rekkehus</option><option>Fritidsbolig</option><option>Gårdsbruk</option><option>Næring</option></select></label></div></div>' +
-        '<div class="card pad"><div class="row between" style="margin-bottom:4px"><h3 class="h3">Tjenester</h3><button type="button" class="link small" data-act="usePkg">Bruk standardpakken</button></div>' + Object.keys(groups).map(function (g) { return '<p class="eyebrow" style="margin:14px 0 8px">' + g + '</p><div class="opts">' + groups[g].map(function (s) { var radio = s.group === 'Fotopakke'; return '<label class="opt' + (radio ? ' radio' : '') + '"><input type="' + (radio ? 'radio' : 'checkbox') + '" name="' + (radio ? 'foto' : 's') + '" value="' + s.id + '"' + (p.indexOf(s.id) > -1 ? ' checked' : '') + ' data-change="orderCalc"><b>' + esc(s.name.replace(', per bilde', '')) + '</b><small>' + esc(s.desc) + '</small><span class="price">' + SV.kr(Math.round(s.price * DISC)) + '</span></label>'; }).join('') + '</div>'; }).join('') + '</div>' +
-        '<div class="card pad"><h3 class="h3" style="margin-bottom:6px">Tid</h3><p class="small muted" style="margin-bottom:12px">«La selger velge» er raskest: selger får SMS med ledige tider.</p><div class="slots"><label class="opt radio"><input type="radio" name="slot" value="selger" checked data-change="orderCalc"><b>La selger velge</b><small>Anbefalt</small></label>' + slots.map(function (s) { return '<label class="opt radio"><input type="radio" name="slot" value="' + s[0] + ' ' + s[1] + '" data-change="orderCalc"><b>' + SV.fdate(s[0]) + '</b><small>kl. ' + s[1] + '</small></label>'; }).join('') + '</div></div>' +
+        '<div class="card pad"><div class="row between" style="margin-bottom:4px"><h3 class="h3">Tjenester</h3><button type="button" class="link small" data-act="usePkg">Bruk standardpakken</button></div>' + Object.keys(groups).map(function (g) { return '<p class="eyebrow" style="margin:14px 0 8px">' + g + '</p><div class="opts">' + groups[g].map(function (s) { return SV.svcOpt(s, 's', p.indexOf(s.id) > -1, DISC, 'orderCalc', true); }).join('') + '</div>'; }).join('') + '</div>' +
         '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Selger og tilgang</h3><div class="g2"><label class="fld"><span>Selgers navn</span><input class="inp" name="seller" placeholder="Navn"></label><label class="fld"><span>Mobil</span><input class="inp" name="phone" inputmode="tel" placeholder="8 siffer"></label><label class="fld"><span>Tilgang</span><select class="sel" name="access"><option>Selger hjemme</option><option>Nøkkel hos megler</option><option>Nøkkelboks</option></select></label><label class="fld"><span>Notat til fotografen</span><input class="inp" name="note" placeholder="F.eks. katt i huset, parkering bak"></label></div></div>' +
       '</div><aside><div class="card pad" style="position:sticky;top:60px"><h3 class="h3">Oppsummering</h3><div id="sum"></div><button class="btn btn-acc" style="width:100%;margin-top:16px" data-act="orderSend">' + ic('check') + 'Send bestilling</button><p class="hint" style="text-align:center">Bekreftelse på e-post med en gang.</p></div></aside></form>';
   }, { title: 'Bestill' });
   function orderVals() {
     var f = document.getElementById('order'); if (!f) return null;
     var sel = [].slice.call(f.querySelectorAll('input[name=foto]:checked,input[name=s]:checked')).map(function (x) { return x.value; });
-    return { f: f, sel: sel, slot: (f.querySelector('input[name=slot]:checked') || {}).value };
+    return { f: f, sel: sel, qty: SV.formQty(f, sel) };
   }
   function orderCalc() {
     var v = orderVals(); if (!v) return;
-    var sum = 0, rows = v.sel.map(function (id) { var s = svc(id), p = Math.round(s.price * DISC); sum += p; return '<div class="li" style="padding:7px 0"><span class="li-t small">' + esc(s.name.replace(', per bilde', '')) + '</span><span class="li-r num small">' + SV.kr(p) + '</span></div>'; }).join('');
+    var sum = 0, rows = v.sel.map(function (id) { var s = svc(id), n = v.qty[id] || 1, p = Math.round(s.price * DISC) * n; sum += p; return '<div class="li" style="padding:7px 0"><span class="li-t small">' + esc(s.name) + (s.unit ? ' × ' + n : '') + '</span><span class="li-r num small">' + SV.kr(p) + '</span></div>'; }).join('');
     document.getElementById('sum').innerHTML = '<p style="font-weight:700;margin:8px 0 4px">' + esc(v.f.addr.value || 'Ny bolig') + '</p>' + rows +
-      '<div class="row between" style="margin-top:10px"><span>Eks. mva</span><b class="num" style="font-size:20px">' + SV.kr(sum) + '</b></div><div class="row between small muted"><span>Inkl. mva</span><span class="num">' + SV.kr(sum * 1.25) + '</span></div><p class="hint">' + (v.slot === 'selger' ? 'Selger velger tid' : 'Tid: ' + SV.fdate(v.slot.split(' ')[0]) + ' kl. ' + v.slot.split(' ')[1]) + ' · samlefaktura til kontoret</p>';
+      '<div class="row between" style="margin-top:10px"><span>Eks. mva</span><b class="num" style="font-size:20px">' + SV.kr(sum) + '</b></div><div class="row between small muted"><span>Inkl. mva</span><span class="num">' + SV.kr(sum * 1.25) + '</span></div><p class="hint">Studiovest avtaler tid med selger · samlefaktura til kontoret</p>';
   }
   SV.on('orderCalc', orderCalc);
   SV.on('usePkg', function () { var p = pkg(); document.querySelectorAll('#order input[name=foto],#order input[name=s]').forEach(function (x) { x.checked = p.indexOf(x.value) > -1; }); orderCalc(); });
   SV.on('orderSend', function () {
     var v = orderVals(); if (!v.f.addr.value.trim()) { SV.toast('Skriv inn adressen', 'warn'); v.f.addr.focus(); return; }
     if (!v.sel.length) { SV.toast('Velg minst én tjeneste', 'warn'); return; }
-    var f = v.f, slot = v.slot === 'selger' ? null : v.slot.split(' ');
-    var id = newJob({ addr: f.addr.value, town: f.town.value || 'Leirvik', nr: f.nr.value || '–', stage: slot ? 'Fotografering avtalt' : 'Opprettet', date: slot ? slot[0] : D.W(3), time: slot ? slot[1] : '10:00', services: v.sel, seller: f.seller.value || 'Selger', phone: f.phone.value || '–', access: f.access.value, type: f.type.value, wish: slot ? '' : 'Selger velger tid' });
-    SV.go('#/kunde/megler/' + id); SV.toast('Bestilling sendt · selger får SMS');
+    var f = v.f;
+    var id = newJob({ addr: f.addr.value, town: f.town.value || 'Leirvik', nr: f.nr.value || '–', stage: 'Opprettet', date: D.W(3), time: '10:00', services: v.sel, qty: v.qty, seller: f.seller.value || 'Selger', phone: f.phone.value || '–', access: f.access.value, type: f.type.value, wish: '' });
+    SV.go('#/kunde/megler/' + id); SV.toast('Bestilling sendt · Studiovest avtaler tid med selger');
   });
 
   // oppdrag sett fra megler
@@ -260,7 +269,7 @@
     if (!done) {
       return head + '<div class="g2"><div class="card pad"><h3 class="h3">Detaljer</h3><dl class="kv" style="margin-top:12px"><dt>Selger</dt><dd>' + esc(j.seller) + '</dd><dt>Tilgang</dt><dd>' + esc(j.access) + '</dd><dt>Bestilt</dt><dd>' + SV.svcShort(j) + '</dd><dt>Pris</dt><dd>' + SV.kr(Math.round(total(j) * DISC)) + ' eks. mva · ' + SV.kr(total(j) * DISC * 1.25) + ' inkl.</dd></dl>' +
         '<a class="btn btn-ghost btn-s" style="margin-top:14px" href="#/selger/' + j.id + '">' + ic('eye') + 'Se kundens side</a>' + '</div>' +
-        '<div class="card pad"><h3 class="h3">Legg til</h3><p class="small muted" style="margin:6px 0 12px">Fram til fotograferingen.</p><div class="opts">' + ['dr', 'kv', 're', 'p3'].filter(function (s) { return j.services.indexOf(s) < 0; }).map(function (s) { var v = svc(s); return '<label class="opt"><input type="checkbox" data-change="addSvc" value="' + s + '"><b>' + esc(v.name) + '</b><span class="price">' + SV.kr(Math.round(v.price * DISC)) + '</span></label>'; }).join('') + '</div>' +
+        '<div class="card pad"><h3 class="h3">Legg til</h3><p class="small muted" style="margin:6px 0 12px">Fram til fotograferingen.</p><div class="opts">' + ['ut', 'to', 'vm', 'kv'].filter(function (s) { return j.services.indexOf(s) < 0; }).map(function (s) { var v = svc(s); return '<label class="opt"><input type="checkbox" data-change="addSvc" value="' + s + '"><b>' + esc(v.name) + '</b><span class="price">' + SV.unitPrice(v, DISC) + '</span></label>'; }).join('') + '</div>' +
         '<button class="link small" style="margin-top:14px" data-act="dummy">Avlys eller flytt</button></div></div>';
     }
     var by = j.broker + ' (megler)', live = st === 'Oppdrag levert';
@@ -273,7 +282,7 @@
       '<div class="card pad"><h3 class="h3">Bruk av bildene</h3><p class="small" style="margin-top:8px">' + lic.text + '</p><p class="small" style="margin-top:8px">Krediter med <b>«Foto: Studiovest»</b>. Bilder merket «Illustrasjon» skal vises med merkingen.</p><div class="row" style="margin-top:14px"><button class="btn btn-ghost btn-xs" data-act="dummy">' + ic('plus') + 'Bestill digital møblering</button></div></div></div>';
     var appr = live ? SV.reviewBox(j, by) :
       st === 'Godkjent' && SV.approval(j) ? '<p class="small muted" style="margin:-10px 0 18px">' + ic('check') + ' Godkjent ' + SV.fdate(SV.approval(j).d) + ' av ' + esc(SV.approval(j).by) + '</p>' : '';
-    return head + appr + SV.reviewThread(j, 'megler') + '<div class="sec">' + gal + '</div>' + (j.services.indexOf('p2') > -1 ? plan : '') + extras;
+    return head + appr + SV.reviewThread(j, 'megler') + '<div class="sec">' + gal + '</div>' + plan + extras;
   }, { title: 'Oppdrag' });
 
   function galDnd() {

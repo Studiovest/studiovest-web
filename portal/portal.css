@@ -866,3 +866,8 @@ details[open].card summary::after{content:" −"}
 .rv-floors{display:grid;gap:14px}
 .rv-fname{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin:0 0 6px}
 @media (min-width:900px){.rv-floors.two{grid-template-columns:repeat(2,minmax(0,1fr))}.rv-floors.two .rv-canvas.sm{max-width:none}}
+
+/* antall bilder for produkter med pris per bilde */
+.opt .qty{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--dim)}
+.opt .qty .inp{position:static;opacity:1;width:72px;height:34px;padding:0 10px;border-radius:9px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);font:600 14px inherit;color:var(--ink)}
+.opt:not(:has(input:checked)) .qty{display:none}
