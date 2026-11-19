@@ -52,11 +52,15 @@
   function ruleOn(r) { return S.mailRules[r.k] == null ? !r.off : S.mailRules[r.k]; }
   function when(j) { return SV.fdate(j.date, true) + ' kl. ' + j.time + (j.date2 ? ', utefoto ' + SV.outWhen(j) : ''); }
   function recips(j, to) { return to === 'megler' ? [[j.broker, brokerMail(j)]] : to === 'kunde' ? (clientMail(j) ? [[j.seller, clientMail(j)]] : []) : to === 'begge' ? recips(j, 'megler').concat(recips(j, 'kunde')) : [['Deg', 'varsel i portalen']]; }
+  // Meglerens egne valg under Innstillinger → Varsler
+  var MEGLER_PREF = { avtalt_megler: 'tid', flytt: 'tid', ute: 'tid', utsatt: 'utsatt', levert_megler: 'klar', levert_paminn: 'klar' };
+  function meglerWants(k) { var g = MEGLER_PREF[k], n = (S.megler && S.megler.notif) || {}; return !g || n['mail_' + g] !== false; }
   function send(j, rules) {
     var sent = [];
     rules.forEach(function (r) {
       if (!ruleOn(r)) return;
       recips(j, r.to).forEach(function (p) {
+        if (p[1] === brokerMail(j) && !meglerWants(r.k)) return;
         S.mailLog.unshift({ id: j.id, t: now(), to: p[0], mail: p[1], subj: r.subj(j), k: r.k, later: r.later || '' });
         if (!r.later && r.to !== 'meg') sent.push(p[0]);
       });
