@@ -193,7 +193,7 @@
     { nr: '26-1191', to: 'Vestkraft Energi AS', area: 'bedrift', sum: 38500, date: D(-20), due: D(-6), status: 'Forfalt', chan: 'EHF' },
     { nr: '26-1197', to: 'Kystmegleren Haugesund · Rune Skår', area: 'bolig', sum: 5490, date: D(-9), due: D(5), status: 'Sendt', chan: 'E-post' },
     { nr: '26-1199', to: 'Rosendal Fjordhotell', area: 'bedrift', sum: 21000, date: D(-7), due: D(7), status: 'Sendt', chan: 'EHF' },
-    { nr: '26-1200', to: 'Halsnøy Tannklinikk (timebank nov)', area: 'mark', sum: 7600, date: D(-1), due: D(13), status: 'Sendt', chan: 'EHF' },
+    { nr: '26-1200', to: 'Halsnøy Tannklinikk (timebank nov)', area: 'mark', sum: 6900, date: D(-1), due: D(13), status: 'Sendt', chan: 'EHF' },
     { nr: '26-1201', to: 'Hardanger Boligmegling', area: 'bolig', sum: 13290, date: D(-1), due: D(13), status: 'Sendt', chan: 'E-post' },
     { nr: '—', to: 'Sunnhordland Eiendom (samlefaktura okt)', area: 'bolig', sum: 22760, date: '', due: '', status: 'Utkast', chan: 'EHF' },
     { nr: 'Vipps', to: 'Fjordtun skule · foresatte', area: 'skole', sum: 23838, date: D(0), due: '', status: 'Løpende', chan: 'Vipps' }
