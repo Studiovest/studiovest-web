@@ -61,9 +61,9 @@
       var list = jobs.filter(function (j) { return SV.colOf(j) === s; });
       return '<div class="kb-col" data-stage="' + s + '"><div class="kb-h">' + s + '<span>' + list.length + '</span></div>' + list.map(card).join('') + '</div>';
     }).join('') + '</div>';
-    var svcs = '<div class="card tbl-w"><table class="tbl"><thead><tr><th>Tjeneste</th><th class="hide-s">Gruppe</th><th class="hide-s">Tid på stedet</th><th class="r">Pris</th><th class="r">Aktiv</th></tr></thead><tbody>' +
-      D.boligServices.map(function (s) { return '<tr><td><b>' + esc(s.name) + '</b><small>' + esc(s.desc) + '</small></td><td class="hide-s">' + s.group + '</td><td class="hide-s">' + (s.min ? s.min + ' min' : '–') + '</td><td class="r num">' + SV.unitPrice(s) + '</td><td class="r"><label class="sw"><input type="checkbox"' + (s.on ? ' checked' : '') + ' aria-label="' + esc(s.name) + '"><span></span></label></td></tr>'; }).join('') +
-      '</tbody></table></div><p class="hint">Priser inkl. mva. Tid på stedet brukes til å legge oppdrag i kalenderen. Kontoravtaler gir egne priser per kontor.</p>';
+    var svcs = '<div class="card tbl-w"><table class="tbl"><thead><tr><th>Tjeneste</th><th class="hide-s">Gruppe</th><th class="r">Pris</th><th class="r">Aktiv</th></tr></thead><tbody>' +
+      D.boligServices.map(function (s) { return '<tr><td><b>' + esc(s.name) + '</b><small>' + esc(s.desc) + '</small></td><td class="hide-s">' + s.group + '</td><td class="r num">' + SV.unitPrice(s) + '</td><td class="r"><label class="sw"><input type="checkbox"' + (s.on ? ' checked' : '') + ' aria-label="' + esc(s.name) + '"><span></span></label></td></tr>'; }).join('') +
+      '</tbody></table></div><p class="hint">Priser inkl. mva. Kontoravtaler gir egne priser per kontor.</p>';
     var off = '<div class="g2">' + D.offices.map(function (o) { return '<div class="card pad"><p class="eyebrow">' + esc(o.town) + '</p><h3 class="h3" style="font-size:18px">' + esc(o.name) + '</h3><dl class="kv" style="margin-top:12px"><dt>Avtale</dt><dd>' + esc(o.agreement) + '</dd><dt>Faktura</dt><dd>' + esc(o.invoice) + '</dd><dt>Meglere</dt><dd>' + o.brokers.map(esc).join(', ') + '</dd><dt>I år</dt><dd class="num">' + SV.kr(o.ytd) + '</dd></dl></div>'; }).join('') + '</div>';
     SV.after(dnd);
     var act = jobs.filter(function (j) { return SV.stageOf(j) !== 'Godkjent'; }).length, wait = jobs.filter(function (j) { return SV.stageOf(j) === 'Opprettet'; }).length;
