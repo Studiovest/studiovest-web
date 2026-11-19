@@ -53,7 +53,7 @@
   function when(j) { return SV.fdate(j.date, true) + ' kl. ' + j.time + (j.date2 ? ', utefoto ' + SV.outWhen(j) : ''); }
   function recips(j, to) { return to === 'megler' ? [[j.broker, brokerMail(j)]] : to === 'kunde' ? (clientMail(j) ? [[j.seller, clientMail(j)]] : []) : to === 'begge' ? recips(j, 'megler').concat(recips(j, 'kunde')) : [['Deg', 'varsel i portalen']]; }
   // Meglerens egne valg under Innstillinger → Varsler
-  var MEGLER_PREF = { avtalt_megler: 'tid', flytt: 'tid', ute: 'tid', utsatt: 'utsatt', levert_megler: 'klar', levert_paminn: 'klar', melding: 'melding' };
+  var MEGLER_PREF = { avtalt_megler: 'tid', flytt: 'tid', ute: 'tid', utsatt: 'tid', levert_megler: 'klar', levert_paminn: 'klar', melding: 'melding' };
   function meglerWants(k) { var g = MEGLER_PREF[k], n = (S.megler && S.megler.notif) || {}; return !g || n['mail_' + g] !== false; }
   SV.meglerWants = meglerWants;
   function send(j, rules) {
