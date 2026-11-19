@@ -145,7 +145,7 @@
     r.requests.push(q); delete r.drafts[by];
     var S = SV.state; S.mailLog = S.mailLog || [];
     S.mailLog.unshift({ id: j.id, t: SV.fdate(today()), to: 'Deg', mail: 'varsel i portalen', subj: 'Endringsønske (' + items.length + '): ' + j.addr + ' fra ' + by, k: 'endring' });
-    if (q.role === 'kunde') S.mailLog.unshift({ id: j.id, t: SV.fdate(today()), to: j.broker, mail: 'megler', subj: j.seller + ' har sendt endringsønsker: ' + j.addr, k: 'endring' });
+    if (q.role === 'kunde' && SV.meglerWants('melding')) S.mailLog.unshift({ id: j.id, t: SV.fdate(today()), to: j.broker, mail: 'megler', subj: j.seller + ' har sendt endringsønsker: ' + j.addr, k: 'endring' });
     // plantegningsagenten starter av seg selv når det er ønsker på plantegningen
     if (hasPlan) SV.runAgent(j);
     SV.save(); keep(); SV.toast('Sendt til Studiovest · ' + (q.role === 'kunde' ? 'megler ser det også' : 'kunden ser det også'));
@@ -177,7 +177,7 @@
     if (!t) { SV.toast('Skriv et kort svar', 'warn'); return; }
     q.status = 'rettet'; q.answer = t; q.ad = today();
     var S = SV.state;
-    [[j.broker, 'megler'], [j.seller, j.email || 'kunde']].forEach(function (p) { S.mailLog.unshift({ id: j.id, t: SV.fdate(today()), to: p[0], mail: p[1], subj: 'Endringene er gjort: ' + j.addr, k: 'rettet' }); });
+    [[j.broker, 'megler'], [j.seller, j.email || 'kunde']].filter(function (p) { return p[1] !== 'megler' || SV.meglerWants('melding'); }).forEach(function (p) { S.mailLog.unshift({ id: j.id, t: SV.fdate(today()), to: p[0], mail: p[1], subj: 'Endringene er gjort: ' + j.addr, k: 'rettet' }); });
     SV.save(); keep(); SV.toast('Svar sendt · megler og kunde får e-post');
   });
 })();
