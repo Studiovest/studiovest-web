@@ -120,7 +120,7 @@
       return SV.brand(b.kind) + '<div class="bhead"><h1>Du er booket!</h1><p>' + esc(b.name) + '</p></div>' +
         '<div class="card pad" style="margin-top:18px;text-align:center"><p style="font-family:var(--serif);font-size:26px">' + SV.fdate(b.when, true) + ' kl. ' + my.t + '</p><p class="small muted" style="margin:6px 0 14px">' + esc(my.who) + (my.pre ? ' · forhåndskjøpt: ' + esc(my.pre) : '') + '</p><p class="small" style="margin-top:10px">Si navnet ditt ved stasjonen. Galleri-kode: <b>' + esc('BK-' + my.t.replace(':', '') + '-7Q') + '</b></p></div>' +
         '<div class="row" style="margin-top:14px"><button class="btn btn-ghost" data-act="ics">' + ic('cal') + 'Legg i kalender</button><button class="btn btn-ghost" data-act="bkCancel" data-id="' + b.id + '">Endre eller avbestill</button></div>' +
-        '<p class="hint" style="margin-top:12px">Du får SMS dagen før. Bildene er klare ca. tre dager etter, og du får beskjed.</p>';
+        '<p class="hint" style="margin-top:12px">Du får e-post dagen før. Bildene er klare ca. tre dager etter, og du får beskjed.</p>';
     }
     var pkgs = [['Ingen nå', 0, 'Velg bilder etterpå'], ['Digital familiepakke', 424, 'Alle digitale bilder (spar 15 %)'], ['Digital + 2 trykk', 594, 'Alle digitale + 2 × 18×24 (spar 15 %)']];
     return SV.brand(b.kind) + '<div class="bhead"><h1>' + esc(b.name) + '</h1><p>' + SV.fdate(b.when, true) + '. Velg en tid som passer. Det tar ca. 10 minutter.</p></div>' +
@@ -137,7 +137,7 @@
     if (!t) { SV.toast('Velg en tid', 'warn'); return; }
     st().bookings = st().bookings || {}; var pre = f.querySelector('input[name=pre]:checked').value;
     st().bookings[el.getAttribute('data-id')] = { t: t.value === 'Uten tid' ? 'valgfri tid' : t.value, who: f.who.value, pre: pre === 'Ingen nå' ? '' : pre };
-    SV.save(); SV.render(); SV.toast(pre === 'Ingen nå' ? 'Booket · bekreftelse på SMS' : 'Booket og betalt med Vipps · bekreftelse på SMS');
+    SV.save(); SV.render(); SV.toast(pre === 'Ingen nå' ? 'Booket · bekreftelse på e-post' : 'Booket og betalt med Vipps · bekreftelse på e-post');
   });
   SV.on('bkCancel', function (el) { delete st().bookings[el.getAttribute('data-id')]; SV.save(); SV.render(); SV.toast('Bookingen er avbestilt · velg ny tid'); });
   function qrSvg(seed) { var h = 0; for (var i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0; var c = ''; for (var y = 0; y < 13; y++) for (var x = 0; x < 13; x++) { h = (h * 1103515245 + 12345) >>> 0; var corner = (x < 3 && y < 3) || (x > 9 && y < 3) || (x < 3 && y > 9); if (corner || (h >> 16) & 1) c += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>'; } return '<svg viewBox="-1 -1 15 15" width="150" height="150" style="margin:0 auto;display:block" fill="#161412">' + c + '</svg>'; }
@@ -182,7 +182,7 @@
     return '<h2 class="h2" style="margin-top:20px"><span class="serif">Forhåndskjøp</span> <span class="small muted" style="font-family:var(--sans)">valgfritt, 15 % rabatt</span></h2>' +
       [['', 'Vent til jeg har sett bildene', 'Du får beskjed når galleriet er klart.'], ['Alle digitale', 'Alle digitale bilder · 297 kr', 'Ordinær pris 349 kr'], ['Digital + trykk', 'Alle digitale + 2 trykk 18×24 · 550 kr', 'Ordinær pris 647 kr']].map(function (k, i) { return '<label class="choice"><input type="radio" name="pre" value="' + k[0] + '"' + (i === 0 ? ' checked' : '') + '><b>' + k[1] + '</b><small>' + k[2] + '</small></label>'; }).join('') +
       '<div class="callout" style="margin-top:8px">' + ic('cal') + '<span>Vil dere ha familiebilde med søsken eller foreldre? <a href="#/booking/S-sjb">Book en tid</a> etter lunsj samme dag.</span></div>' +
-      '<label class="choice cb" style="margin-top:10px"><input type="checkbox" name="notify" checked><b>Varsle meg når bildene er klare</b><small>SMS til mobilen du er registrert med</small></label>';
+      '<label class="choice cb" style="margin-top:10px"><input type="checkbox" name="notify" checked><b>Varsle meg når bildene er klare</b><small>E-post til adressen du er registrert med</small></label>';
   };
   X.preDone = function () { var c = st().preConsent || {}; return (c.pre ? '<div class="callout sage" style="margin-top:14px">' + ic('check') + '<span>Forhåndskjøpt: <b>' + esc(c.pre) + '</b>. Betalt med Vipps. Du velger bildene når galleriet åpner.</span></div>' : '') + (c.notify ? '<p class="hint">Du får SMS når bildene er klare.</p>' : ''); };
   SV.on('preSave', function () {

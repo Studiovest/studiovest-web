@@ -29,7 +29,7 @@
       '<a class="btn btn-ghost bigbtn" href="#/skole/fotograf" style="margin-top:8px">' + ic('users') + 'Skolefoto-modus</a>';
   }, { title: 'Dagen' });
   SV.on('shotTick', function (el) { SV.state.shotDone = SV.state.shotDone || {}; var id = el.getAttribute('data-id'); (SV.state.shotDone[id] = SV.state.shotDone[id] || {})[el.getAttribute('data-k')] = el.checked; SV.save(); el.closest('li').classList.toggle('done', el.checked); });
-  SV.on('onWay', function (el) { var j = SV.find(SV.jobs(), el.getAttribute('data-id')); SV.toast('SMS til ' + j.seller.split(' ')[0] + ': «Fotografen er på vei, framme ca. om 20 min»'); });
+  SV.on('onWay', function (el) { var j = SV.find(SV.jobs(), el.getAttribute('data-id')); SV.toast('E-post til ' + j.seller.split(' ')[0] + ': «Fotografen er på vei, framme ca. om 20 min»'); });
   SV.on('outDone', function (el) { var id = el.getAttribute('data-id'), j = SV.find(SV.jobs(), id); SV.state.outDone = SV.state.outDone || {}; SV.state.outDone[id] = true; if (SV.stIdx(j) < 4) SV.setStage(j, 'Utefotografering utført'); else { SV.save(); SV.render(); } });
   SV.on('shotDone', function (el) { var id = el.getAttribute('data-id'); var j = SV.find(SV.jobs(), id); SV.setStage(j, SV.hasOut(j) && j.date2 && !(SV.state.outDone || {})[id] ? 'Utefotografering avtalt' : 'Fotografering utført'); });
 

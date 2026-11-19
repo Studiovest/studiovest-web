@@ -26,7 +26,7 @@
         { from: ['Marte Aasen', 'marte@vestkraft.example'], to: [ME], cc: [['Ola Brekke', 'ola@vestkraft.example']], d: at(-1, '16:44'), html: p('Hei Aleksander!\n\nVi er veldig fornøyde med v2. To små ting:\n\n1. Kan logoen komme litt tidligere?\n2. Musikken kan være litt lavere under intervjuet.\n\nMvh Marte') }] },
       { id: 't6', subj: 'Fotodag Fjordtun: spørsmål fra foresatt', folder: 'inbox', labels: ['Skole'], unread: false, msgs: [
         { from: ['Linn Haugland', 'linn.haugland@epost.example'], to: [ME], d: at(-2, '20:12'), html: p('Hei! Emma var syk på fotodagen. Kan hun bli med på omfotograferingen?\n\nHilsen Linn') },
-        { from: ME, to: [['Linn Haugland', 'linn.haugland@epost.example']], d: at(-1, '08:15'), html: p('Hei Linn,\n\nJa, Emma står på listen til omfotograferingen. Du får tid på SMS.\n\nMvh\nStudiovest') }] },
+        { from: ME, to: [['Linn Haugland', 'linn.haugland@epost.example']], d: at(-1, '08:15'), html: p('Hei Linn,\n\nJa, Emma står på listen til omfotograferingen. Du får tid på e-post.\n\nMvh\nStudiovest') }] },
       { id: 't7', subj: 'Bekreftelse: Valevåg sjøhus', folder: 'archive', labels: ['Bolig'], job: 'B-2616', unread: false, msgs: [
         { from: ['Eirik Sæther', 'eirik.saether@kystmegleren.example'], to: [ME], d: at(-3, '11:20'), html: p('Hei, bekrefter oppdraget på Valevåg sjøhus. Selger Hans Valen tar imot.\n\nEirik') }] },
       { id: 't8', subj: 'Du har vunnet et gavekort!', folder: 'spam', labels: [], unread: true, msgs: [

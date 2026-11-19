@@ -109,7 +109,7 @@
       '<div class="g21" style="grid-template-columns:minmax(0,3fr) minmax(260px,1fr)"><div class="card" style="overflow-x:auto;padding:6px 10px 14px"><div class="wk">' + grid + '</div></div>' +
       '<div class="stack"><div class="card"><div class="card-h"><h3>Uten tid</h3><span class="chip chip-sand">' + unplanned.length + '</span></div><div class="card-b">' +
         unplanned.map(function (j) { return '<a class="li" href="#/bolig/' + j.id + '"><span class="li-t"><b>' + esc(j.addr) + '</b><small>' + esc(j.town) + ' · ønske: ' + esc(j.wish || '–') + '</small></span>' + ic('chev') + '</a>'; }).join('') +
-        '<p class="hint">Forslag til tid sendes selger på SMS automatisk. Selger kan velge blant ledige luker.</p></div></div>' +
+        '<p class="hint">Studiovest avtaler tid med selger. Når tiden settes på oppdraget, får selger e-post med tid og sjekkliste.</p></div></div>' +
         '<div class="card"><div class="card-h"><h3>Tilgjengelighet</h3></div><div class="card-b small"><ul class="check">' +
           D.team.slice(0, 2).map(function (t) { return '<li>' + SV.avatar(t.name) + '<span><b>' + esc(t.name) + '</b><br><span class="muted">' + esc(t.role) + '</span></span></li>'; }).join('') +
         '</ul><p class="hint">Bestillingsregler: maks 4 boligoppdrag per fotograf per dag, 30 min buffer, drone bare ved vind under 8 m/s.</p></div></div></div></div>';
@@ -165,7 +165,7 @@
     var f = p.felt || 'alle';
     var list = D.automations.filter(function (a) { return f === 'alle' || a.area === f; });
     var on = D.automations.filter(autoOn).length, runs = D.automations.reduce(function (s, a) { return s + a.runs; }, 0);
-    return SV.head({ eyebrow: on + ' av ' + D.automations.length + ' aktive · ' + runs + ' kjøringer siste 30 dager', a: 'Automatisering', lead: 'Når noe skjer, gjør portalen resten: e-post, SMS, faktura, påminnelser og sletting. Du skrur av og på, og endrer tekst og tidspunkt.', actions: '<button class="btn btn-acc btn-s" data-act="autoNew">' + ic('plus') + 'Ny regel</button>' }) +
+    return SV.head({ eyebrow: on + ' av ' + D.automations.length + ' aktive · ' + runs + ' kjøringer siste 30 dager', a: 'Automatisering', lead: 'Når noe skjer, gjør portalen resten: e-post, faktura, påminnelser og sletting. Du skrur av og på, og endrer tekst og tidspunkt.', actions: '<button class="btn btn-acc btn-s" data-act="autoNew">' + ic('plus') + 'Ny regel</button>' }) +
       '<div class="filters">' + [['alle', 'Alle'], ['bolig', 'Bolig'], ['bedrift', 'Bedrift'], ['skole', 'Skolefoto'], ['mark', 'Markedsføring']].map(function (x) { return '<a class="fbtn' + (x[0] === f ? ' on' : '') + '" href="#/automatisering' + (x[0] === 'alle' ? '' : '/' + x[0]) + '">' + (x[0] !== 'alle' ? SV.dot(x[0]) : '') + x[1] + '</a>'; }).join('') + '</div>' +
       ['bolig', 'bedrift', 'skole', 'mark'].filter(function (k) { return list.some(function (a) { return a.area === k; }); }).map(function (k) {
         return '<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>' + SV.dot(k) + ' ' + SV.areaName[k] + '</h3></div><div class="card-b" style="padding-top:2px;padding-bottom:2px">' + list.filter(function (a) { return a.area === k; }).map(function (a) {
@@ -209,17 +209,15 @@
         '<p class="small" style="font-weight:750;margin-bottom:6px">Flettefelt</p><div class="tags">' + ['megler.fornavn', 'adresse', 'tjenester', 'selger.navn', 'dato', 'tid', 'lenke', 'barn.fornavn', 'kode', 'frist'].map(function (k) { return '<button type="button" data-act="tplTag" data-k="' + k + '">{{' + k + '}}</button>'; }).join('') + '</div></div>' +
         '<div><p class="small" style="font-weight:750;margin-bottom:6px">Slik ser kunden den</p><div class="mailprev" id="tplPrev"></div></div></div></div></div></div>';
     var log = '<div class="card tbl-w"><table class="tbl"><thead><tr><th>Tid</th><th>Til</th><th>Emne</th><th>Status</th></tr></thead><tbody>' + D.outbox.map(function (o) { return '<tr><td class="num">' + o.t + '</td><td>' + SV.dot(o.area) + ' ' + esc(o.to) + '</td><td>' + esc(o.subj) + '</td><td>' + SV.chip(o.st, /Åpnet|Klikket|Levert|svart|åpnet/.test(o.st) ? 'ok' : 'ink') + '</td></tr>'; }).join('') + '</tbody></table></div>';
-    var set = '<div class="g2"><div class="card pad"><h3 class="h3">Avsender</h3><label class="fld" style="margin-top:12px"><span>Navn</span><input class="inp" value="Studiovest"></label><label class="fld"><span>E-post</span><input class="inp" value="kontakt@studiovest.no"></label><label class="fld"><span>SMS-avsender</span><input class="inp" value="Studiovest" maxlength="11"></label><p class="hint">Domenet må verifiseres (SPF og DKIM) hos one.com ved lansering, så e-posten ikke havner i søppelpost.</p></div>' +
-      '<div class="card pad"><h3 class="h3">Kanaler per felt</h3><table class="tbl" style="margin-top:8px"><thead><tr><th>Felt</th><th>E-post</th><th>SMS</th></tr></thead><tbody>' + ['bolig', 'bedrift', 'skole', 'mark'].map(function (k) { return '<tr><td>' + SV.dot(k) + ' ' + SV.areaName[k] + '</td><td><label class="sw"><input type="checkbox" checked aria-label="E-post ' + k + '"><span></span></label></td><td><label class="sw"><input type="checkbox"' + (k === 'bolig' || k === 'skole' ? ' checked' : '') + ' aria-label="SMS ' + k + '"><span></span></label></td></tr>'; }).join('') + '</tbody></table></div></div>';
+    var set = '<div class="g2"><div class="card pad"><h3 class="h3">Avsender</h3><label class="fld" style="margin-top:12px"><span>Navn</span><input class="inp" value="Studiovest"></label><label class="fld"><span>E-post</span><input class="inp" value="kontakt@studiovest.no"></label><p class="hint">Domenet må verifiseres (SPF og DKIM) hos one.com ved lansering, så e-posten ikke havner i søppelpost.</p></div>' +
+      '<div class="card pad"><h3 class="h3">Kanal</h3><p class="small" style="margin-top:10px">Alle varsler sendes på e-post fra kontakt@studiovest.no via send.one.com. Svar havner i E-post i portalen.</p></div></div>';
     SV.after(tplLive);
-    return SV.head({ eyebrow: 'Sendt siste 30 dager: 1 284 e-poster · 316 SMS', a: 'Maler', b: 'og varsler', lead: 'Alle meldinger har samme Studiovest-uttrykk. Flettefeltene fylles inn automatisk fra oppdraget.' }) +
+    return SV.head({ eyebrow: 'Sendt siste 30 dager: 1 284 e-poster', a: 'Maler', b: 'og varsler', lead: 'Alle meldinger har samme Studiovest-uttrykk. Flettefeltene fylles inn automatisk fra oppdraget.' }) +
       SV.tabs('ep', [['m', 'Maler'], ['l', 'Utboks', D.outbox.length], ['s', 'Innstillinger']], 'm') + SV.panels('ep', { m: tpl, l: log, s: set }, 'm');
   }, { title: 'Maler og varsler' });
   function tplLive() {
     var s = document.getElementById('tplSubj'), b = document.getElementById('tplBody'), p = document.getElementById('tplPrev'); if (!s) return;
-    var sms = s.value === 'SMS';
-    p.innerHTML = sms ? '<div class="mp-b" style="background:#eae6df;border-radius:12px;margin:14px;max-width:85%">' + fill(b.value) + '</div><p class="mp-f">' + b.value.length + ' tegn · ' + Math.ceil(b.value.length / 153) + ' SMS</p>' :
-      '<div class="mp-h"><span class="lg"><span class="serif">STUDIO</span><span class="bold">VEST</span></span><span class="small">' + fill(s.value) + '</span></div><div class="mp-b">' + fill(b.value) + '</div><span class="mp-btn">Åpne i portalen</span><div class="mp-f">Studiovest · Eidsvik, Halsnøy · kontakt@studiovest.no</div>';
+    p.innerHTML = '<div class="mp-h"><span class="lg"><span class="serif">STUDIO</span><span class="bold">VEST</span></span><span class="small">' + fill(s.value) + '</span></div><div class="mp-b">' + fill(b.value) + '</div><span class="mp-btn">Åpne i portalen</span><div class="mp-f">Studiovest · Eidsvik, Halsnøy · kontakt@studiovest.no</div>';
   }
   SV.on('tplLive', tplLive);
   SV.on('tplPick', function (el) {

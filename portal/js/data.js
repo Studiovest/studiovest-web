@@ -221,17 +221,17 @@
   };
 
   var automations = [
-    { id: 'a1', area: 'bolig', name: 'Ny bestilling fra megler', on: true, runs: 46, trigger: 'Megler sender bestilling', steps: ['E-post: bekreftelse til megler', 'SMS: til selger med forslag til tid', 'Oppretter oppdrag i kalender', 'Varsel til fotograf'] },
-    { id: 'a2', area: 'bolig', name: 'Klargjøring dagen før', on: true, runs: 41, trigger: '1 dag før fotografering, kl. 12', steps: ['SMS til selger: «Slik gjør du boligen klar»', 'Værsjekk for drone', 'Hvis vind > 8 m/s: foreslå ny dag for drone'] },
+    { id: 'a1', area: 'bolig', name: 'Ny bestilling fra megler', on: true, runs: 46, trigger: 'Megler sender bestilling', steps: ['E-post: bekreftelse til megler', 'Oppgave til Studiovest: avtal tid med selger', 'Oppretter oppdrag i kalender', 'Varsel til fotograf'] },
+    { id: 'a2', area: 'bolig', name: 'Klargjøring dagen før', on: true, runs: 41, trigger: '1 dag før fotografering, kl. 12', steps: ['E-post til selger: «Slik gjør du boligen klar»', 'Værsjekk for drone', 'Hvis vind > 8 m/s: foreslå ny dag for drone'] },
     { id: 'a3', area: 'bolig', name: 'Levert til megler', on: true, runs: 38, trigger: 'Oppdrag settes til Levert', steps: ['Lager Finn-, trykk- og SoMe-formater', 'E-post til megler med lenke', 'Faktura til kontoret (samlefaktura eller enkelt)'] },
     { id: 'a4', area: 'bolig', name: 'Lisens utløper', on: true, runs: 7, trigger: '30 dager før bildelisensen utløper', steps: ['E-post til megler: forlenge eller avslutte', 'Hvis solgt: arkiver og planlegg sletting av RAW'] },
-    { id: 'a14', area: 'bolig', name: 'Be om omtale', on: true, runs: 21, trigger: '7 dager etter levering', steps: ['SMS til megler med lenke til Google-omtale', 'Hopper over meglere som har gitt omtale siste 6 mnd'] },
-    { id: 'a15', area: 'bolig', name: 'Selger har ikke valgt tid', on: true, runs: 9, trigger: '24 timer etter SMS uten svar', steps: ['Ny SMS til selger', 'Varsel til megler etter 48 timer'] },
+    { id: 'a14', area: 'bolig', name: 'Be om omtale', on: true, runs: 21, trigger: '7 dager etter levering', steps: ['E-post til megler med lenke til Google-omtale', 'Hopper over meglere som har gitt omtale siste 6 mnd'] },
+    { id: 'a15', area: 'bolig', name: 'Tid ikke avtalt', on: true, runs: 9, trigger: '24 timer etter bestilling uten avtalt tid', steps: ['Påminnelse til Studiovest om å kontakte selger', 'E-post til megler etter 48 timer'] },
     { id: 'a5', area: 'bedrift', name: 'Ny versjon til gjennomgang', on: true, runs: 12, trigger: 'Ny filmversjon lastes opp', steps: ['E-post til kontaktperson med lenke', 'Påminnelse etter 3 virkedager uten svar'] },
     { id: 'a6', area: 'bedrift', name: 'Timebank nesten brukt', on: true, runs: 3, trigger: 'Under 1 time igjen i måneden', steps: ['E-post til kunde med forslag om påfyll', 'Varsel til Studiovest'] },
     { id: 'a7', area: 'bedrift', name: 'Samtykke fra ansatte', on: true, runs: 19, trigger: 'Person lagt til i opptaksliste', steps: ['Sender samtykkeskjema for bilde og film', 'Påminnelse etter 2 dager', 'Flagger i opptaksliste hvis ikke signert'] },
     { id: 'a8', area: 'skole', name: 'Informasjon og samtykke før fotodag', on: true, runs: 2, trigger: '14 dager før fotodag', steps: ['E-post til foresatte via skolens liste', 'Samtykke: portrett / kun gruppebilde / nei', 'Påminnelse til de som ikke har svart, 7 dager før'] },
-    { id: 'a9', area: 'skole', name: 'Bestilling åpner', on: true, runs: 3, trigger: '3 virkedager etter fotodag', steps: ['E-post og SMS med personlig kode', 'Søsken samles i én bestilling'] },
+    { id: 'a9', area: 'skole', name: 'Bestilling åpner', on: true, runs: 3, trigger: '3 virkedager etter fotodag', steps: ['E-post med personlig kode', 'Søsken samles i én bestilling'] },
     { id: 'a10', area: 'skole', name: 'Påminnelse før frist', on: true, runs: 3, trigger: '3 dager før bestillingen stenger', steps: ['Bare til de som ikke har bestilt', 'Hopper over de som har reservert seg mot påminnelser'] },
     { id: 'a11', area: 'skole', name: 'Automatisk sletting', on: true, runs: 1, trigger: '24 mnd etter fotodag', steps: ['Varsler skolen 30 dager før', 'Sletter bilder, koder og klasselister', 'Lager slettebekreftelse til skolen'] },
     { id: 'a12', area: 'mark', name: 'Innlegg til godkjenning', on: true, runs: 22, trigger: 'Innlegg settes til «Til godkjenning»', steps: ['E-post til kunde med forhåndsvisning', 'Planlegger publisering når godkjent'] },
@@ -240,7 +240,7 @@
 
   var templates = [
     { id: 't1', area: 'bolig', name: 'Bekreftelse til megler', subject: 'Bestilling mottatt: {{adresse}}', body: 'Hei {{megler.fornavn}},\n\nTakk for bestillingen av {{tjenester}} i {{adresse}}. Vi tar kontakt med {{selger.navn}} i dag og avtaler tid.\n\nDu følger oppdraget her: {{lenke}}\n\nHilsen\nStudiovest' },
-    { id: 't2', area: 'bolig', name: 'SMS til selger: klargjøring', subject: 'SMS', body: 'Hei {{selger.fornavn}}! Studiovest kommer {{dato}} kl. {{tid}} for å fotografere boligen. Tips: rydd benker, skru på alle lys, åpne gardiner. Spørsmål? Svar på denne SMS-en.' },
+    { id: 't2', area: 'bolig', name: 'Klargjøring til selger', subject: 'Fotografering {{dato}} kl. {{tid}}: slik gjør du boligen klar', body: 'Hei {{selger.fornavn}},\n\nStudiovest kommer {{dato}} kl. {{tid}} for å fotografere boligen. Tips: rydd benker, skru på alle lys og åpne gardiner.\n\nAlt om oppdraget finner du her: {{lenke}}\n\nSpørsmål? Svar på denne e-posten.' },
     { id: 't3', area: 'bolig', name: 'Levering til megler', subject: 'Bildene er klare: {{adresse}}', body: 'Hei {{megler.fornavn}},\n\nBildene fra {{adresse}} er klare i Finn-, trykk- og SoMe-format. Plantegning og video ligger i samme mappe.\n\n{{lenke}}\n\nHusk kreditering: «Foto: Studiovest».' },
     { id: 't4', area: 'skole', name: 'Bestilling åpner', subject: 'Skolebildene av {{barn.fornavn}} er klare', body: 'Hei,\n\nBildene fra fotodagen på {{skole}} er klare. Bruk koden {{kode}} på lenken under. Du velger bare det du vil ha – ingen faste pakker.\n\n{{lenke}}\n\nBestillingen stenger {{frist}}.' },
     { id: 't5', area: 'skole', name: 'Samtykke før fotodag', subject: 'Fotodag på {{skole}} {{dato}}: ditt valg', body: 'Hei,\n\n{{dato}} er det fotodag. Velg om {{barn.fornavn}} skal være med på portrett og gruppebilde, bare gruppebilde, eller ikke fotograferes. Det tar ett minutt:\n\n{{lenke}}\n\nVi deler ikke bildene med noen andre enn dere og skolen.' },
@@ -249,7 +249,7 @@
 
   var outbox = [
     { t: '10:42', to: 'kari.lunde@fjordmegling.example', subj: 'Bestilling mottatt: Ølve terrasse 12', area: 'bolig', st: 'Åpnet' },
-    { t: '10:41', to: '+47 480 12 776', subj: 'SMS: forslag til tid, Ølve terrasse 12', area: 'bolig', st: 'Levert' },
+    { t: '10:41', to: 'stine.nygard@epost.example', subj: 'Fotografering avtalt: Ølve terrasse 12', area: 'bolig', st: 'Åpnet' },
     { t: '09:15', to: '312 foresatte · Fjordtun skule', subj: 'Påminnelse: 9 dager igjen', area: 'skole', st: '71 % åpnet' },
     { t: '08:30', to: 'marte@vestkraft.example', subj: 'Ny versjon klar: Rekrutteringsfilm v2', area: 'bedrift', st: 'Klikket' },
     { t: 'I går', to: 'eirik.saether@kystmegleren.example', subj: 'Bildene er klare: Fjellsætervegen 22', area: 'bolig', st: 'Planlagt' },

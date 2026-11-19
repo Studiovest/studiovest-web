@@ -155,7 +155,7 @@
     var rev = Math.round(total(j) * (j.office === 'fjm' ? .92 : j.office === 'sue' ? .95 : 1)), costSum = kmKr + ferry + ed, margin = rev - costSum;
     return '<div class="card"><div class="card-h"><h3>Lønnsomhet</h3><span class="small muted">estimat</span></div><div class="card-b"><dl class="kv"><dt>Inntekt</dt><dd class="num">' + SV.kr(rev) + '</dd><dt>Kjøring</dt><dd class="num">' + km + ' km · ' + SV.kr(kmKr) + '</dd><dt>Ferje</dt><dd class="num">' + (ferry ? SV.kr(ferry) : '–') + '</dd><dt>Redigering</dt><dd class="num">' + SV.kr(ed) + '</dd><dt>Tid brukt</dt><dd class="num">' + hrs.toFixed(1).replace('.', ',') + ' t</dd><dt>Dekning</dt><dd class="num"><b>' + SV.kr(margin) + '</b> · ' + SV.kr(margin / hrs) + '/t</dd></dl><p class="hint">Km og ferje føres fra fotograf-appen. Satser kan endres.</p></div></div>';
   }
-  SV.on('review', function (el) { el.outerHTML = SV.chip('Omtale bedt om', 'ok'); SV.toast('SMS med lenke til Google-omtale sendt til megler'); });
+  SV.on('review', function (el) { el.outerHTML = SV.chip('Omtale bedt om', 'ok'); SV.toast('E-post med lenke til Google-omtale sendt til megler'); });
 
   // ---------- råfiler og utvalg ----------
   function rawCount(j) { return j.services.indexOf('f40') > -1 ? 64 : j.services.indexOf('f30') > -1 ? 48 : 36; }
@@ -313,7 +313,7 @@
     var j = job(el.getAttribute('data-id')), url = 'portal.studiovest.no/d/' + j.id.toLowerCase() + '-7k2q';
     SV.modal('<h2 class="h2"><span class="serif">Del ' + esc(j.addr) + '</span></h2><p class="small muted">Mottakeren ser bare dette oppdraget, ikke resten av portalen.</p><div class="stack" style="margin-top:14px">' +
       [['Selger', 'Ser status og bildene når de er klare. Kan ikke laste ned trykkfiler.', true], ['Boligstylist', 'Ser tid og adresse, og kan legge inn notat til fotografen.', false], ['Kollega på kontoret', 'Full tilgang til nedlasting.', false]].map(function (x, i) { return '<label class="opt radio"><input type="radio" name="sh"' + (x[2] ? ' checked' : '') + '><b>' + x[0] + '</b><small>' + x[1] + '</small></label>'; }).join('') +
-      '</div><div class="row" style="margin-top:14px;flex-wrap:nowrap"><input class="inp" readonly value="' + url + '" aria-label="Lenke"><button class="btn btn-dark" data-act="copyLink">Kopier</button></div><p class="hint">Eller send på SMS: skriv mobilnummer under.</p><div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" placeholder="Mobilnummer" inputmode="tel"><button class="btn btn-ghost" data-act="copyLink">Send</button></div>');
+      '</div><div class="row" style="margin-top:14px;flex-wrap:nowrap"><input class="inp" readonly value="' + url + '" aria-label="Lenke"><button class="btn btn-dark" data-act="copyLink">Kopier</button></div><p class="hint">Eller send på e-post: skriv adressen under.</p><div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" type="email" placeholder="E-postadresse"><button class="btn btn-ghost" data-act="copyLink">Send</button></div>');
   });
   SV.on('copyLink', function () { SV.close(); SV.toast('Lenken er delt'); });
   SV.on('fix', function () {
@@ -336,12 +336,12 @@
   }, { title: 'Fakturaer' });
 
   SV.route('/kunde/megler/innstillinger', 'megler', function () {
-    var p = pkg(), n = (SV.state.megler && SV.state.megler.notif) || { sms_tid: true, sms_klar: true, mail_klar: true, push_klar: false, mail_uke: true };
+    var p = pkg(), n = (SV.state.megler && SV.state.megler.notif) || { mail_tid: true, mail_klar: true, mail_lis: true, mail_uke: true };
     return SV.head({ a: 'Innstillinger', lead: 'Standardpakken brukes i «Bestill som sist». Velg hvordan du vil få beskjed.' }) +
       '<div class="g2"><div class="card pad"><h3 class="h3" style="margin-bottom:12px">Standardpakke</h3><div class="stack" id="pkgSet">' + D.boligServices.filter(function (s) { return s.on && s.id !== 'f20' && s.id !== 'f40'; }).concat([svc('f20'), svc('f40')]).map(function (s) { return '<label class="opt"><input type="checkbox" value="' + s.id + '"' + (p.indexOf(s.id) > -1 ? ' checked' : '') + ' data-change="pkgSave"><b>' + esc(s.name) + '</b><span class="price">' + SV.kr(Math.round(s.price * DISC)) + '</span></label>'; }).join('') + '</div></div>' +
-      '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Varsler</h3><table class="tbl"><thead><tr><th>Når</th><th>SMS</th><th>E-post</th><th>Push</th></tr></thead><tbody>' +
-        [['Selger har valgt tid', 'tid'], ['Bildene er klare', 'klar'], ['Lisens utløper snart', 'lis'], ['Ukesoversikt fredag', 'uke']].map(function (r) { return '<tr><td>' + r[0] + '</td>' + ['sms', 'mail', 'push'].map(function (c) { var k = c + '_' + r[1]; return '<td><label class="sw"><input type="checkbox" data-change="notif" data-k="' + k + '"' + (n[k] ? ' checked' : '') + ' aria-label="' + r[0] + ' ' + c + '"><span></span></label></td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table><p class="hint">Push krever at portalen er lagt til på hjemskjermen.</p></div></div>';
+      '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Varsler</h3><table class="tbl"><thead><tr><th>Når</th><th>E-post</th></tr></thead><tbody>' +
+        [['Tid er avtalt med selger', 'tid'], ['Bildene er klare', 'klar'], ['Lisens utløper snart', 'lis'], ['Ukesoversikt fredag', 'uke']].map(function (r) { return '<tr><td>' + r[0] + '</td>' + ['mail'].map(function (c) { var k = c + '_' + r[1]; return '<td><label class="sw"><input type="checkbox" data-change="notif" data-k="' + k + '"' + (n[k] ? ' checked' : '') + ' aria-label="' + r[0] + ' ' + c + '"><span></span></label></td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table><p class="hint">Alle varsler sendes på e-post.</p></div></div>';
   }, { title: 'Innstillinger' });
   SV.on('pkgSave', function () { SV.state.megler = SV.state.megler || {}; SV.state.megler.pkg = [].slice.call(document.querySelectorAll('#pkgSet input:checked')).map(function (x) { return x.value; }); SV.save(); SV.toast('Standardpakken er lagret'); });
-  SV.on('notif', function (el) { SV.state.megler = SV.state.megler || {}; var n = SV.state.megler.notif = SV.state.megler.notif || { sms_tid: true, sms_klar: true, mail_klar: true, mail_uke: true }; n[el.getAttribute('data-k')] = el.checked; SV.save(); SV.toast('Lagret'); });
+  SV.on('notif', function (el) { SV.state.megler = SV.state.megler || {}; var n = SV.state.megler.notif = SV.state.megler.notif || { mail_tid: true, mail_klar: true, mail_lis: true, mail_uke: true }; n[el.getAttribute('data-k')] = el.checked; SV.save(); SV.toast('Lagret'); });
 })();

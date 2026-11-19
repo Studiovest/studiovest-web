@@ -42,7 +42,7 @@
     return brand('for ' + o.name) +
       '<div class="bhead"><h1>Hei ' + esc(first) + '! Vi skal fotografere ' + esc(j.addr) + '.</h1><p>Her finner du tiden vi har avtalt, hva ' + esc(j.broker) + ' har bestilt, og hvordan du gjør boligen klar.</p></div>' + stepper +
       info +
-      (drone ? '<div class="callout" style="margin-top:16px">' + ic('wind') + '<span>Dronebilder krever lite vind. Vi sjekker været dagen før og sender SMS hvis dronen må flyttes. Resten tas som avtalt.</span></div>' : '') +
+      (drone ? '<div class="callout" style="margin-top:16px">' + ic('wind') + '<span>Dronebilder krever lite vind. Vi sjekker været dagen før og sender e-post hvis dronen må flyttes. Resten tas som avtalt.</span></div>' : '') +
       prep + after;
   }, { title: 'Fotografering' });
   SV.on('sellerPick', function (el) { var v = (document.querySelector('input[name=t]:checked') || {}).value; if (!v) return; SV.state.sellerTime = SV.state.sellerTime || {}; SV.state.sellerTime[el.getAttribute('data-id')] = v.split(' '); SV.save(); SV.setStage(SV.find(SV.jobs(), el.getAttribute('data-id')), 'Fotografering avtalt', { quiet: true }); SV.toast('Tiden er bekreftet · megler og fotograf er varslet'); });
@@ -77,7 +77,7 @@
     var s = D.schoolDays[1], c = (SV.state.preConsent || null);
     if (c) {
       return '<div style="max-width:560px;margin:0 auto"><p class="eyebrow">Sjøbakken barnehage · fotodag ' + SV.fdate(s.date) + '</p>' +
-        '<div class="bhead"><h1>Takk! Valgene for Selma er lagret.</h1><p>Fotografen ser valgene dine på fotodagen. Du får SMS når bildene er klare, ca. tre dager etter.</p></div>' +
+        '<div class="bhead"><h1>Takk! Valgene for Selma er lagret.</h1><p>Fotografen ser valgene dine på fotodagen. Du får e-post når bildene er klare, ca. tre dager etter.</p></div>' +
         '<div class="card pad" style="margin-top:16px"><dl class="kv"><dt>Fotografering</dt><dd>' + esc(c.consent) + '</dd><dt>Søskenbilde</dt><dd>' + (c.sib ? 'Ja, med Johannes (Bjørnehiet)' : 'Nei') + '</dd><dt>Vennebilde</dt><dd>' + (c.friend ? 'Med ' + esc(c.friend) + ' · venter på svar fra deres foresatte' : 'Nei') + '</dd><dt>Bakgrunn</dt><dd>' + esc(c.bg) + '</dd></dl></div>' +
         SV.skx.preDone() + '<button class="btn btn-ghost" style="margin-top:14px" data-act="preEdit">Endre</button></div>';
     }
