@@ -20,7 +20,7 @@
   SV.postInfo = function (j) { return SV.stageOf(j) === 'Utsatt' ? S.postponed[j.id] || { reason: 'Utsatt' } : null; };
   function svc(id) { return SV.find(D.boligServices, id); }
   function office(id) { return SV.find(D.offices, id); }
-  function total(j) { return SV.svcTotal(j); }
+  function total(j) { return SV.jobTotal ? SV.jobTotal(j) : SV.svcTotal(j); }
   function slug(s) { return s.toLowerCase().replace(/æ/g, 'ae').replace(/ø/g, 'o').replace(/å/g, 'a').replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, ''); }
   var DOMAIN = { fjm: 'fjordmegling.example', kmh: 'kystmegleren.example', sue: 'sunnhordland-eiendom.example', hbm: 'hardangerbolig.example' };
   function brokerMail(j) { return slug(j.broker) + '@' + (DOMAIN[j.office] || 'megler.example'); }

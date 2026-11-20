@@ -1125,3 +1125,4 @@ details[open].card summary::after{content:" −"}
   .sl-bar-r{width:100%;justify-content:space-between}
 }
 @media (max-width:760px){.sl-tbl td:has(> .sl-none:only-child){display:none!important}}
+.drive-zones{display:flex;flex-wrap:wrap;gap:6px}.drive-zones .chip{cursor:default}

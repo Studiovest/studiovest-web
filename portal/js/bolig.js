@@ -29,7 +29,29 @@
       (s.unit ? '<span class="qty"><input class="inp" type="number" min="1" max="60" value="1" name="q_' + s.id + '" data-change="' + change + '" data-input="' + change + '" aria-label="Antall bilder, ' + esc(s.name) + '"> bilder</span>' : '') + '</label>';
   };
   SV.formQty = function (f, sel) { var q = {}; sel.forEach(function (id) { var v = svc(id), el = f.querySelector('[name=q_' + id + ']'); if (v.unit && el) q[id] = Math.max(1, Math.min(60, parseInt(el.value, 10) || 1)); }); return q; };
-  function total(j) { return SV.svcTotal(j); }
+  // ---------- kjøresats ----------
+  // Steder med kommune og ca. km én vei fra Halsnøy. I den ekte portalen regnes km med en ruteplanlegger (kjørerute fra Halsnøy).
+  SV.PLACES = {
+    'Halsnøy': ['Kvinnherad', 8], 'Sæbøvik': ['Kvinnherad', 10], 'Husnes': ['Kvinnherad', 32], 'Sunde': ['Kvinnherad', 28], 'Valen': ['Kvinnherad', 22], 'Høylandsbygd': ['Kvinnherad', 40], 'Uskedalen': ['Kvinnherad', 44], 'Herøysund': ['Kvinnherad', 50], 'Rosendal': ['Kvinnherad', 64], 'Seimsfoss': ['Kvinnherad', 60], 'Ølve': ['Kvinnherad', 52], 'Fjelberg': ['Kvinnherad', 30], 'Varaldsøy': ['Kvinnherad', 80], 'Kvinnherad': ['Kvinnherad', 40],
+    'Leirvik': ['Stord', 78], 'Stord': ['Stord', 80], 'Sagvåg': ['Stord', 88], 'Fitjar': ['Fitjar', 96], 'Svortland': ['Bømlo', 112], 'Bremnes': ['Bømlo', 120], 'Bømlo': ['Bømlo', 118], 'Haugesund': ['Haugesund', 140],
+    'Sveio': ['Sveio', 130], 'Tysnes': ['Tysnes', 70], 'Uggdal': ['Tysnes', 72], 'Etne': ['Etne', 75], 'Skånevik': ['Etne', 45], 'Odda': ['Ullensvang', 105], 'Kinsarvik': ['Ullensvang', 120], 'Lofthus': ['Ullensvang', 110], 'Ullensvang': ['Ullensvang', 110], 'Jondal': ['Kvam', 80], 'Norheimsund': ['Kvam', 95], 'Os': ['Bjørnafjorden', 110], 'Bergen': ['Bergen', 140]
+  };
+  SV.driveCfg = function () { var c = SV.state.driveCfg; if (!c) c = SV.state.driveCfg = { rate: 8, rt: true, base: 'Halsnøy', free: ['Bømlo', 'Stord', 'Fitjar', 'Kvinnherad', 'Haugesund'], charged: ['Ølve', 'Fjelberg'] }; return c; };
+  SV.place = function (town) { var t = String(town || '').trim().toLowerCase(); if (!t) return null; var k = Object.keys(SV.PLACES).filter(function (x) { return x.toLowerCase() === t; })[0]; return k ? { name: k, kommune: SV.PLACES[k][0], km: SV.PLACES[k][1] } : null; };
+  // Kjøring for et oppdrag: { charged, km, trips, kr, place, why, known }
+  SV.driveFor = function (town, o) {
+    o = o || {}; var c = SV.driveCfg(), p = SV.place(town), low = function (a) { return a.map(function (x) { return x.toLowerCase(); }); };
+    var t = String(town || '').trim().toLowerCase(), free = low(c.free), ex = low(c.charged);
+    var exc = ex.indexOf(t) > -1, inFree = p ? free.indexOf(p.kommune.toLowerCase()) > -1 || free.indexOf(t) > -1 : free.indexOf(t) > -1;
+    var auto = exc || (!!p && !inFree), charged = o.mode === 'ja' ? true : o.mode === 'nei' ? false : auto;
+    var km = o.km != null && o.km !== '' ? +o.km : p ? p.km : 0, trips = c.rt ? 2 : 1, kr = charged ? Math.round(km * trips * c.rate) : 0;
+    var why = o.mode === 'nei' ? 'Kjøring frafalt' : o.mode === 'ja' ? 'Kjøring lagt til' : exc ? esc(town) + ' har kjøresats' : p ? (inFree ? esc(p.name) + ' er innenfor sonen (' + esc(p.kommune) + ')' : esc(p.name) + ' (' + esc(p.kommune) + ') er utenfor sonen') : t ? 'Ukjent sted: sett km' : 'Ingen sted ennå';
+    return { charged: charged, km: km, trips: trips, kr: kr, rate: c.rate, place: p, why: why, known: !!p || exc, auto: auto };
+  };
+  SV.drive = function (j) { return SV.driveFor(j.town, (SV.state.drive || {})[j.id]); };
+  SV.driveLine = function (d) { return d.trips + ' × ' + SV.num(d.km) + ' km × ' + d.rate + ' kr'; };
+  SV.jobTotal = function (j) { return SV.svcTotal(j) + SV.drive(j).kr; };
+  function total(j) { return SV.jobTotal(j); }
   var POS = ['50% 50%', '20% 50%', '80% 40%', '50% 80%', '35% 30%', '65% 60%', '10% 60%', '90% 50%'];
   function photos(j) {
     var srcs = j.type === 'Fritidsbolig' || j.type === 'Gårdsbruk' ? [D.img.hytte, D.img.stue, D.img.kjokken, D.img.loft, D.img.tomanns] : j.type === 'Leilighet' ? [D.img.stue, D.img.kjokken, D.img.loft, D.img.stue, D.img.tomanns] : [D.img.tomanns, D.img.stue, D.img.kjokken, D.img.loft, D.img.hytte];
@@ -66,7 +88,7 @@
     }).join('') + '</div>';
     var svcs = '<div class="card tbl-w"><table class="tbl"><thead><tr><th>Tjeneste</th><th class="hide-s">Gruppe</th><th class="r">Pris</th><th class="r">Aktiv</th></tr></thead><tbody>' +
       D.boligServices.map(function (s) { return '<tr><td><b>' + esc(s.name) + '</b><small>' + esc(s.desc) + '</small></td><td class="hide-s">' + s.group + '</td><td class="r num">' + SV.unitPrice(s) + '</td><td class="r"><label class="sw"><input type="checkbox"' + (s.on ? ' checked' : '') + ' aria-label="' + esc(s.name) + '"><span></span></label></td></tr>'; }).join('') +
-      '</tbody></table></div><p class="hint">Priser inkl. mva. Kontoravtaler gir egne priser per kontor.</p>';
+      '</tbody></table></div><p class="hint">Priser inkl. mva. Kontoravtaler gir egne priser per kontor.</p>' + driveSettings();
     var off = '<div class="g2">' + D.offices.map(function (o) { return '<div class="card pad"><p class="eyebrow">' + esc(o.town) + '</p><h3 class="h3" style="font-size:18px">' + esc(o.name) + '</h3><dl class="kv" style="margin-top:12px"><dt>Avtale</dt><dd>' + esc(o.agreement) + '</dd><dt>Faktura</dt><dd>' + esc(o.invoice) + '</dd><dt>Meglere</dt><dd>' + o.brokers.map(esc).join(', ') + '</dd><dt>I år</dt><dd class="num">' + SV.kr(o.ytd) + '</dd></dl></div>'; }).join('') + '</div>';
     SV.after(dnd);
     var act = jobs.filter(function (j) { return SV.stageOf(j) !== 'Godkjent'; }).length, wait = jobs.filter(function (j) { return SV.stageOf(j) === 'Opprettet'; }).length;
@@ -114,7 +136,7 @@
     var j = job(p.id); if (!j) return '<p class="empty">Fant ikke oppdraget.</p>';
     var o = office(j.office), st = SV.stageOf(j), ph = photos(j), lic = license(j), L = SV.stagesFor(j), i = L.indexOf(st);
     var ov = '<div class="g21"><div class="stack">' +
-      '<div class="card"><div class="card-h"><h3>Bestilt</h3><span class="small muted">' + SV.kr(total(j)) + ' inkl. mva</span></div><div class="card-b">' + j.services.map(function (s) { var v = svc(s), n = SV.qtyOf(j, s); return '<div class="li"><span class="li-t"><b>' + esc(v.name) + (v.unit ? ' × ' + n : '') + '</b><small>' + esc(v.desc) + (v.unit ? ' ' + SV.unitPrice(v) + '.' : '') + '</small></span><span class="li-r num">' + SV.kr(v.price * n) + '</span></div>'; }).join('') + '</div></div>' +
+      '<div class="card"><div class="card-h"><h3>Bestilt</h3><span class="small muted">' + SV.kr(total(j)) + ' inkl. mva</span></div><div class="card-b">' + j.services.map(function (s) { var v = svc(s), n = SV.qtyOf(j, s); return '<div class="li"><span class="li-t"><b>' + esc(v.name) + (v.unit ? ' × ' + n : '') + '</b><small>' + esc(v.desc) + (v.unit ? ' ' + SV.unitPrice(v) + '.' : '') + '</small></span><span class="li-r num">' + SV.kr(v.price * n) + '</span></div>'; }).join('') + driveRow(j) + '</div></div>' +
       '<div class="card"><div class="card-h"><h3>Tidslinje</h3></div><div class="card-b"><ul class="feed">' + timeline(j).map(function (t) { return '<li>' + SV.dot('bolig') + '<span>' + t[1] + '</span><time>' + t[0] + '</time></li>'; }).join('') + '</ul></div></div></div>' +
       '<div class="stack">' + SV.crmCard(j) + '<div class="card pad"><dl class="kv"><dt>Oppdragsnr.</dt><dd>' + esc(j.nr) + '</dd><dt>Megler</dt><dd>' + esc(j.broker) + '<br><span class="muted small">' + esc(o.name) + '</span></dd><dt>Selger</dt><dd>' + esc(j.seller) + '<br><span class="muted small">' + esc(j.phone) + '</span></dd><dt>Tilgang</dt><dd>' + esc(j.access) + '</dd><dt>Type</dt><dd>' + esc(j.type) + '</dd><dt>Fotograf</dt><dd>' + esc(SV.find(D.team, j.by).name) + '</dd>' + (j.date ? '<dt>Tid</dt><dd>' + SV.fdate(j.date) + ' kl. ' + j.time + '</dd>' : '') + '</dl></div>' +
       (j.services.indexOf('dr') > -1 ? '<div class="callout">' + ic('wind') + '<span><b>Drone:</b> ' + esc(j.weather || 'Værsjekk dagen før') + '. Over 8 m/s flyttes dronen til ny dag uten kostnad for megler.</span></div>' : '') +
@@ -132,6 +154,37 @@
       SV.tabs('job', [['o', 'Oversikt'], ['r', 'Råfiler og utvalg', i >= 2 ? rawCount(j) : null], ['b', 'Redigerte', ph.length], ['l', 'Leveranse']], 'o') + SV.panels('job', { o: ov, r: i >= 2 ? rawView(j) : '<p class="empty">Råfilene kommer når boligen er fotografert.</p>', b: gal, l: lev }, 'o');
   }, { title: 'Oppdrag' });
 
+  function driveSettings() {
+    var c = SV.driveCfg(), towns = Object.keys(SV.PLACES);
+    return '<div class="card pad sec"><div class="row between"><h3 class="h3">Kjøresats</h3><span class="small muted">Legges automatisk på bolig-oppdrag utenfor sonen</span></div>' +
+      '<form id="drCfg" onsubmit="return false"><div class="g3" style="gap:10px;margin-top:12px"><label class="fld"><span>Sats per km (kr)</span><input class="inp" name="rate" inputmode="decimal" value="' + c.rate + '"></label><label class="fld"><span>Kjører fra</span><input class="inp" name="base" value="' + esc(c.base) + '"></label><label class="fld"><span>Km regnes</span><select class="sel" name="rt"><option value="1"' + (c.rt ? ' selected' : '') + '>Tur-retur</option><option value="0"' + (c.rt ? '' : ' selected') + '>Én vei</option></select></label></div>' +
+      '<label class="fld"><span>Ingen kjøring i (kommuner eller steder, komma mellom)</span><input class="inp" name="free" value="' + esc(c.free.join(', ')) + '"></label>' +
+      '<label class="fld"><span>Unntak som likevel får kjøring</span><input class="inp" name="charged" value="' + esc(c.charged.join(', ')) + '" placeholder="F.eks. Ølve, Fjelberg"></label>' +
+      '<div class="row" style="justify-content:flex-end"><button class="btn btn-dark btn-s" data-act="drCfgSave">Lagre</button></div></form>' +
+      '<p class="eyebrow" style="margin:14px 0 8px">Slik blir det</p><div class="drive-zones">' + towns.map(function (t) { var d = SV.driveFor(t); return '<span class="chip ' + (d.charged ? 'chip-sand' : 'chip-mute') + '" title="' + esc(SV.PLACES[t][0]) + ' · ' + SV.PLACES[t][1] + ' km én vei">' + esc(t) + (d.charged ? ' · ' + SV.kr(d.kr) : '') + '</span>'; }).join('') + '</div>' +
+      '<p class="hint">Km er avstand én vei fra ' + esc(c.base) + '. Kan endres på hvert oppdrag. I den ekte portalen regnes km med kjørerute fra adressen.</p></div>';
+  }
+  SV.on('drCfgSave', function () {
+    var f = document.getElementById('drCfg'), c = SV.driveCfg(), list = function (v) { return v.split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
+    c.rate = +String(f.rate.value).replace(',', '.') || 0; c.base = f.base.value.trim() || 'Halsnøy'; c.rt = f.rt.value === '1'; c.free = list(f.free.value); c.charged = list(f.charged.value);
+    SV.save(); SV.render(); SV.toast('Kjøresats lagret');
+  });
+  function driveRow(j) {
+    var d = SV.drive(j);
+    return '<div class="li drive-li"><span class="li-t"><b>Kjøring' + (d.charged ? '' : ' <span class="muted" style="font-weight:500">· ingen</span>') + '</b><small>' + d.why + (d.charged ? ' · ' + SV.driveLine(d) : '') + ' <button class="link" data-act="driveEdit" data-id="' + j.id + '">Endre</button></small></span><span class="li-r num">' + (d.charged ? SV.kr(d.kr) : '–') + '</span></div>';
+  }
+  SV.on('driveEdit', function (el) {
+    var j = job(el.getAttribute('data-id')), o = (SV.state.drive || {})[j.id] || {}, d = SV.drive(j), auto = SV.driveFor(j.town);
+    SV.modal('<p class="eyebrow">' + esc(j.addr) + (j.town ? ', ' + esc(j.town) : '') + '</p><h2 class="h2"><span class="serif">Kjøring</span></h2><p class="small muted" style="margin-top:6px">' + auto.why + '. Sats ' + SV.driveCfg().rate + ' kr/km' + (SV.driveCfg().rt ? ', tur-retur' : '') + ' fra ' + esc(SV.driveCfg().base) + '.</p>' +
+      '<form id="drF" onsubmit="return false"><div class="opts" style="margin-top:12px">' + [['', 'Automatisk (' + (auto.charged ? 'ta kjøring' : 'ingen kjøring') + ')'], ['ja', 'Ta kjøring'], ['nei', 'Ikke ta kjøring']].map(function (x) { return '<label class="opt"><input type="radio" name="m" value="' + x[0] + '"' + ((o.mode || '') === x[0] ? ' checked' : '') + '><span><b>' + x[1] + '</b></span></label>'; }).join('') + '</div>' +
+      '<label class="fld" style="margin-top:10px"><span>Km én vei' + (auto.place ? ' (forslag ' + auto.place.km + ' km)' : '') + '</span><input class="inp" name="km" inputmode="numeric" value="' + (o.km != null ? o.km : d.km || '') + '" style="max-width:140px"></label></form>' +
+      '<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn btn-dark" data-act="driveSave" data-id="' + j.id + '">Lagre</button></div>');
+  });
+  SV.on('driveSave', function (el) {
+    var id = el.getAttribute('data-id'), f = document.getElementById('drF'), m = (f.querySelector('[name=m]:checked') || {}).value || '', km = f.km.value.replace(/\D/g, ''), j = job(id), auto = SV.driveFor(j.town);
+    SV.state.drive = SV.state.drive || {}; SV.state.drive[id] = { mode: m, km: km && (!auto.place || +km !== auto.place.km) ? +km : null };
+    SV.save(); SV.close(); SV.render(); var d = SV.drive(job(id)); SV.toast(d.charged ? 'Kjøring: ' + SV.kr(d.kr) : 'Ingen kjøring');
+  });
   function timeline(j) {
     var st = SV.stIdx(j), ap = SV.approval(j), t = [[j.created ? SV.fdate(j.created) : '', 'Opprettet · ' + esc(j.broker) + ', ' + esc(SV.find(D.offices, j.office).name)]];
     if (st >= 1) t.push(['', 'Kunden ' + esc(j.seller) + ' er kontaktet']);
@@ -241,7 +294,7 @@
     SV.after(orderCalc);
     return SV.head({ eyebrow: 'Fjordmegling Stord · priser inkl. mva', a: 'Bestill fotografering', lead: 'Ingen felt er påkrevd: fyll inn det du har, så tar vi resten. Standardpakken din er valgt på forhånd. Studiovest avtaler tid med selgeren etter at du har bestilt.' }) +
       '<form id="order" class="g21" onsubmit="return false"><div class="stack">' +
-        '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Boligen</h3><div class="g2"><label class="fld sugg"><span>Adresse</span><input class="inp" name="addr" required autocomplete="off" placeholder="Begynn å skrive …" data-input="addrSugg" data-target="o"><span class="sugg-list" id="sugg-o"></span></label><label class="fld"><span>Sted</span><input class="inp" name="town"></label><label class="fld"><span>Oppdragsnummer</span><input class="inp" name="nr"></label><label class="fld"><span>Boligtype</span><select class="sel" name="type"><option>Enebolig</option><option selected>Leilighet</option><option>Rekkehus</option><option>Fritidsbolig</option><option>Gårdsbruk</option><option>Næring</option></select></label></div></div>' +
+        '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Boligen</h3><div class="g2"><label class="fld sugg"><span>Adresse</span><input class="inp" name="addr" required autocomplete="off" placeholder="Begynn å skrive …" data-input="addrSugg" data-target="o"><span class="sugg-list" id="sugg-o"></span></label><label class="fld"><span>Sted</span><input class="inp" name="town" data-input="orderCalc" list="svPlaces"><datalist id="svPlaces">' + Object.keys(SV.PLACES).map(function (p) { return '<option value="' + p + '">'; }).join('') + '</datalist></label><label class="fld"><span>Oppdragsnummer</span><input class="inp" name="nr"></label><label class="fld"><span>Boligtype</span><select class="sel" name="type"><option>Enebolig</option><option selected>Leilighet</option><option>Rekkehus</option><option>Fritidsbolig</option><option>Gårdsbruk</option><option>Næring</option></select></label></div></div>' +
         '<div class="card pad"><div class="row between" style="margin-bottom:4px"><h3 class="h3">Tjenester</h3><button type="button" class="link small" data-act="usePkg">Bruk standardpakken</button></div>' + Object.keys(groups).map(function (g) { return '<p class="eyebrow" style="margin:14px 0 8px">' + g + '</p><div class="opts">' + groups[g].map(function (s) { return SV.svcOpt(s, 's', p.indexOf(s.id) > -1, DISC, 'orderCalc', true); }).join('') + '</div>'; }).join('') + '</div>' +
         '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Selger og tilgang</h3><div class="g2"><label class="fld"><span>Selgers navn</span><input class="inp" name="seller" placeholder="Navn"></label><label class="fld"><span>Mobil</span><input class="inp" name="phone" inputmode="tel" placeholder="8 siffer"></label><label class="fld"><span>Tilgang</span><select class="sel" name="access"><option>Selger hjemme</option><option>Nøkkel hos megler</option><option>Nøkkelboks</option></select></label><label class="fld"><span>Notat til fotografen</span><input class="inp" name="note" placeholder="F.eks. katt i huset, parkering bak"></label></div></div>' +
       '</div><aside><div class="card pad" style="position:sticky;top:60px"><h3 class="h3">Oppsummering</h3><div id="sum"></div><button class="btn btn-acc" style="width:100%;margin-top:16px" data-act="orderSend">' + ic('check') + 'Send bestilling</button><p class="hint" style="text-align:center">Bekreftelse på e-post med en gang.</p></div></aside></form>';
@@ -254,8 +307,9 @@
   function orderCalc() {
     var v = orderVals(); if (!v) return;
     var sum = 0, rows = v.sel.map(function (id) { var s = svc(id), n = v.qty[id] || 1, p = Math.round(s.price * DISC) * n; sum += p; return '<div class="li" style="padding:7px 0"><span class="li-t small">' + esc(s.name) + (s.unit ? ' × ' + n : '') + '</span><span class="li-r num small">' + SV.kr(p) + '</span></div>'; }).join('');
+    var dr = SV.driveFor(v.f.town.value); if (dr.charged) { sum += dr.kr; rows += '<div class="li" style="padding:7px 0"><span class="li-t small">Kjøring<small>' + SV.driveLine(dr) + '</small></span><span class="li-r num small">' + SV.kr(dr.kr) + '</span></div>'; }
     document.getElementById('sum').innerHTML = '<p style="font-weight:700;margin:8px 0 4px">' + esc(v.f.addr.value || 'Ny bolig') + '</p>' + rows +
-      '<div class="row between" style="margin-top:10px"><span>Inkl. mva</span><b class="num" style="font-size:20px">' + SV.kr(sum) + '</b></div><div class="row between small muted"><span>Eks. mva</span><span class="num">' + SV.kr(Math.round(sum / 1.25)) + '</span></div><p class="hint">Studiovest avtaler tid med selger · samlefaktura til kontoret</p>';
+      '<div class="row between" style="margin-top:10px"><span>Inkl. mva</span><b class="num" style="font-size:20px">' + SV.kr(sum) + '</b></div><div class="row between small muted"><span>Eks. mva</span><span class="num">' + SV.kr(Math.round(sum / 1.25)) + '</span></div><p class="hint">' + (dr.charged ? 'Kjøresats ' + dr.rate + ' kr/km utenfor ' + esc(SV.driveCfg().free.join(', ')) + '. ' : '') + 'Studiovest avtaler tid med selger · samlefaktura til kontoret</p>';
   }
   SV.on('orderCalc', orderCalc);
   SV.on('usePkg', function () { var p = pkg(); document.querySelectorAll('#order input[name=foto],#order input[name=s]').forEach(function (x) { x.checked = p.indexOf(x.value) > -1; }); orderCalc(); });
@@ -275,7 +329,7 @@
         actions: '<button class="btn btn-ghost btn-s" data-act="share" data-id="' + j.id + '">' + ic('link') + 'Del</button>' + (done ? '<span class="split-btn"><button class="btn btn-acc" data-act="finn" data-id="' + j.id + '">' + ic('down') + 'Last ned til Finn</button><button class="btn btn-acc" data-act="dl" aria-label="Andre formater">' + ic('chev', 'rot90') + '</button></span>' : '') }) +
       '<div class="card pad" style="margin-bottom:22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap"><span class="srow" style="margin:0;font-weight:650">' + sl[0] + sl[1] + '</span><span style="margin-left:auto">' + prog(j) + '</span></div>';
     if (!done) {
-      return head + '<div class="g2"><div class="card pad"><h3 class="h3">Detaljer</h3><dl class="kv" style="margin-top:12px"><dt>Selger</dt><dd>' + esc(j.seller) + '</dd><dt>Tilgang</dt><dd>' + esc(j.access) + '</dd><dt>Bestilt</dt><dd>' + SV.svcShort(j) + '</dd><dt>Pris</dt><dd>' + SV.kr(Math.round(total(j) * DISC)) + ' inkl. mva · ' + SV.kr(Math.round(total(j) * DISC / 1.25)) + ' eks.</dd></dl>' +
+      return head + '<div class="g2"><div class="card pad"><h3 class="h3">Detaljer</h3><dl class="kv" style="margin-top:12px"><dt>Selger</dt><dd>' + esc(j.seller) + '</dd><dt>Tilgang</dt><dd>' + esc(j.access) + '</dd><dt>Bestilt</dt><dd>' + SV.svcShort(j) + '</dd>' + (SV.drive(j).charged ? '<dt>Kjøring</dt><dd>' + SV.kr(SV.drive(j).kr) + '<br><span class="small muted">' + SV.driveLine(SV.drive(j)) + '</span></dd>' : '') + '<dt>Pris</dt><dd>' + SV.kr(Math.round(total(j) * DISC)) + ' inkl. mva · ' + SV.kr(Math.round(total(j) * DISC / 1.25)) + ' eks.</dd></dl>' +
         '<a class="btn btn-ghost btn-s" style="margin-top:14px" href="#/selger/' + j.id + '">' + ic('eye') + 'Se kundens side</a>' + '</div>' +
         '<div class="card pad"><h3 class="h3">Legg til</h3><p class="small muted" style="margin:6px 0 12px">Fram til fotograferingen.</p><div class="opts">' + ['ut', 'to', 'vm', 'kv'].filter(function (s) { return j.services.indexOf(s) < 0; }).map(function (s) { var v = svc(s); return '<label class="opt"><input type="checkbox" data-change="addSvc" value="' + s + '"><b>' + esc(v.name) + '</b><span class="price">' + SV.unitPrice(v, DISC) + '</span></label>'; }).join('') + '</div>' +
         '<button class="link small" style="margin-top:14px" data-act="dummy">Avlys eller flytt</button></div></div>';
@@ -330,7 +384,7 @@
   SV.planSvg = planSvg;
 
   SV.route('/kunde/megler/priser', 'megler', function () {
-    return SV.head({ eyebrow: 'Fjordmegling Stord', a: 'Priser', lead: 'Alle priser er inkl. mva.' }) +
+    return SV.head({ eyebrow: 'Fjordmegling Stord', a: 'Priser', lead: 'Alle priser er inkl. mva. Utenfor ' + esc(SV.driveCfg().free.join(', ')) + ' kommer kjøring i tillegg: ' + SV.driveCfg().rate + ' kr/km' + (SV.driveCfg().rt ? ' tur-retur' : '') + (SV.driveCfg().charged.length ? ' (også ' + esc(SV.driveCfg().charged.join(', ')) + ')' : '') + '.' }) +
       '<div class="card tbl-w"><table class="tbl"><thead><tr><th>Tjeneste</th><th class="r hide-s">Listepris</th><th class="r">Din pris inkl. mva</th><th class="r hide-s">Eks. mva</th></tr></thead><tbody>' + D.boligServices.filter(function (s) { return s.on; }).map(function (s) { var p = Math.round(s.price * DISC); return '<tr><td><b>' + esc(s.name) + '</b><small>' + esc(s.desc) + '</small></td><td class="r num muted hide-s">' + SV.kr(s.price) + '</td><td class="r num"><b>' + SV.kr(p) + '</b></td><td class="r num hide-s">' + SV.kr(Math.round(p / 1.25)) + '</td></tr>'; }).join('') + '</tbody></table></div>';
   }, { title: 'Priser' });
   SV.route('/kunde/megler/faktura', 'megler', function () {
