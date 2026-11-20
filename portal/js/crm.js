@@ -112,6 +112,7 @@
       var pi = SV.postInfo(j); if (pi) tm = '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Ny tid</button><small>' + esc(pi.reason) + (pi.follow ? ' · følg opp ' + SV.fdate(pi.follow) : '') + '</small>';
       else if (i >= 2 && i < 3) tm += '<small><button class="link" data-act="crmPost" data-id="' + j.id + '">Utsett</button></small>';
       if (SV.hasOut(j)) tm += '<small>' + (j.date2 ? '<button class="link" data-act="crmTime" data-id="' + j.id + '" style="white-space:nowrap">Ute: ' + SV.fdate(j.date2) + ' kl. ' + j.time2 + '</button>' : 'Ute: <button class="link" data-act="crmTime" data-id="' + j.id + '">sett tid</button>') + '</small>';
+      if (i < 4 && (SV.eta(j) || i >= 2)) tm += '<small><button class="link" data-act="crmEta" data-id="' + j.id + '" style="white-space:nowrap">' + (SV.eta(j) ? 'Levering: ' + SV.fdate(SV.eta(j).d) + (SV.eta(j).t ? ' kl. ' + SV.eta(j).t : '') : '+ forventet levering') + '</button></small>';
       return '<tr><td><a href="#/bolig/' + j.id + '"><b>' + esc(j.addr) + '</b></a><small>' + esc(j.town) + ' · ' + esc(j.type) + ' · ' + esc(j.nr) + '</small></td>' +
         '<td class="hide-s">' + esc(j.broker) + '<small>' + esc(o ? o.name : '') + '</small></td>' +
         '<td class="hide-s">' + esc(j.seller) + '<small>' + (j.email ? esc(j.email) : '<button class="link" data-act="crmEdit" data-id="' + j.id + '">Legg til e-post</button>') + '</small></td>' +
@@ -299,12 +300,27 @@
   });
 
   // ---------- CRM-kort på prosjektsiden (bare studio) ----------
+  SV.on('crmEta', function (el) {
+    var j = SV.find(SV.jobs(), el.getAttribute('data-id')), e = SV.eta(j) || {}, base = j.date && SV.diff(j.date) >= 0 ? j.date : D.iso(D.today);
+    var add = function (n) { var d = SV.parse(base); d.setDate(d.getDate() + n); while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1); return D.iso(d); };
+    SV.modal('<p class="eyebrow">' + esc(j.addr) + '</p><h2 class="h2"><span class="serif">Forventet levering</span></h2><p class="small muted" style="margin-top:6px">Valgfritt. Vises for megler og kunde i portalen til bildene er levert.</p>' +
+      '<form id="etaF" onsubmit="return false"><div class="g2" style="gap:10px;margin-top:14px"><label class="fld"><span>Dato</span><input class="inp" type="date" name="d" value="' + (e.d || '') + '"></label><label class="fld"><span>Klokkeslett (valgfritt)</span><input class="inp" type="time" name="t" value="' + (e.t || '') + '" step="900"></label></div>' +
+      '<div class="row" style="gap:6px;margin-top:4px">' + [[1, 'Dagen etter'], [2, '2 virkedager'], [3, '3 virkedager']].map(function (x) { return '<button type="button" class="fbtn" data-act="etaQ" data-d="' + add(x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div></form>' +
+      '<div class="row between" style="margin-top:16px">' + (SV.eta(j) ? '<button class="link small" data-act="etaSave" data-id="' + j.id + '" data-clear="1">Fjern</button>' : '<span></span>') + '<button class="btn btn-dark" data-act="etaSave" data-id="' + j.id + '">Lagre</button></div>');
+  });
+  SV.on('etaQ', function (el) { document.getElementById('etaF').d.value = el.getAttribute('data-d'); });
+  SV.on('etaSave', function (el) {
+    var id = el.getAttribute('data-id'), f = document.getElementById('etaF'); S.eta = S.eta || {};
+    if (el.getAttribute('data-clear')) S.eta[id] = null; else { if (!f.d.value) { SV.toast('Velg en dato, eller trykk Fjern', 'warn'); return; } S.eta[id] = { d: f.d.value, t: f.t.value || '' }; }
+    SV.save(); SV.close(); SV.render(); SV.toast(S.eta[id] ? 'Forventet levering: ' + SV.fdate(S.eta[id].d, true) + (S.eta[id].t ? ' kl. ' + S.eta[id].t : '') : 'Forventet levering fjernet');
+  });
   SV.crmCard = function (j) {
     var i = SV.stIdx(j), inv = S.inv[j.id] || {}, ap = SV.approval(j), log = S.mailLog.filter(function (m) { return m.id === j.id; });
     return '<div class="card"><div class="card-h"><h3>Status og kunde</h3>' + SV.chip(SV.stageOf(j)) + '</div><div class="card-b">' +
       '<label class="fld"><span>Status</span><select class="sel crm-st crm-' + i + '" data-change="crmStage" data-id="' + j.id + '">' + SV.stagesFor(j).map(function (s) { return '<option' + (s === SV.stageOf(j) ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></label>' +
       '<dl class="kv" style="margin-top:6px">' + (SV.postInfo(j) ? '<dt>Utsatt</dt><dd>' + esc(SV.postInfo(j).reason) + (SV.postInfo(j).note ? '<br><span class="small muted">' + esc(SV.postInfo(j).note) + '</span>' : '') + (SV.postInfo(j).follow ? '<br><span class="small muted">Følg opp ' + SV.fdate(SV.postInfo(j).follow) + '</span>' : '') + '</dd>' : '') + '<dt>Fotografering</dt><dd>' + (i >= 2 ? SV.fdate(j.date, true) + ' kl. ' + j.time + ' <button class="link small" data-act="crmTime" data-id="' + j.id + '">Endre</button>' + (i < 3 ? ' · <button class="link small" data-act="crmPost" data-id="' + j.id + '">Utsett</button>' : '') : '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Avtal tid</button>') + '</dd>' +
       (SV.hasOut(j) ? '<dt>Utefoto</dt><dd>' + (j.date2 ? SV.outWhen(j) + ' <button class="link small" data-act="crmTime" data-id="' + j.id + '">Endre</button>' : '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Sett tid</button>') + '</dd>' : '') +
+      '<dt>Levering</dt><dd>' + (i >= 4 ? (j.delivered ? 'Levert ' + SV.fdate(j.delivered) : 'Levert') : SV.eta(j) ? SV.fdate(SV.eta(j).d, true) + (SV.eta(j).t ? ' kl. ' + SV.eta(j).t : '') + ' <button class="link small" data-act="crmEta" data-id="' + j.id + '">Endre</button>' : '<button class="btn btn-ghost btn-xs" data-act="crmEta" data-id="' + j.id + '">' + ic('cal') + 'Sett forventet levering</button>') + '</dd>' +
       '<dt>Kunde</dt><dd>' + esc(j.seller) + '<br><span class="small muted">' + (j.email ? esc(j.email) : 'Ingen e-post') + ' · ' + esc(j.phone) + '</span> <button class="link small" data-act="crmEdit" data-id="' + j.id + '">Endre</button></dd>' +
       '<dt>Megler</dt><dd>' + esc(j.broker) + '<br><span class="small muted">' + esc(brokerMail(j)) + '</span></dd>' +
       '<dt>Godkjent</dt><dd>' + (ap ? SV.fdate(ap.d) + ' av ' + esc(ap.by) : i === 4 ? 'Venter på megler eller kunde <button class="btn btn-ghost btn-xs" style="margin-top:6px" data-act="crmApprove" data-id="' + j.id + '" data-by="Studiovest">' + ic('check') + 'Godkjenn selv</button>' : '–') + '</dd></dl>' +

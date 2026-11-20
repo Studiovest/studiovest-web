@@ -9,6 +9,9 @@
     return D.boligJobs.concat(SV.state.newJobs).map(function (j) { var x = t[j.id] ? Object.assign({}, j, { date: t[j.id][0], time: t[j.id][1], wish: '' }) : j; if (e[j.id]) x = Object.assign({}, x, e[j.id]); if (dl[j.id] && !x.delivered) x = Object.assign({}, x, { delivered: dl[j.id] }); if (j.id in o) x = Object.assign({}, x, o[j.id] ? { date2: o[j.id][0], time2: o[j.id][1] } : { date2: null, time2: null }); return x; });
   };
   SV.stageOf = function (j) { return SV.state.stage[j.id] || j.stage; };
+  // Forventet levering: valgfri, settes av studio. { d: 'YYYY-MM-DD', t: 'HH:MM' | '' }
+  SV.eta = function (j) { var e = (SV.state.eta || {})[j.id]; return e === null ? null : e || j.eta || null; };
+  SV.etaTxt = function (j, short) { var e = SV.eta(j); if (!e || SV.stIdx(j) >= 4) return ''; return (short ? 'Levering ' : 'Forventet levering ') + SV.fdate(e.d, true) + (e.t ? ' kl. ' + e.t : ''); };
   // «Ekstra utefotografering» tas på en egen dag/tid
   SV.hasOut = function (j) { return j.services.indexOf('ut') > -1; };
   SV.outWhen = function (j) { return j.date2 ? SV.fdate(j.date2, true) + ' kl. ' + j.time2 : ''; };
@@ -78,7 +81,7 @@
 
   function card(j) {
     var st = SV.stageOf(j), o = office(j.office);
-    var si = SV.stIdx(j), when = SV.postInfo(j) ? '<span>' + SV.chip('Utsatt', 'bad') + ' ' + esc(SV.postInfo(j).reason) + '</span>' : si < 2 ? '<span>' + (j.wish ? 'Ønske: ' + esc(j.wish) : 'Ingen tid ennå') + '</span>' : si >= 4 ? '<span>Levert ' + SV.fdate(j.delivered || j.date) + '</span>' : (st === 'Fotografering avtalt' ? '<span>' + ic('cal') + SV.fdate(j.date) + ' ' + j.time + '</span>' : (j.due ? '<span class="' + (SV.diff(j.due) <= 0 ? 'due' : '') + '">' + ic('clock') + 'Frist ' + SV.rel(j.due) + '</span>' : ''));
+    var si = SV.stIdx(j), when = SV.postInfo(j) ? '<span>' + SV.chip('Utsatt', 'bad') + ' ' + esc(SV.postInfo(j).reason) + '</span>' : si < 2 ? '<span>' + (j.wish ? 'Ønske: ' + esc(j.wish) : 'Ingen tid ennå') + '</span>' : si >= 4 ? '<span>Levert ' + SV.fdate(j.delivered || j.date) + '</span>' : (st === 'Fotografering avtalt' ? '<span>' + ic('cal') + SV.fdate(j.date) + ' ' + j.time + '</span>' : (SV.eta(j) ? '<span class="' + (SV.diff(SV.eta(j).d) <= 0 ? 'due' : '') + '">' + ic('clock') + 'Levering ' + SV.fdate(SV.eta(j).d) + (SV.eta(j).t ? ' ' + SV.eta(j).t : '') + '</span>' : j.due ? '<span class="' + (SV.diff(j.due) <= 0 ? 'due' : '') + '">' + ic('clock') + 'Frist ' + SV.rel(j.due) + '</span>' : ''));
     return '<a class="kb-card" draggable="true" data-id="' + j.id + '" href="#/bolig/' + j.id + '"><div class="kb-img">' + SV.pic(j.cover, '50% 60%') + '</div><div class="kb-b"><b>' + esc(j.addr) + '</b><small>' + esc(j.town) + ' · ' + esc(o.name) + '</small>' + svcTags(j) +
       '<div class="kb-meta">' + when + (st !== 'Godkjent' ? '<button type="button" class="kb-mv" data-act="stageNext" data-id="' + j.id + '" aria-label="Flytt ' + esc(j.addr) + ' til ' + D.stages[D.stages.indexOf(st) + 1] + '">' + D.stages[D.stages.indexOf(st) + 1] + ' →</button>' : '') + '</div></div></a>';
   }
@@ -182,9 +185,10 @@
   function pkgPrice(list) { return list.reduce(function (a, s) { return a + Math.round(svc(s).price * DISC); }, 0); }
   var ADDR = [['Hamnegata 8', 'Leirvik', 'Leilighet', '1126-0436'], ['Hamnegata 12', 'Leirvik', 'Enebolig', '1126-0437'], ['Hamnavegen 3', 'Husnes', 'Rekkehus', '1126-0438'], ['Heiane 14', 'Stord', 'Enebolig', '1126-0439'], ['Havnegata 2B', 'Sagvåg', 'Leilighet', '1126-0440']];
 
-  function statusLine(j) {
+  function statusLine(j) { var r = statusLine0(j), e = SV.etaTxt(j, true); if (e) r = [r[0], r[1] + ' · ' + e]; return r; }
+  function statusLine0(j) {
     var st = SV.stageOf(j), lic = license(j);
-    return st === 'Utsatt' ? [ic('clock'), 'Utsatt · ' + esc((SV.postInfo(j) || {}).reason || '') + ' · ny tid avtales'] : st === 'Opprettet' ? [ic('clock'), 'Registrert · Studiovest kontakter ' + esc(j.seller.split(' ')[0])] : st === 'Kontaktet' ? [ic('chat'), esc(j.seller.split(' ')[0]) + ' er kontaktet · tid avtales'] : st === 'Fotografering avtalt' ? [ic('cal'), 'Fotografering ' + SV.fdate(j.date, true) + ' kl. ' + j.time + (SV.hasOut(j) ? ' · utefoto ' + (j.date2 ? SV.outWhen(j) : 'avtales') : '')] : st === 'Utefotografering avtalt' ? [ic('cal'), 'Fotografert inne · utefoto ' + (SV.outWhen(j) || 'avtales')] : st === 'Utefotografering utført' ? [ic('check'), 'Inne og ute er fotografert · leveres snart'] : st === 'Oppdrag levert' ? [ic('eye'), 'Levert ' + SV.fdate(j.delivered || j.date) + ' · se gjennom og godkjenn'] : st === 'Godkjent' ? [ic('check'), 'Godkjent' + (SV.approval(j) ? ' ' + SV.fdate(SV.approval(j).d) : '') + (lic && !lic.sold ? ' · lisens til ' + SV.fdate(lic.exp) : '')] : [ic('edit'), 'Redigeres · klare ' + (j.due ? SV.rel(j.due) : 'neste virkedag')];
+    return st === 'Utsatt' ? [ic('clock'), 'Utsatt · ' + esc((SV.postInfo(j) || {}).reason || '') + ' · ny tid avtales'] : st === 'Opprettet' ? [ic('clock'), 'Registrert · Studiovest kontakter ' + esc(j.seller.split(' ')[0])] : st === 'Kontaktet' ? [ic('chat'), esc(j.seller.split(' ')[0]) + ' er kontaktet · tid avtales'] : st === 'Fotografering avtalt' ? [ic('cal'), 'Fotografering ' + SV.fdate(j.date, true) + ' kl. ' + j.time + (SV.hasOut(j) ? ' · utefoto ' + (j.date2 ? SV.outWhen(j) : 'avtales') : '')] : st === 'Utefotografering avtalt' ? [ic('cal'), 'Fotografert inne · utefoto ' + (SV.outWhen(j) || 'avtales')] : st === 'Utefotografering utført' ? [ic('check'), 'Inne og ute er fotografert · leveres snart'] : st === 'Oppdrag levert' ? [ic('eye'), 'Levert ' + SV.fdate(j.delivered || j.date) + ' · se gjennom og godkjenn'] : st === 'Godkjent' ? [ic('check'), 'Godkjent' + (SV.approval(j) ? ' ' + SV.fdate(SV.approval(j).d) : '') + (lic && !lic.sold ? ' · lisens til ' + SV.fdate(lic.exp) : '')] : [ic('edit'), SV.eta(j) ? 'Redigeres' : 'Redigeres · klare ' + (j.due ? SV.rel(j.due) : 'neste virkedag')];
   }
   function prog(j) { var cur = SV.stIdx(j); return '<span class="prog5" aria-hidden="true">' + D.stages.map(function (_, i) { return '<i class="' + (i < cur || SV.stageOf(j) === 'Godkjent' ? 'on' : i === cur ? 'now' : '') + '"></i>'; }).join('') + '</span>'; }
   function jrow(j) {

@@ -204,9 +204,37 @@
     var jcard = j ? '<a class="mx-job" href="#/bolig/' + j.id + '">' + ic('house') + '<span><b>' + esc(j.addr) + ', ' + esc(j.town) + '</b><small>' + esc(j.broker) + ' · ' + (SV.stIdx(j) >= 2 && SV.stIdx(j) < 4 && j.date ? SV.fdate(j.date) + ' kl. ' + j.time + ' · ' : '') + '</small></span>' + SV.chip(SV.stageOf(j)) + '</a>' :
       (t.auto ? '' : '<div class="mx-job none"><button class="btn btn-acc btn-xs" data-act="mxOrder" data-id="' + t.id + '">' + ic('plus') + 'Lag prosjekt fra e-posten</button><span class="small muted">eller</span><select class="sel sel-xs" data-change="mxLink" data-id="' + t.id + '" aria-label="Koble til prosjekt"><option value="">Koble til …</option>' + SV.jobs().map(function (x) { return '<option value="' + x.id + '">' + esc(x.addr) + '</option>'; }).join('') + '</select></div>');
     var reply = t.auto || t.folder === 'trash' ? '' : (ui.reply && ui.reply.t === t.id ? composer(ui.reply, true) : '<button class="mx-qr" data-act="mxReply" data-id="' + t.id + '" data-k="' + (t.msgs.length - 1) + '" data-m="r">' + ic('back') + 'Svar til ' + esc(others(t)[0] || '') + ' …</button>');
-    return tools + '<div class="mx-read-in"><h2 class="mx-subj">' + esc(t.subj || '(uten emne)') + ' ' + t.labels.map(function (l) { return '<i class="mx-lab">' + esc(l) + '<button data-act="mxUnlabel" data-id="' + t.id + '" data-l="' + esc(l) + '" aria-label="Fjern etikett ' + esc(l) + '">×</button></i>'; }).join('') + '</h2>' + jcard +
+    return tools + '<div class="mx-read-in">' + salesLine(t) + '<h2 class="mx-subj">' + esc(t.subj || '(uten emne)') + ' ' + t.labels.map(function (l) { return '<i class="mx-lab">' + esc(l) + '<button data-act="mxUnlabel" data-id="' + t.id + '" data-l="' + esc(l) + '" aria-label="Fjern etikett ' + esc(l) + '">×</button></i>'; }).join('') + '</h2>' + jcard +
       '<div class="mx-msgs">' + t.msgs.map(function (m, k) { return msgHtml(t, m, k, ui.printAll); }).join('') + '</div>' + reply + '</div>';
   }
+
+  // ---------- kobling til Salg (kunde-CRM) ----------
+  function salesAddr(t) { var m = t.msgs.filter(function (x) { return !x.draft && !isMe(x.from[1]); })[0]; if (m) return m.from; var l = last(t); return (l.to || [])[0] || null; }
+  function salesLine(t) {
+    if (!SV.sales || t.auto) return '';
+    var a = salesAddr(t); if (!a || !a[1]) return '';
+    var c = SV.sales.match({ email: a[1] });
+    if (!c) return '<div class="mx-sales">' + ic('route') + '<span class="small muted">' + esc(a[0] || a[1]) + ' er ikke i salgslisten.</span><button class="link small" data-act="mxSalesAdd" data-id="' + t.id + '">Legg til i salg</button></div>';
+    var n = t.msgs.filter(function (m, k) { return !m.draft && !m.sched && !c.acts.some(function (x) { return x.ref === 'mail:' + t.id + ':' + k; }); }).length;
+    return '<div class="mx-sales">' + ic('route') + '<a href="#/salg/' + c.id + '"><b>' + esc(c.name) + '</b></a>' + SV.salesChip(c.status) + (n ? '<button class="link small" data-act="mxSalesLog" data-id="' + t.id + '" data-c="' + c.id + '">Logg ' + (n > 1 ? n + ' meldinger' : 'e-posten') + ' i salg</button>' : '<span class="tiny muted">' + ic('check') + 'Logget i salg</span>') + '</div>';
+  }
+  function salesLog(t, c) {
+    var n = 0; t.msgs.forEach(function (m, k) { if (m.draft || m.sched) return; if (SV.sales.log(c.id, { ch: 'epost', dir: isMe(m.from[1]) ? 'ut' : 'inn', d: m.d, text: (t.subj || '') + ': ' + text(m.html).slice(0, 140), src: 'e-post', ref: 'mail:' + t.id + ':' + k })) n++; });
+    return n;
+  }
+  SV.on('mxSalesLog', function (el) { var t = all().filter(function (x) { return x.id === el.getAttribute('data-id'); })[0], c = SV.sales.get(el.getAttribute('data-c')), n = salesLog(t, c); keep(); SV.toast(n + (n === 1 ? ' melding' : ' meldinger') + ' logget hos ' + c.name); });
+  SV.on('mxSalesAdd', function (el) {
+    var t = all().filter(function (x) { return x.id === el.getAttribute('data-id'); })[0], a = salesAddr(t), dm = (a[1].split('@')[1] || '');
+    var guess = /gmail|hotmail|outlook|online\.no|live\.no|icloud|yahoo|epost\./.test(dm) ? a[0] : dm.split('.')[0].replace(/^\w/, function (x) { return x.toUpperCase(); });
+    var c = SV.sales.upsert({ name: guess, people: [{ name: a[0] === a[1].split('@')[0] ? '' : a[0], email: a[1] }], source: 'Annet' });
+    salesLog(t, c); SV.go('#/salg/' + c.id); SV.toast('Lagt til i salg: ' + c.name + '. Rett navn og felt ved behov.');
+  });
+  SV.mailCompose = function (to, subj) { ui.comp = { mode: 'ny', from: curAcct() || accts()[0].id, to: to ? [to] : [], cc: [], bcc: [], subj: subj || '', html: sigHtml(), att: [] }; ui.reply = null; SV.go('#/post'); setTimeout(focusTo, 60); };
+  SV.mailFind = function (emails, domains) {
+    emails = (emails || []).map(function (e) { return e.toLowerCase(); }); domains = (domains || []).map(function (d) { return d.toLowerCase(); });
+    var hit = function (x) { if (!x || !x[1] || isMe(x[1])) return false; var e = x[1].toLowerCase(); return emails.indexOf(e) > -1 || domains.indexOf(e.split('@')[1]) > -1; };
+    return all().filter(function (t) { return !t.auto && t.folder !== 'trash' && t.folder !== 'spam' && t.msgs.some(function (m) { return !m.draft && [m.from].concat(m.to || [], m.cc || []).some(hit); }); });
+  };
 
   // ---------- skrive ----------
   // c = { mode: 'ny'|'r'|'a'|'f', t (tråd-id), k (meldingsnr i utkast), to, cc, bcc, subj, html, att, showCc }
