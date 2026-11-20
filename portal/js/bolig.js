@@ -30,13 +30,18 @@
   };
   SV.formQty = function (f, sel) { var q = {}; sel.forEach(function (id) { var v = svc(id), el = f.querySelector('[name=q_' + id + ']'); if (v.unit && el) q[id] = Math.max(1, Math.min(60, parseInt(el.value, 10) || 1)); }); return q; };
   // ---------- kjøresats ----------
-  // Steder med kommune og ca. km én vei fra Halsnøy. I den ekte portalen regnes km med en ruteplanlegger (kjørerute fra Halsnøy).
+  // Steder med kommune og ca. km én vei fra Klostervegen 162, Halsnøy. I den ekte portalen regnes km med kjørerute fra Klostervegen 162 til adressen.
   SV.PLACES = {
-    'Halsnøy': ['Kvinnherad', 8], 'Sæbøvik': ['Kvinnherad', 10], 'Husnes': ['Kvinnherad', 32], 'Sunde': ['Kvinnherad', 28], 'Valen': ['Kvinnherad', 22], 'Høylandsbygd': ['Kvinnherad', 40], 'Uskedalen': ['Kvinnherad', 44], 'Herøysund': ['Kvinnherad', 50], 'Rosendal': ['Kvinnherad', 64], 'Seimsfoss': ['Kvinnherad', 60], 'Ølve': ['Kvinnherad', 52], 'Fjelberg': ['Kvinnherad', 30], 'Varaldsøy': ['Kvinnherad', 80], 'Kvinnherad': ['Kvinnherad', 40],
+    'Halsnøy': ['Kvinnherad', 8], 'Sæbøvik': ['Kvinnherad', 10], 'Husnes': ['Kvinnherad', 32], 'Sunde': ['Kvinnherad', 28], 'Valen': ['Kvinnherad', 22], 'Høylandsbygd': ['Kvinnherad', 40], 'Uskedalen': ['Kvinnherad', 44], 'Herøysund': ['Kvinnherad', 50], 'Rosendal': ['Kvinnherad', 64], 'Seimsfoss': ['Kvinnherad', 60], 'Ølve': ['Kvinnherad', 64], 'Fjelberg': ['Kvinnherad', 30], 'Varaldsøy': ['Kvinnherad', 80], 'Kvinnherad': ['Kvinnherad', 40],
     'Leirvik': ['Stord', 78], 'Stord': ['Stord', 80], 'Sagvåg': ['Stord', 88], 'Fitjar': ['Fitjar', 96], 'Svortland': ['Bømlo', 112], 'Bremnes': ['Bømlo', 120], 'Bømlo': ['Bømlo', 118], 'Haugesund': ['Haugesund', 140],
     'Sveio': ['Sveio', 130], 'Tysnes': ['Tysnes', 70], 'Uggdal': ['Tysnes', 72], 'Etne': ['Etne', 75], 'Skånevik': ['Etne', 45], 'Odda': ['Ullensvang', 105], 'Kinsarvik': ['Ullensvang', 120], 'Lofthus': ['Ullensvang', 110], 'Ullensvang': ['Ullensvang', 110], 'Jondal': ['Kvam', 80], 'Norheimsund': ['Kvam', 95], 'Os': ['Bjørnafjorden', 110], 'Bergen': ['Bergen', 140]
   };
-  SV.driveCfg = function () { var c = SV.state.driveCfg; if (!c) c = SV.state.driveCfg = { rate: 8, rt: true, base: 'Halsnøy', free: ['Bømlo', 'Stord', 'Fitjar', 'Kvinnherad', 'Haugesund'], charged: ['Ølve', 'Fjelberg'] }; return c; };
+  SV.driveCfg = function () {
+    var c = SV.state.driveCfg;
+    if (!c) c = SV.state.driveCfg = { v: 2, rate: 8, rt: true, base: 'Klostervegen 162, Halsnøy', free: ['Bømlo', 'Stord', 'Fitjar', 'Kvinnherad', 'Haugesund', 'Sveio'], charged: ['Ølve', 'Fjelberg'] };
+    if (!c.v) { c.v = 2; c.base = 'Klostervegen 162, Halsnøy'; if (c.free.indexOf('Sveio') < 0) c.free.push('Sveio'); }
+    return c;
+  };
   SV.place = function (town) { var t = String(town || '').trim().toLowerCase(); if (!t) return null; var k = Object.keys(SV.PLACES).filter(function (x) { return x.toLowerCase() === t; })[0]; return k ? { name: k, kommune: SV.PLACES[k][0], km: SV.PLACES[k][1] } : null; };
   // Kjøring for et oppdrag: { charged, km, trips, kr, place, why, known }
   SV.driveFor = function (town, o) {
@@ -166,7 +171,7 @@
   }
   SV.on('drCfgSave', function () {
     var f = document.getElementById('drCfg'), c = SV.driveCfg(), list = function (v) { return v.split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
-    c.rate = +String(f.rate.value).replace(',', '.') || 0; c.base = f.base.value.trim() || 'Halsnøy'; c.rt = f.rt.value === '1'; c.free = list(f.free.value); c.charged = list(f.charged.value);
+    c.rate = +String(f.rate.value).replace(',', '.') || 0; c.base = f.base.value.trim() || 'Klostervegen 162, Halsnøy'; c.rt = f.rt.value === '1'; c.free = list(f.free.value); c.charged = list(f.charged.value);
     SV.save(); SV.render(); SV.toast('Kjøresats lagret');
   });
   function driveRow(j) {
