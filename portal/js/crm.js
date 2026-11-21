@@ -237,12 +237,15 @@
       '<p class="eyebrow" style="margin:16px 0 8px">Kunde (selger)</p><div class="g2"><label class="fld"><span>Navn</span><input class="inp" name="seller" placeholder="Navn"></label><label class="fld"><span>E-post</span><input class="inp" type="email" name="email" placeholder="navn@epost.no" autocomplete="off"></label><label class="fld"><span>Mobil</span><input class="inp" name="phone" inputmode="tel" placeholder="8 siffer"></label><label class="fld"><span>Tilgang</span><select class="sel" name="access"><option>Selger hjemme</option><option>Nøkkel hos megler</option><option>Nøkkelboks</option></select></label></div>' +
       '<p class="eyebrow" style="margin:14px 0 8px">Fotografering <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(valgfritt, kan settes senere)</span></p><div class="g2"><label class="fld"><span>Dato</span><input class="inp" type="date" name="d"></label><label class="fld"><span>Klokkeslett</span><input class="inp" type="time" name="t" step="900"></label></div>' +
       '<div id="npOut" hidden><p class="eyebrow" style="margin:14px 0 8px">Ekstra utefotografering · egen tid <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(valgfritt)</span></p><div class="g2"><label class="fld"><span>Dato</span><input class="inp" type="date" name="d2"></label><label class="fld"><span>Klokkeslett</span><input class="inp" type="time" name="t2" step="900"></label></div></div>' +
+      '<p class="eyebrow" style="margin:14px 0 8px">Kjøring</p><label class="opt"><input type="checkbox" name="drOn" data-change="npSum"><b>Kjøresats</b><small>' + SV.driveCfg().rate + ' kr/km' + (SV.driveCfg().rt ? ' tur-retur' : '') + ' fra ' + esc(SV.driveCfg().base.split(',')[0]) + '</small></label>' +
+      '<div id="npDr" hidden style="margin-top:8px"><label class="fld"><span>Km én vei</span><input class="inp" name="drKm" inputmode="numeric" placeholder="F.eks. 64" style="max-width:140px" data-input="npSum"></label></div>' +
       '<label class="fld"><span>Notat</span><input class="inp" name="note" placeholder="F.eks. drone avhenger av vind"></label>' +
       '<div class="stack" style="margin-top:6px"><label class="opt"><input type="checkbox" name="mailB" checked><b>Send bekreftelse til megler</b><small>«Bestilling mottatt»</small></label><label class="opt"><input type="checkbox" name="mailK" checked><b>Send e-post til kunden når tiden er satt</b><small>Tid og sjekkliste</small></label></div>' +
       '<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn btn-acc" data-act="npSave">' + ic('plus') + 'Opprett prosjekt</button></div></form>', { wide: true, after: function () { if (pre) npFill(pre); npSum(); } });
   }
   function npVals() { var f = document.getElementById('npF'), sel = [].slice.call(f.querySelectorAll('input[name=foto]:checked,input[name=s]:checked')).map(function (x) { return x.value; }); return { f: f, sel: sel, qty: SV.formQty(f, sel) }; }
-  function npSum() { var v = npVals(), n = document.getElementById('npSum'), o = document.getElementById('npOut'); if (o) o.hidden = v.sel.indexOf('ut') < 0; if (n) n.textContent = SV.kr(v.sel.reduce(function (a, id) { return a + svc(id).price * (v.qty[id] || 1); }, 0)); }
+  function npSum() { var v = npVals(), n = document.getElementById('npSum'), o = document.getElementById('npOut'); if (o) o.hidden = v.sel.indexOf('ut') < 0; var dr = SV.driveFor({ on: v.f.drOn && v.f.drOn.checked, km: v.f.drKm ? v.f.drKm.value.replace(/\D/g, '') : 0 }), dw = document.getElementById('npDr'); if (dw) dw.hidden = !(v.f.drOn && v.f.drOn.checked);
+    if (n) n.textContent = SV.kr(v.sel.reduce(function (a, id) { return a + svc(id).price * (v.qty[id] || 1); }, 0) + dr.kr) + (dr.charged ? ' (inkl. kjøring ' + SV.kr(dr.kr) + ')' : ''); }
   SV.on('npSum', npSum);
   SV.on('npOffice', function (el) { var o = office(el.value); document.getElementById('npBroker').innerHTML = o.brokers.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join(''); });
   function npFill(pre) {
@@ -265,6 +268,7 @@
     if (v.sel.indexOf('ut') > -1 && f.d2.value && f.t2.value) { j.date2 = f.d2.value; j.time2 = f.t2.value; }
     if (S.npPre && S.npPre.thread) { j.source = 'e-post'; j.mailThread = S.npPre.thread; }
     S.newJobs.push(j);
+    if (f.drOn.checked) { var km = +f.drKm.value.replace(/\D/g, ''); SV.setDrive(id, { on: !!km, km: km }); if (!km) SV.toast('Kjøresats: skriv inn km på prosjektsiden', 'warn'); }
     var who = f.mailB.checked ? send(j, RULES.filter(function (r) { return r.k === 'opprettet_megler'; })) : [];
     if (j.mailThread && SV.mailLinkJob) SV.mailLinkJob(j.mailThread, j.id);
     S.npPre = null;
