@@ -1,0 +1,6 @@
+dist/
+backup/
+*.tgz
+api/config.php
+api/data/*
+!api/data/.htaccess

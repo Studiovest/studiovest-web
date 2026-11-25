@@ -1,0 +1,13 @@
+<?php
+// Faste jobber. Kalles hvert 15. minutt av GitHub Actions (cron.yml) med hemmelig nøkkel. Små steg, så PHP-tidsgrensen holder.
+require __DIR__ . '/lib.php';
+$tok = (string)($_GET['token'] ?? '');
+if (!hash_equals(substr(hash('sha256', app_secret() . '|cron'), 0, 32), $tok)) fail('Ingen tilgang', 403);
+$done = [];
+try { db()->prepare('DELETE FROM login_tokens WHERE expires < ?')->execute([time() - 86400]); $done[] = 'gamle innloggingslenker slettet'; } catch (Throwable $e) { $done[] = 'opprydding feilet'; }
+if (s3_on() && get_meta('s3_setup') !== 'ok') { $r = s3_setup(); set_meta('s3_setup', $r['ok'] ? 'ok' : 'feil'); $done[] = 'wasabi: ' . $r['info']; }
+// Neste trinn (bygges sammen med e-post i portalen): hent ny e-post fra imap.one.com, send påminnelser og ukesoversikt.
+$info = implode('; ', $done);
+db()->prepare('INSERT INTO cron_runs (task, ok, info, at) VALUES (?,?,?,?)')->execute(['kvarter', 1, $info, now()]);
+db()->exec('DELETE FROM cron_runs WHERE id < (SELECT m FROM (SELECT MAX(id) - 2000 AS m FROM cron_runs) t)');
+json_out(['ok' => true, 'done' => $done]);

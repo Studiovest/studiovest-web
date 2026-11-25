@@ -1,0 +1,20 @@
+# Faste jobber for portalen (opprydding nå; påminnelser og e-posthenting senere). Kaller api/cron.php hvert 15. minutt.
+name: Portal-jobber
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - id: cfg
+        env:
+          CFG: ${{ secrets.STUDIOVEST_CONFIG }}
+        run: python3 .github/scripts/config.py
+      - if: steps.cfg.outputs.ready == 'true' && steps.cfg.outputs.has_db == 'true'
+        run: curl -s --max-time 60 "${{ steps.cfg.outputs.site }}/api/cron.php?token=$CRON_TOKEN" || true

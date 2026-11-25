@@ -1,0 +1,61 @@
+# Publiserer nettsiden, portalen og API-et til studiovest.no (one.com) over SFTP.
+# Alt oppsett ligger i ÉN hemmelighet: STUDIOVEST_CONFIG (se LANSERING.md).
+# - Ved hver endring på main: publiserer, men bare når siden allerede er lansert.
+# - Manuelt (Actions → Live på studiovest.no → Run workflow): probe | golive | deploy
+name: Live på studiovest.no
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'probe = se mappene · golive = lanser (sikkerhetskopi av WordPress først) · deploy = publiser'
+        type: choice
+        options: [deploy, probe, golive]
+        default: deploy
+
+concurrency:
+  group: live
+  cancel-in-progress: false
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Les oppsett
+        id: cfg
+        env:
+          CFG: ${{ secrets.STUDIOVEST_CONFIG }}
+        run: python3 .github/scripts/config.py
+      - name: Ikke satt opp ennå
+        if: steps.cfg.outputs.ready != 'true'
+        run: echo "::notice::STUDIOVEST_CONFIG mangler SFTP-oppsett. Ingenting publisert."
+      - name: Installer lftp
+        if: steps.cfg.outputs.ready == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+      - name: Bygg
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          CFG: ${{ secrets.STUDIOVEST_CONFIG }}
+        run: |
+          bash .github/scripts/build.sh "${{ steps.cfg.outputs.site }}"
+          python3 .github/scripts/config.py php dist/api/config.php
+      - name: Publiser
+        if: steps.cfg.outputs.ready == 'true'
+        run: bash .github/scripts/sftp.sh "${{ github.event.inputs.mode || 'deploy' }}"
+      - name: Lagre sikkerhetskopi av WordPress
+        if: always() && hashFiles('wordpress-backup.tgz') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordpress-backup
+          path: wordpress-backup.tgz
+          retention-days: 90
+      - name: Sjekk at alt virker
+        if: steps.cfg.outputs.ready == 'true' && github.event.inputs.mode != 'probe'
+        run: |
+          sleep 5
+          code=$(curl -s -o /dev/null -w '%{http_code}' "${{ steps.cfg.outputs.site }}/" || true); echo "Forside: HTTP $code"
+          curl -s --max-time 30 "${{ steps.cfg.outputs.site }}/api/health.php" || true; echo

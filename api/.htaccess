@@ -1,0 +1,9 @@
+# API: ingen mappelisting, og interne filer kan ikke hentes direkte
+Options -Indexes
+<FilesMatch "^(config|lib)\.php$">
+  Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^data/ - [F,L]
+</IfModule>

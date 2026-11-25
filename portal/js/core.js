@@ -12,6 +12,62 @@
   SV.save = function () { try { localStorage.setItem(KEY, JSON.stringify(SV.state)); } catch (e) {} };
   SV.reset = function () { try { localStorage.removeItem(KEY); } catch (e) {} location.hash = '#/'; location.reload(); };
 
+  // ---------- server (studiovest.no): innlogging med lenke på e-post, og lagring i databasen ----------
+  // På GitHub Pages / localhost kjører portalen som demo (lagring i nettleseren). På studiovest.no kreves innlogging,
+  // og alt lagres på serveren (api/state.php) med versjon, så to enheter ikke overskriver hverandre.
+  var DEFAULTS = JSON.parse(JSON.stringify({ stage: {}, newJobs: [], cart: [], paid: [], favs: {}, comments: [], autos: {}, consents: {}, approved: {}, postStatus: {}, retake: false, deleteReq: false, read: false }));
+  var API = location.pathname.replace(/\/portal(\/.*)?$/, '') + '/api/';
+  var localSave = SV.save, putT = null, busy = false, again = false, netWarned = false;
+  SV.live = false; SV.me = null; SV.serverVersion = 0;
+  function serverPut() {
+    if (busy) { again = true; return; }
+    busy = true; again = false;
+    fetch(API + 'state.php', { method: 'PUT', credentials: 'same-origin', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: SV.state, version: SV.serverVersion }) })
+      .then(function (r) { return r.json().then(function (j) { return { st: r.status, j: j }; }); })
+      .then(function (x) {
+        busy = false; netWarned = false;
+        if (x.st === 200) { SV.serverVersion = x.j.version; if (again) serverPut(); return; }
+        if (x.st === 409) { SV.toast('Dataene ble endret på en annen enhet. Laster inn på nytt …', 'warn'); setTimeout(function () { location.reload(); }, 1500); return; }
+        if (x.st === 401) { loginScreen(); return; }
+        throw new Error(x.st);
+      })
+      .catch(function () { busy = false; if (!netWarned) { SV.toast('Ikke lagret ennå: får ikke kontakt med serveren. Prøver igjen …', 'warn'); netWarned = true; } clearTimeout(putT); putT = setTimeout(serverPut, 10000); });
+  }
+  function loginScreen() {
+    var exp = /[?&]login=utlopt/.test(location.search);
+    document.body.innerHTML = '<main class="login-wrap"><form class="card pad login-card" id="loginF"><p class="eyebrow">Studiovest</p><h1 class="h2"><span class="serif">Logg inn i portalen</span></h1>' +
+      '<p class="small muted" style="margin:8px 0 16px">' + (exp ? 'Lenken var utløpt eller allerede brukt. Be om en ny.' : 'Skriv e-postadressen din, så sender vi deg en lenke. Ingen passord.') + '</p>' +
+      '<label class="fld"><span>E-post</span><input class="inp" type="email" name="email" autocomplete="email" required autofocus></label>' +
+      '<button class="btn btn-acc" style="width:100%;justify-content:center;margin-top:6px">Send innloggingslenke</button><p class="small" id="loginMsg" style="margin-top:12px" role="status"></p></form></main>';
+    document.getElementById('loginF').addEventListener('submit', function (e) {
+      e.preventDefault(); var f = e.target, msg = document.getElementById('loginMsg'), b = f.querySelector('button'); b.disabled = true;
+      fetch(API + 'auth.php?a=request', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: f.email.value }) })
+        .then(function (r) { return r.json(); }).then(function (j) { msg.textContent = j.ok ? 'Sjekk e-posten din. Lenken virker i 15 minutter.' : (j.error || 'Noe gikk galt'); b.disabled = false; })
+        .catch(function () { msg.textContent = 'Får ikke kontakt med serveren.'; b.disabled = false; });
+    });
+  }
+  SV.logout = function () { fetch(API + 'auth.php?a=logout', { credentials: 'same-origin' }).then(function () { location.reload(); }); };
+  SV.boot = function (start) {
+    var demo = /github\.io$|^localhost$|^127\./.test(location.hostname) && !/[?&]api=1/.test(location.search);
+    if (demo || location.protocol === 'file:') return start();
+    fetch(API + 'auth.php?a=me', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('ingen server'); return r.json(); })
+      .then(function (me) {
+        if (!me.user) return loginScreen();
+        SV.me = me.user; SV.live = true;
+        return fetch(API + 'state.php', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (st) {
+          Object.keys(SV.state).forEach(function (k) { delete SV.state[k]; });
+          Object.assign(SV.state, JSON.parse(JSON.stringify(DEFAULTS)), st.data || {});
+          SV.serverVersion = st.version || 0;
+          SV.save = function () { localSave(); clearTimeout(putT); putT = setTimeout(serverPut, 700); };
+          SV.reset = SV.logout;
+          window.addEventListener('beforeunload', function () { if (putT) { clearTimeout(putT); serverPut(); } });
+          start();
+        });
+      })
+      .catch(function () { start(); });
+  };
+
   // ---------- hjelpere ----------
   var esc = SV.esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   SV.kr = function (n) { return Math.round(n).toLocaleString('nb-NO').replace(/ |,/g, ' ') + ' kr'; };
@@ -194,11 +250,11 @@
   ];
 
   function demoBar(role) {
-    return '<div class="demobar"><span class="db-l"><b>Demo</b><span class="db-hide"> · dummydata, ingen innlogging</span></span>' +
+    return '<div class="demobar"><span class="db-l"><b>' + (SV.live ? 'Studiovest' : 'Demo') + '</b><span class="db-hide">' + (SV.live ? ' · ' + esc(SV.me.email) : ' · dummydata, ingen innlogging') + '</span></span>' +
       '<nav class="db-roles" aria-label="Vis portalen som">' + '<span class="db-hide db-lbl">Vis som</span>' +
       ROLES.map(function (r) { if (r === '|') return '<i class="db-sep" aria-hidden="true"></i>'; return '<a href="' + r[2] + '" class="' + (r[0] === role ? 'on' : '') + '"' + (r[0] === role ? ' aria-current="page"' : '') + '>' + r[1] + '</a>'; }).join('') + '</nav>' +
       '<select class="db-sel" aria-label="Vis portalen som" data-change="roleSel">' + ROLES.filter(function (r) { return r !== '|'; }).map(function (r) { return '<option value="' + r[2] + '"' + (r[0] === role ? ' selected' : '') + '>' + r[1] + '</option>'; }).join('') + '</select>' +
-      '<button type="button" class="db-reset" data-act="reset" title="Tilbakestill demoen">Nullstill</button></div>';
+      (SV.live ? '<button type="button" class="db-reset" data-act="reset" title="Logg ut ' + esc(SV.me.email) + '">Logg ut</button></div>' : '<button type="button" class="db-reset" data-act="reset" title="Tilbakestill demoen">Nullstill</button></div>');
   }
   on('reset', function () { SV.reset(); });
   on('roleSel', function (el) { location.hash = el.value; });
