@@ -31,15 +31,21 @@ fi
 
 if [ "$MODE" = "golive" ] && [ "$LIVE" = "0" ]; then
   echo "== Sikkerhetskopi av alt på serveren =="
-  mkdir -p backup && L "mirror --parallel=4 $ROOT backup"
+  # store mediemapper (bilder i wp-content/uploads, virtuell-tur) lastes ikke ned: de blir liggende urørt på serveren
+  mkdir -p backup && L "mirror --parallel=4 --exclude-glob wp-content/uploads/ --exclude-glob virtuell-tur/ $ROOT backup"
   tar -czf wordpress-backup.tgz -C backup . && ls -lh wordpress-backup.tgz
   echo "== Flytter eksisterende filer til _wordpress/ =="
-  KEEP='^(_wordpress|\.|\.\.|\.well-known|cgi-bin)$'
+  # virtuell-tur/ brukes av lenker ute (visninger), så den blir liggende der den er
+  KEEP='^(_wordpress|\.|\.\.|\.well-known|cgi-bin|virtuell-tur)$'
   ITEMS=$(L "cls -1a $ROOT/" | sed 's#/$##' | grep -v -E "$KEEP" || true)
   CMDS="mkdir -p $ROOT/_wordpress"
   for it in $ITEMS; do CMDS="$CMDS; mv $ROOT/$it $ROOT/_wordpress/$it"; done
   L "$CMDS"
-  printf 'Require all denied\n' > deny.htaccess && L "put deny.htaccess -o $ROOT/_wordpress/.htaccess"
+  # alt i _wordpress/ er stengt, unntatt opplastede bilder (gamle bildelenker), og PHP kjøres aldri der
+  printf 'Require all denied\n' > deny.htaccess
+  printf 'Require all granted\n<FilesMatch "\\.(php|phtml|phar)$">\n  Require all denied\n</FilesMatch>\n' > uploads.htaccess
+  L "put deny.htaccess -o $ROOT/_wordpress/.htaccess"
+  L "put uploads.htaccess -o $ROOT/_wordpress/wp-content/uploads/.htaccess" || echo "Ingen wp-content/uploads, hopper over"
 fi
 
 echo "== Publiserer =="
