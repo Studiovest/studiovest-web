@@ -41,6 +41,9 @@
     dark:  { bg: '#161412', fg: '#F2EEE8', acc: '#D9A866', line: 'rgba(242,238,232,0.07)' },
     stone: { bg: '#C9C1B6', fg: '#161412', acc: '#5E3B24', line: 'rgba(22,20,18,0.12)' }
   };
+  // toppen får bakgrunn så snart man har scrollet litt
+  var onScrollTop = function () { body.classList.toggle('scrolled', (window.scrollY || 0) > 40); };
+  window.addEventListener('scroll', onScrollTop, { passive: true }); onScrollTop();
   var currentTheme = 'light';
   function setTheme(name) {
     if (name === currentTheme) return;

@@ -217,8 +217,8 @@ ul,ol{margin:0;padding:0;list-style:none}
 .due{color:var(--bad);font-weight:700}
 
 /* ---------- steg ---------- */
-.steps{display:flex;gap:0;margin:4px 0 2px;counter-reset:s}
-.steps li{flex:1;position:relative;padding-top:20px;font-size:12px;font-weight:700;color:var(--faint)}
+.steps{display:flex;gap:0;margin:4px 0 2px;counter-reset:s;overflow-x:auto;scrollbar-width:none;max-width:100%;padding:4px 4px 2px}
+.steps li{flex:1;min-width:0;position:relative;padding-top:20px;font-size:12px;font-weight:700;color:var(--faint)}
 .steps li::before{content:"";position:absolute;top:5px;left:0;right:0;height:2px;background:var(--line)}
 .steps li::after{content:"";position:absolute;top:0;left:0;width:12px;height:12px;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 2px var(--line)}
 .steps li.done{color:var(--ink)}
@@ -226,7 +226,7 @@ ul,ol{margin:0;padding:0;list-style:none}
 .steps li.done::after{background:var(--ink);box-shadow:none}
 .steps li.now{color:var(--ink)}
 .steps li.now::after{background:var(--sand);box-shadow:0 0 0 4px rgba(217,168,102,.3)}
-.steps li span{display:block;padding-right:8px}
+.steps li span{display:block;padding-right:8px;overflow-wrap:anywhere}
 
 /* ---------- galleri ---------- */
 .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
@@ -1006,7 +1006,8 @@ details[open].card summary::after{content:" −"}
 @media (max-width:1180px){.mx-grid{grid-template-columns:190px minmax(260px,340px) minmax(0,1fr)}}
 @media (max-width:900px){
   .mx{height:auto;min-height:0}
-  .mx-grid{grid-template-columns:1fr;overflow:visible;background:none;box-shadow:none;border-radius:0}
+  .mx-grid{grid-template-columns:minmax(0,1fr);overflow:visible;background:none;box-shadow:none;border-radius:0}
+  .mx-side,.mx-list,.mx-read,.mx-folders,.mx-boxes{min-width:0;max-width:100%}
   .mx-side{border:0;padding:0 0 10px;flex-direction:row;flex-wrap:wrap;align-items:center;overflow:visible}
   .mx-side .mx-new{width:auto}
   .mx-folders{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none;width:100%}

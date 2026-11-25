@@ -22,7 +22,9 @@
 }
 
 *,*::before,*::after{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;overflow-x:clip}
+/* animerte overskrifter starter forskjøvet til siden; de skal aldri gjøre siden bredere (mobil la menyknappen utenfor skjermen) */
+.fields,.foot{overflow-x:clip}
 html.lenis,html.lenis body{height:auto}
 .lenis.lenis-smooth{scroll-behavior:auto !important}
 .lenis.lenis-stopped{overflow:hidden}
@@ -64,6 +66,10 @@ h2>span{display:block}
 /* Topp */
 .top{position:fixed;inset:0 0 auto 0;z-index:70;display:flex;align-items:center;justify-content:space-between;padding:14px var(--gut);pointer-events:none}
 .top>*{pointer-events:auto}
+/* bakgrunn bak toppen når man har scrollet, så tekst ikke legger seg oppå logo og meny */
+.top::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--bg);opacity:0;box-shadow:0 1px 0 var(--line);transition:opacity .35s;pointer-events:none;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+body.scrolled .top::before{opacity:.94}
+body.menu-open .top::before{opacity:0}
 .logo{display:flex;flex-direction:column;line-height:.86;text-decoration:none;color:var(--fg);transition:color .4s}
 body.menu-open .logo,body.menu-open .top-mark{color:var(--light)}
 .logo .serif{font-size:25px}
@@ -180,7 +186,7 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
 
 /* Foto / Film */
 .split{position:relative;min-height:115vh;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:12vh var(--gut)}
-.split-img{position:absolute;z-index:1;top:50%;width:min(32vw,520px);aspect-ratio:3/4;translate:0 -50%;border-radius:6px;overflow:hidden}
+.split-img{position:absolute;z-index:1;top:50%;width:min(26vw,480px);aspect-ratio:3/4;translate:0 -50%;border-radius:6px;overflow:hidden}
 .split-img img{width:100%;height:100%;object-fit:cover}
 .split-img-l{left:-5vw}
 .split-img-r{right:-5vw}
@@ -229,7 +235,7 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
 .packs li{display:grid;grid-template-columns:1.2fr 1.6fr 1fr;gap:12px;align-items:baseline;padding:14px 0;border-top:1.5px solid currentColor;font-size:14px}
 .packs li:last-child{border-bottom:1.5px solid currentColor}
 .packs b{font-weight:850;font-size:20px;text-transform:uppercase;letter-spacing:-.01em}
-.packs span:last-child{text-align:right;font-weight:700}
+.packs span:last-child{text-align:right;font-weight:700;white-space:nowrap}
 .bank-floats{position:relative;z-index:1;height:min(90vh,820px)}
 .bf{position:absolute;margin:0;overflow:hidden;border-radius:4px;box-shadow:0 30px 60px -30px rgba(22,20,18,.45);will-change:transform}
 .bf img{width:100%;height:100%;object-fit:cover}
@@ -243,7 +249,7 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
 .fan-ap{width:42px;height:42px;margin:0 auto 18px;display:block;animation:spin 18s linear infinite}
 .fan h2 .bold{font-size:clamp(40px,4.6vw,84px)}
 .fan h2 .serif{font-size:clamp(36px,4.2vw,76px)}
-.fan-stage{position:relative;height:clamp(360px,58vh,600px);margin-top:4vh;cursor:grab;touch-action:pan-y;user-select:none}
+.fan-stage{position:relative;isolation:isolate;height:clamp(360px,58vh,600px);margin-top:clamp(28px,9vh,110px);cursor:grab;touch-action:pan-y;user-select:none}
 .fan-stage.dragging{cursor:grabbing}
 .fan-cards{list-style:none;margin:0;padding:0}
 .fan-card{position:absolute;left:50%;top:6%;width:clamp(150px,15vw,250px);aspect-ratio:3/4.2;margin-left:calc(clamp(150px,15vw,250px) / -2);border-radius:22px;overflow:hidden;transform-origin:50% 260%;box-shadow:0 24px 50px -24px rgba(22,20,18,.5);will-change:transform;background:var(--stone)}
@@ -321,4 +327,20 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
   *,*::before,*::after{animation:none !important;transition:none !important}
   .lens-bars .on i::after{animation:none;transform:scaleX(1)}
   .mq-scribble path,.split-scribble path{stroke-dashoffset:0 !important}
+}
+/* liggende mobil: lavere topp så den ikke tar en fjerdedel av skjermen */
+@media (max-height:500px) and (orientation:landscape){
+  .top{padding:8px var(--gut)}
+  .menu-btn{width:40px;height:40px}
+  .mb-l{left:11px;right:11px}
+  .top-mark{top:14px;width:26px;height:26px;margin-left:-13px}
+  .logo .serif{font-size:20px}.logo .bold{font-size:21px}
+  .menu{padding:64px var(--gut) 16px}
+  .menu-link{font-size:clamp(26px,10vh,48px)}
+  .menu-nav{gap:10px}
+  .menu-badge,.menu-grid{display:none}
+  .menu-foot{position:static;width:auto;margin-top:12px;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:8px 18px}
+  .menu-nav,.menu-foot{grid-column:1/-1}
+  .menu{display:flex;flex-direction:column;justify-content:center}
+  .menu[hidden]{display:none}
 }
