@@ -1,6 +1,6 @@
 # API: ingen mappelisting, og interne filer kan ikke hentes direkte
 Options -Indexes
-<FilesMatch "^(config|lib)\.php$">
+<FilesMatch "^(config|lib|agent)\.php$">
   Require all denied
 </FilesMatch>
 <IfModule mod_rewrite.c>

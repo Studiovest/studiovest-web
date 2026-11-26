@@ -84,6 +84,10 @@
     return n > 0 ? 'om ' + n + ' dager' : 'for ' + (-n) + ' dager siden';
   };
   SV.find = function (arr, id, k) { k = k || 'id'; for (var i = 0; i < arr.length; i++) if (arr[i][k] === id) return arr[i]; return null; };
+  // Prosjekter uten kjent kontor (f.eks. laget av e-postagenten) skal ikke knekke sidene som viser kontornavn.
+  var findRaw = SV.find, NOOFFICE = { id: '', name: 'Kontor ikke valgt', town: '', agreement: 'Listepris', invoice: '', brokers: [], ytd: 0 };
+  var NOPERSON = { id: '', name: 'Ikke tildelt', role: '', initials: '–' };
+  SV.find = function (arr, id, k) { var r = findRaw(arr, id, k); if (r || k || !SV.data) return r; return arr === SV.data.offices ? NOOFFICE : arr === SV.data.team ? NOPERSON : r; };
   SV.areaName = { bolig: 'Bolig', bedrift: 'Bedrift', skole: 'Skolefoto', mark: 'Markedsføring' };
 
   var TONE = {
@@ -245,7 +249,7 @@
   var NAV = [
     { h: '' , items: [['#/', 'home', 'Oversikt']] },
     { h: 'Felt', items: [['#/bolig', 'house', 'Bolig', 'bolig'], ['#/bedrift', 'brief', 'Bedrift', 'bedrift'], ['#/skole', 'school', 'Skolefoto', 'skole'], ['#/marked', 'mega', 'Markedsføring', 'mark']] },
-    { h: 'Drift', items: [['#/kalender', 'cal', 'Kalender'], ['#/stasjon', 'cam', 'Fotostasjon'], ['#/salg', 'route', 'Salg'], ['#/kunder', 'users', 'Kunder'], ['#/lagring', 'box', 'Lagring'], ['#/automatisering', 'bolt', 'Automatisering'], ['#/post', 'mail', 'E-post'], ['#/epost', 'file', 'Maler og varsler'], ['#/okonomi', 'wallet', 'Økonomi']] },
+    { h: 'Drift', items: [['#/kalender', 'cal', 'Kalender'], ['#/stasjon', 'cam', 'Fotostasjon'], ['#/salg', 'route', 'Salg'], ['#/kunder', 'users', 'Kunder'], ['#/lagring', 'box', 'Lagring'], ['#/automatisering', 'bolt', 'Automatisering'], ['#/post', 'mail', 'E-post'], ['#/agent', 'chat', 'E-postagent'], ['#/epost', 'file', 'Maler og varsler'], ['#/okonomi', 'wallet', 'Økonomi']] },
     { h: 'Om portalen', items: [['#/innsikt', 'info', 'Behov og innsikt']] }
   ];
 

@@ -38,6 +38,14 @@ Senere, når du vil lagre bilder:
    ```
    Bøtta og CORS opprettes automatisk ved første kjøring. Regionkoden står i Wasabi-konsollen (f.eks. eu-central-1 Amsterdam, eu-central-2 Frankfurt).
 
+E-postagent (leser bestillinger fra meglere og lager prosjekter):
+
+7. **Claude API-nøkkel:** console.anthropic.com → API Keys → Create key. Sett gjerne en månedlig grense under Limits (f.eks. 10 $). Legg til i hemmeligheten:
+   ```
+   ANTHROPIC_API_KEY=
+   ```
+   Valgfritt: `IMAP_USER=` og `IMAP_PASSWORD=` hvis bestillingene kommer til en annen adresse enn `MAIL_USER`, og `AGENT_DOMAINS=fjordmegling.no,em1.no` for meglerdomener som alltid skal leses.
+
 ## Det som skjer automatisk
 
 | Steg | Hvordan |

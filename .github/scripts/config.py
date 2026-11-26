@@ -41,7 +41,8 @@ if env:
 
 if len(sys.argv) > 2 and sys.argv[1] == 'php':
     keys = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'MAIL_HOST', 'MAIL_PORT', 'MAIL_USER', 'MAIL_PASSWORD', 'MAIL_FROM',
-            'ADMIN_EMAIL', 'WASABI_KEY', 'WASABI_SECRET', 'WASABI_BUCKET', 'WASABI_REGION']
+            'ADMIN_EMAIL', 'WASABI_KEY', 'WASABI_SECRET', 'WASABI_BUCKET', 'WASABI_REGION',
+            'ANTHROPIC_API_KEY', 'IMAP_HOST', 'IMAP_PORT', 'IMAP_USER', 'IMAP_PASSWORD', 'AGENT_MODEL', 'AGENT_MAX_PER_DAY', 'AGENT_DOMAINS']
     php = {k: cfg[k] for k in keys if cfg.get(k)}
     php['APP_SECRET'] = app_secret
     php['BASE_URL'] = site
