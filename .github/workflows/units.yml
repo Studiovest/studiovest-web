@@ -1,0 +1,28 @@
+# Henter leilighetsnummer (bruksenhetsnummer) fra Kartverket én gang i måneden og lagrer dem i api/data/units.json.
+name: Leilighetsnummer fra Kartverket
+
+on:
+  schedule:
+    - cron: '17 3 2 * *'
+  workflow_dispatch:
+    inputs:
+      sample:
+        description: 'Bare vis eksempel (ikke lagre)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  units:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/scripts/units.py ${{ github.event.inputs.sample == 'true' && '--sample' || '' }}
+      - if: github.event.inputs.sample != 'true'
+        run: |
+          git config user.name "studiovest-bot"; git config user.email "actions@users.noreply.github.com"
+          git add api/data/units.json
+          git diff --cached --quiet || (git commit -m "Leilighetsnummer fra Kartverket" && git push)
