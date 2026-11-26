@@ -25,7 +25,7 @@ for k, url in sorted(urls.items()):
         for x in f.iter():
             t = loc(x.tag).lower()
             if t in ('adresseid', 'adresseidentifikasjon') and (x.text or '').strip().isdigit(): aid = x.text.strip()
-            if t == 'bruksenhetsnummer':
+            if t == 'bruksenhetsnummertekst':
                 txt = ''.join(x.itertext()).strip()
                 if re.fullmatch(r'[HUKL]\d{4}', txt): units.append(txt)
         if aid and units: out.setdefault(aid, []).extend(units)
