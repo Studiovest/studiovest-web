@@ -1,6 +1,6 @@
 <?php
 // E-postagent: henter ny e-post fra imap.one.com, lar Claude lese bestillinger fra meglere,
-// og oppretter prosjekter i portalen. Kjøres fra cron.php hvert 15. minutt, i små steg.
+// og oppretter prosjekter i portalen. Kjøres fra cron.php hvert 30. minutt, i små steg.
 //
 // Oppsett (STUDIOVEST_CONFIG): ANTHROPIC_API_KEY (påkrevd), IMAP_USER/IMAP_PASSWORD (standard: MAIL_USER/MAIL_PASSWORD),
 // IMAP_HOST (imap.one.com), AGENT_MODEL (claude-sonnet-5-5), AGENT_MAX_PER_DAY (100), AGENT_DOMAINS (meglerdomener, komma).
@@ -165,6 +165,7 @@ function agent_prompt(): string {
     "Meglerkontor (office_id) – velg ut fra avsenderens signatur, e-postdomene eller tekst. Tom hvis ukjent:\n" . implode('', array_map(fn($k, $o) => "- $k: {$o[0]} (faktura til " . ($o[1] === 'kunde' ? 'kunden direkte' : 'meglerkontoret') . " som standard)\n", array_keys(AGENT_OFFICES), AGENT_OFFICES)) .
     "invoice_to: sett bare hvis e-posten sier noe om hvem fakturaen skal til (f.eks. «faktura direkte til selger/kunde» → kunde, «fakturer oss/kontoret» → kontor). Ellers ukjent.\n" .
     "Endring av tidligere bestilling (f.eks. «fakturaen for Haugen 23 skal likevel til kunden», ny telefon, ekstra kveldsbilder): sett is_update=true og update_ref til adressen eller oppdragsnummeret den gjelder, og fyll bare inn feltene som endres.\n" .
+    "Endring på plantegningen (f.eks. «kan dere fjerne skapene på soverommet», «døra på badet slår feil vei», «det lille rommet skal hete bod»): sett is_floorplan_change=true og is_order=false, update_ref til adressen eller oppdragsnummeret, floorplan_request til selve ønsket med meglerens egne ord (alle punktene), og floorplan_floor hvis etasjen er nevnt.\n" .
     "confidence: høy hvis det tydelig er en bestilling med adresse; lav hvis usikker. Ikke finn på noe som ikke står i e-posten.";
 }
 function agent_tool(): array {
@@ -182,6 +183,9 @@ function agent_tool(): array {
       'invoice_to' => ['type' => 'string', 'enum' => ['kontor', 'kunde', 'ukjent']],
       'is_update' => ['type' => 'boolean', 'description' => 'Endrer en bestilling som allerede er sendt'],
       'update_ref' => ['type' => 'string', 'description' => 'Adresse eller oppdragsnummer for bestillingen som endres'],
+      'is_floorplan_change' => ['type' => 'boolean', 'description' => 'E-posten ber om endringer på plantegningen'],
+      'floorplan_request' => ['type' => 'string', 'description' => 'Endringene på plantegningen, med meglerens ord'],
+      'floorplan_floor' => ['type' => 'string', 'description' => 'Etasjen endringen gjelder, hvis nevnt (f.eks. Kjeller, 1. etasje, Loft)'],
     ]]];
 }
 function agent_extract(array $m): array {
@@ -257,7 +261,19 @@ function agent_process(array $row, int &$used, ?array $m = null): string {
   $m = $m ?: ['from_name' => $row['from_name'], 'from_addr' => $row['from_addr'], 'subject' => $row['subject'], 'date' => $row['received'], 'text' => (string)$row['body'], 'files' => []];
   try {
     $r = agent_extract($m); $used++; $d = (array)$r['data'];
-    $status = 'ikke bestilling'; $job = null;
+    $status = 'ikke bestilling'; $job = null; $info = '';
+    if (!empty($d['is_floorplan_change'])) { // plantegningsendring: gå til plantegningsagenten, lag aldri nytt prosjekt
+      $st = json_decode((string)$p->query("SELECT data FROM app_state WHERE tenant_id='" . SV_TENANT . "' AND scope='studio'")->fetchColumn(), true) ?: [];
+      $i = find_job($st['newJobs'] ?? [], (string)($d['update_ref'] ?? $d['addr'] ?? $d['nr'] ?? ''));
+      if ($i === null) { $status = 'sjekk'; $info = 'Plantegningsendring, men fant ikke prosjektet'; }
+      else {
+        require_once __DIR__ . '/plan.php'; $job = (string)$st['newJobs'][$i]['id'];
+        $r2 = plan_from_mail($job, trim((string)($d['floorplan_request'] ?? '')) ?: (string)$m['text'], (string)($d['floorplan_floor'] ?? ''), $m['from_name'] . ' (megler, e-post)');
+        $status = 'plantegning'; $info = $r2['manual'] ? 'Ingen redigerbar plantegning; lagt på prosjektet til manuell endring' : count($r2['ids']) . ' etasje(r) sendt til plantegningsagenten';
+      }
+      $p->prepare('UPDATE agent_mail SET status=?, job_id=?, data=?, info=?, tokens_in=?, tokens_out=? WHERE id=?')->execute([$status, $job, json_encode($d, JSON_UNESCAPED_UNICODE), $info, $r['in'], $r['out'], $mid]);
+      return $status . ($job ? " $job" : '') . ': ' . mb_substr((string)$m['subject'], 0, 60);
+    }
     if (!empty($d['is_update'])) { $job = agent_update_job($d, $m, $mid); if ($job) $status = 'oppdatert'; }
     if (!$job && (!empty($d['is_order']) || !empty($d['is_update']))) { $job = agent_create_job($d, $m, $mid); $status = (($d['confidence'] ?? '') === 'høy' && !empty($d['addr']) && !empty($d['services']) && isset(AGENT_OFFICES[$d['office_id'] ?? ''])) ? 'opprettet' : 'sjekk'; }
     $p->prepare('UPDATE agent_mail SET status=?, job_id=?, data=?, info=?, tokens_in=?, tokens_out=? WHERE id=?')->execute([$status, $job, json_encode($d, JSON_UNESCAPED_UNICODE), '', $r['in'], $r['out'], $mid]);
@@ -301,7 +317,7 @@ function agent_run(int $budget = 20, int $max = 8): array {
     // registrerte bestillinger flyttes til egen mappe i innboksen (AGENT_FOLDER, tom = ikke flytt)
     $box = trim((string)cfg('AGENT_FOLDER', 'Registrerte bestillinger'));
     if ($box !== '') {
-      $mv = $p->prepare("SELECT id, uid FROM agent_mail WHERE tenant_id=? AND status IN ('opprettet','oppdatert','sjekk') AND moved=0 AND uid IS NOT NULL AND uid > 0 AND created_at >= ?");
+      $mv = $p->prepare("SELECT id, uid FROM agent_mail WHERE tenant_id=? AND status IN ('opprettet','oppdatert','sjekk','plantegning') AND moved=0 AND uid IS NOT NULL AND uid > 0 AND created_at >= ?");
       $mv->execute([SV_TENANT, gmdate('Y-m-d\\TH:i:s\\Z', time() - 14 * 86400)]); $rows = $mv->fetchAll();
       if ($rows) {
         try { $im->move(array_column($rows, 'uid'), $im->folder($box)); $p->exec('UPDATE agent_mail SET moved=1 WHERE id IN (' . implode(',', array_map('intval', array_column($rows, 'id'))) . ')'); $log[] = count($rows) . ' flyttet til «' . $box . '»'; }

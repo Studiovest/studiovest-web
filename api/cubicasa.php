@@ -1,6 +1,6 @@
 <?php
 // Cubicasa: finner ferdige plantegningsordrer og kobler dem til riktig prosjekt i portalen ut fra adressen.
-// Kjøres fra cron.php hvert 15. minutt når CUBICASA_API_KEY er satt. Ordre som kobles, blir en plantegningsjobb (fp_job)
+// Kjøres fra cron.php hvert 30. minutt når CUBICASA_API_KEY er satt. Ordre som kobles, blir en plantegningsjobb (fp_job)
 // som plantegningsagenten i GitHub Actions lager, sjekker og leverer. API: https://integrate.docs.cubi.casa
 require_once __DIR__ . '/lib.php';
 

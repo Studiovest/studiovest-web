@@ -1,5 +1,5 @@
 <?php
-// Faste jobber. Kalles hvert 15. minutt av GitHub Actions (cron.yml) med hemmelig nøkkel. Små steg, så PHP-tidsgrensen holder.
+// Faste jobber. Kalles hvert 30. minutt av GitHub Actions (cron.yml) med hemmelig nøkkel. Små steg, så PHP-tidsgrensen holder.
 require __DIR__ . '/lib.php';
 $tok = (string)($_GET['token'] ?? '');
 if (!hash_equals(substr(hash('sha256', app_secret() . '|cron'), 0, 32), $tok)) fail('Ingen tilgang', 403);

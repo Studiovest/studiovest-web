@@ -84,7 +84,7 @@ Kart med Street View og flyfoto i prosjektene (valgfritt, gratis):
 | Innlogging i portalen | Lenke på e-post til `ADMIN_EMAIL`, ingen passord |
 | Https, www → uten www, gamle WordPress-adresser | `.htaccess` |
 | Google | Forsiden indekseres; portal, api og versjon-1 gjør ikke det; `sitemap.xml` lages |
-| Faste jobber | Workflow «Portal-jobber» kaller `api/cron.php` hvert 15. minutt |
+| Faste jobber | Workflow «Portal-jobber» kaller `api/cron.php` hvert 30. minutt |
 
 ## Angre lanseringen
 Filene til WordPress ligger urørt i `_wordpress/` på serveren, og en full kopi ligger som artefakt i GitHub-kjøringen. Flytt dem tilbake, eller be Claude gjøre det.

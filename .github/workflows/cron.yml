@@ -1,9 +1,9 @@
-# Faste jobber for portalen (opprydding nå; påminnelser og e-posthenting senere). Kaller api/cron.php hvert 15. minutt.
+# Faste jobber for portalen (opprydding nå; påminnelser og e-posthenting senere). Kaller api/cron.php hvert 30. minutt.
 name: Portal-jobber
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:

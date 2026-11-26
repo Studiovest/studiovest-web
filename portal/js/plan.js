@@ -139,11 +139,11 @@
   SV.runAgent = function (j) { return SV.live ? runLive(j) : demoRun(j); };
   var demoCard = SV.agentCard;
   SV.agentCard = function (j) { return SV.live ? SV.planLiveCard(j) : demoCard(j); };
-  var TONE = { 'kjører': ['Jobber …', 'sand'], venter: ['Fortsetter snart', 'sand'], 'spørsmål': ['Spør om noe', 'bad'], 'til godkjenning': ['Venter på godkjenning', 'bad'], godkjent: ['Publisert', 'ok'], avvist: ['Avvist', 'mute'], svar: ['Ingen endring', 'mute'], feil: ['Feil', 'bad'] };
-  SV.planLiveCard = function (j) {
+  var TONE = { 'kjører': ['Jobber …', 'sand'], venter: ['Fortsetter snart', 'sand'], 'spørsmål': ['Spør om noe', 'bad'], 'til godkjenning': ['Venter på godkjenning', 'bad'], godkjent: ['Publisert', 'ok'], avvist: ['Avvist', 'mute'], svar: ['Ingen endring', 'mute'], feil: ['Feil', 'bad'], manuell: ['Må gjøres manuelt', 'bad'] };
+  SV.planLiveCard = function (j, noImport) {
     var d = SV.planLiveData(j); if (!d) return '<p class="small muted">Laster plantegningsagenten …</p>';
     var rows = (d.sessions || []).slice(0, 6), miss = SV.planFloors(j).filter(function (f) { return !(d.scenes || {})[f.id]; });
-    var imp = miss.length ? '<div class="card pad" style="margin-bottom:12px"><p class="small"><b>Plantegningen er ikke lagt inn for ' + miss.map(function (f) { return esc(f.name); }).join(', ') + '.</b> Agenten trenger tegningen som scene (JSON).</p><div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">' +
+    var imp = miss.length && !noImport ? '<div class="card pad" style="margin-bottom:12px"><p class="small"><b>Plantegningen er ikke lagt inn for ' + miss.map(function (f) { return esc(f.name); }).join(', ') + '.</b> Agenten trenger tegningen som scene (JSON).</p><div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">' +
       miss.map(function (f) { return '<button class="btn btn-ghost btn-s" data-act="paImport" data-job="' + j.id + '" data-floor="' + f.id + '">Last opp ' + esc(f.name) + '</button>'; }).join('') + '</div></div>' : '';
     return imp + rows.map(function (r) {
       var t = TONE[r.status] || [r.status, 'mute'], cmp = '';
@@ -161,6 +161,11 @@
         (r.status === 'til godkjenning' ? '<div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn btn-ghost btn-s" data-act="paReject" data-id="' + r.id + '" data-job="' + j.id + '">Avvis</button><button class="btn btn-acc btn-s" data-act="paOk" data-id="' + r.id + '" data-job="' + j.id + '">' + ic('check') + 'Godkjenn og publiser</button></div>' : '') +
         '<p class="hint" style="margin-top:8px">Kostnad: ' + (r.usd || 0).toFixed(3) + ' $</p></div>';
     }).join('');
+  };
+  // på prosjektsiden: endringsønsker fra portalen og e-post
+  SV.planEditCard = function (j) {
+    if (!SV.live) return ''; var d = SV.planLiveData(j); if (!d || !(d.sessions || []).length) return '';
+    return '<div class="card"><div class="card-h"><h3>Endringer på plantegningen</h3></div><div class="card-b" style="padding-top:0">' + SV.planLiveCard(j, true) + '</div></div>';
   };
   function act(a, extra) { return function (el) { el.disabled = true; var body = Object.assign({ a: a, id: +el.getAttribute('data-id') }, extra ? extra(el) : {}), job = el.getAttribute('data-job');
     post(body).then(function (r) { SV.toast(r.ok ? (a === 'approve' ? 'Publisert som versjon ' + r.version : a === 'reject' ? 'Forslaget er avvist' : 'Svar sendt') : r.error || 'Feil', r.ok ? '' : 'warn'); SV.planReload(job); }); }; }
@@ -212,14 +217,14 @@
           '<p class="hint">Kostnad: ' + (r.usd || 0).toFixed(3) + ' $</p></div>';
       }).join('');
     }
-    return '<div class="card"><div class="card-h"><h3>Plantegninger</h3></div><div class="card-b" style="padding-top:0"><p class="small muted" style="margin-bottom:10px">Når Cubicasa-ordren med samme adresse (' + esc(j.addr) + ') er klar, henter agenten den, lager plantegningene i ' + esc((SV.find(SV.data.offices, j.office) || {}).name || 'kontorets') + ' sin mal, sjekker dem og legger dem her. Den ser etter nye ordrer hvert 15. minutt.' + (SV.live ? '' : ' Fungerer på studiovest.no.') + '</p>' + form + list + '</div></div>';
+    return '<div class="card"><div class="card-h"><h3>Plantegninger</h3></div><div class="card-b" style="padding-top:0"><p class="small muted" style="margin-bottom:10px">Når Cubicasa-ordren med samme adresse (' + esc(j.addr) + ') er klar, henter agenten den, lager plantegningene i ' + esc((SV.find(SV.data.offices, j.office) || {}).name || 'kontorets') + ' sin mal, sjekker dem og legger dem her. Den ser etter nye ordrer hvert 30. minutt.' + (SV.live ? '' : ' Fungerer på studiovest.no.') + '</p>' + form + list + '</div></div>';
   };
   SV.on('fpSend', function (el, ev) {
     if (ev) ev.preventDefault(); var f = document.getElementById('fpF'), id = el.getAttribute('data-id');
     if (!f.pdf.files.length) { SV.toast('Velg Cubicasa-PDF-en', 'warn'); return; }
     var fd = new FormData(f); fd.append('job', id); el.disabled = true; el.textContent = 'Laster opp …';
     fetch(API + 'floorjobs.php', { method: 'POST', credentials: 'same-origin', body: fd }).then(function (r) { return r.json(); })
-      .then(function (r) { SV.toast(r.ok ? 'Lagt i kø. Agenten starter innen 15 minutter.' : r.error, r.ok ? '' : 'warn'); FPB[id] = 0; FP[id] = null; fpLoad(id); })
+      .then(function (r) { SV.toast(r.ok ? 'Lagt i kø. Agenten starter innen 30 minutter.' : r.error, r.ok ? '' : 'warn'); FPB[id] = 0; FP[id] = null; fpLoad(id); })
       .catch(function () { SV.toast('Opplastingen feilet', 'warn'); el.disabled = false; });
   });
   SV.on('fpFirst', function (el) { var id = el.getAttribute('data-id'); SV.state.fpFirst = SV.state.fpFirst || {}; SV.state.fpFirst[id] = el.value.trim(); SV.save(); SV.toast(el.value.trim() ? 'Etasjer: ' + el.value.trim() : 'Agenten bruker Cubicasas etasjenavn'); });

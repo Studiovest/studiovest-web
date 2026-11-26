@@ -4,7 +4,7 @@
   var SV = window.SV, esc = SV.esc, ic = SV.icon;
   var API = location.pathname.replace(/\/portal(\/.*)?$/, '') + '/api/';
   var data = null, loading = false, err = '';
-  var TONE = { opprettet: ['Prosjekt laget', 'ok'], sjekk: ['Sjekk bestillingen', 'bad'], 'ikke bestilling': ['Ikke en bestilling', 'mute'], oppdatert: ['Prosjekt oppdatert', 'ok'], feil: ['Feil', 'bad'], venter: ['Venter (dagsgrense)', 'sand'], leser: ['Leser …', 'sand'] };
+  var TONE = { opprettet: ['Prosjekt laget', 'ok'], sjekk: ['Sjekk bestillingen', 'bad'], 'ikke bestilling': ['Ikke en bestilling', 'mute'], oppdatert: ['Prosjekt oppdatert', 'ok'], plantegning: ['Plantegningsendring', 'ok'], feil: ['Feil', 'bad'], venter: ['Venter (dagsgrense)', 'sand'], leser: ['Leser …', 'sand'] };
   var DEMO = { on: true, demo: true, month: { emails: 214, usd: 0.94 }, geo: { n: 31, ok: 27 }, last_run: null, rows: [
     { id: 4, received: '2026-11-26T10:30:00Z', from_name: 'Sigrid Tveit', from_addr: 'sigrid@fjordmegling.example', subject: 'Re: Bestilling: Flaten 23, Ølve', status: 'oppdatert', job_id: 'B-2620', data: { is_update: true, update_ref: 'Flaten 23', invoice_to: 'kunde' } },
     { id: 3, received: '2026-11-26T07:12:00Z', from_name: 'Sigrid Tveit', from_addr: 'sigrid@fjordmegling.example', subject: 'Bestilling: Flaten 23, Ølve', status: 'opprettet', job_id: 'B-2620', data: { addr: 'Flaten 23', town: 'Ølve', services: ['f30', 'kv'], seller: 'Kari Nes' } },
@@ -22,7 +22,7 @@
   function when(iso) { if (!iso) return '–'; var d = new Date(iso); return SV.fdate(iso.slice(0, 10)) + ' kl. ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
   SV.route('/agent', 'studio', function () {
     load();
-    var head = SV.head({ eyebrow: 'Leser innboksen hvert 15. minutt', a: 'E-postagent', b: 'bestillinger fra meglere',
+    var head = SV.head({ eyebrow: 'Leser innboksen hvert 30. minutt', a: 'E-postagent', b: 'bestillinger fra meglere',
       lead: 'Agenten leser ny e-post, finner bestillinger og lager prosjektet i Bolig. Er noe uklart, får prosjektet merket «Sjekk bestillingen».',
       actions: SV.live && data && data.on ? '<button class="btn btn-dark btn-s" data-act="mailRun">' + ic('mail') + 'Sjekk innboksen nå</button>' : '' });
     if (err) return head + '<p class="empty">' + esc(err) + '</p>';
@@ -57,7 +57,7 @@
           '<button class="btn btn-dark btn-s" data-act="ccLink" data-o="' + esc(o.order_id) + '">Koble</button><button class="link small" data-act="ccIgnore" data-o="' + esc(o.order_id) + '">Ignorer</button></div></div>'; }).join('') + '</div>';
   }
   function ccPost(b, msg) { return fetch(API + 'floorjobs.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }).then(function (r) { SV.toast(r.ok ? msg : r.error, r.ok ? '' : 'warn'); CC = null; SV.render(); }); }
-  SV.on('ccLink', function (el) { var o = el.getAttribute('data-o'), s = document.getElementById('cc-' + o); if (!s || !s.value) { SV.toast('Velg prosjekt', 'warn'); return; } ccPost({ a: 'link', order: o, job: s.value }, 'Koblet. Agenten lager plantegningene innen 15 minutter.'); });
+  SV.on('ccLink', function (el) { var o = el.getAttribute('data-o'), s = document.getElementById('cc-' + o); if (!s || !s.value) { SV.toast('Velg prosjekt', 'warn'); return; } ccPost({ a: 'link', order: o, job: s.value }, 'Koblet. Agenten lager plantegningene innen 30 minutter.'); });
   SV.on('ccIgnore', function (el) { ccPost({ a: 'ignore', order: el.getAttribute('data-o') }, 'Ordren er ignorert'); });
   SV.on('mailRun', function (el) {
     el.disabled = true; SV.toast('Sjekker innboksen …');

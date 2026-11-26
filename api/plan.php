@@ -287,11 +287,29 @@ function plan_slim(array $msgs): array {
 }
 
 // Ny forespørsel: lag økt og kjør. $from = hvem som ba om endringen (navn og rolle).
-function plan_request(string $job, string $floor, string $text, string $from): array {
-  plan_tables(); $cur = plan_get($job, $floor); if (!$cur) throw new Exception('Plantegningen for denne etasjen er ikke lagt inn i portalen ennå.');
-  db()->prepare('INSERT INTO plan_session (tenant_id, job_id, floor, status, request, from_who, messages, draft, base_version, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
-    ->execute([SV_TENANT, $job, $floor, 'kjører', $text, $from, json_encode([['role' => 'user', 'content' => "Endringsønske for plantegning $job:$floor fra $from:\n\n$text"]], JSON_UNESCAPED_UNICODE), json_encode($cur['scene'], JSON_UNESCAPED_UNICODE), $cur['version'], now(), now()]);
-  return plan_step((int)db()->lastInsertId());
+// Legger en forespørsel i kø (status «venter»). Uten redigerbar plantegning lagres den som «manuell», så Studiovest ser den på prosjektet.
+function plan_queue(string $job, string $floor, string $text, string $from): int {
+  plan_tables(); $cur = plan_get($job, $floor);
+  db()->prepare('INSERT INTO plan_session (tenant_id, job_id, floor, status, request, from_who, messages, draft, base_version, info, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)')
+    ->execute([SV_TENANT, $job, $floor, $cur ? 'venter' : 'manuell', $text, $from, json_encode([['role' => 'user', 'content' => "Endringsønske for plantegning $job:$floor fra $from:\n\n$text"]], JSON_UNESCAPED_UNICODE),
+      $cur ? json_encode($cur['scene'], JSON_UNESCAPED_UNICODE) : null, $cur['version'] ?? 0, $cur ? null : 'Plantegningen er ikke lagt inn som redigerbar tegning. Må gjøres manuelt.', now(), now()]);
+  return (int)db()->lastInsertId();
+}
+function plan_request(string $job, string $floor, string $text, string $from, int $budget = 50): array {
+  plan_tables(); if (!plan_get($job, $floor)) throw new Exception('Plantegningen for denne etasjen er ikke lagt inn i portalen ennå.');
+  return plan_step(plan_queue($job, $floor, $text, $from), $budget);
+}
+// Endringsønske fra e-post: finner etasjen(e) og starter agenten. Returnerer antall forespørsler.
+const PLAN_FLOOR_WORDS = ['k' => '/kjeller|underetasje|u\.?\s*etg/i', 'f1' => '/(^|\D)1\.?\s*(etasje|etg)|første etasje|hovedetasje/i', 'f2' => '/(^|\D)2\.?\s*(etasje|etg)|andre etasje/i', 'f3' => '/(^|\D)3\.?\s*(etasje|etg)/i', 'l' => '/loft/i'];
+function plan_from_mail(string $job, string $text, string $floorHint, string $from): array {
+  plan_tables(); $s = db()->prepare('SELECT floor FROM plan_scene WHERE tenant_id=? AND job_id=?'); $s->execute([SV_TENANT, $job]); $floors = $s->fetchAll(PDO::FETCH_COLUMN);
+  if (!$floors) return ['ids' => [plan_queue($job, 'f1', $text, $from)], 'manual' => true];
+  $pick = array_values(array_filter($floors, fn($f) => isset(PLAN_FLOOR_WORDS[$f]) && $floorHint !== '' && preg_match(PLAN_FLOOR_WORDS[$f], $floorHint)));
+  if (!$pick) $pick = $floors; // etasjen er ikke nevnt: agenten ser på alle og lar være å endre der ønsket ikke passer
+  $note = count($pick) > 1 ? "\n\n(Etasjen er ikke nevnt i e-posten. Gjelder ikke ønsket denne etasjen, gjør ingen endringer og si det kort.)" : '';
+  $ids = []; foreach ($pick as $f) $ids[] = plan_queue($job, $f, $text . $note, $from);
+  plan_step($ids[0], 20); // første etasje med en gang; resten fortsetter i neste kjøring
+  return ['ids' => $ids, 'manual' => false];
 }
 function plan_answer(int $id, string $answer): array {
   $r = plan_session($id); if ($r['status'] !== 'spørsmål') throw new Exception('Agenten venter ikke på svar');
