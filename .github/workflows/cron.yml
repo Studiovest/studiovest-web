@@ -9,7 +9,7 @@ on:
 jobs:
   tick:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - id: cfg
@@ -18,3 +18,14 @@ jobs:
         run: python3 .github/scripts/config.py
       - if: steps.cfg.outputs.ready == 'true' && steps.cfg.outputs.has_db == 'true'
         run: curl -s --max-time 60 "${{ steps.cfg.outputs.site }}/api/cron.php?token=$CRON_TOKEN" || true
+      # Plantegningsagenten: lager og leverer ferdige plantegninger når det ligger jobber i portalen
+      - id: fp
+        if: steps.cfg.outputs.ready == 'true' && steps.cfg.outputs.has_db == 'true'
+        run: |
+          n=$(curl -s --max-time 30 "${{ steps.cfg.outputs.site }}/api/floorjobs.php?token=$CRON_TOKEN&a=pending" | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('ids',[])))" 2>/dev/null || echo 0)
+          echo "jobs=$n" >> "$GITHUB_OUTPUT"; echo "Plantegningsjobber: $n"
+      - if: steps.fp.outputs.jobs != '0' && steps.fp.outputs.jobs != ''
+        run: |
+          sudo apt-get -qq update && sudo apt-get -qq install -y poppler-utils fonts-liberation >/dev/null
+          pip install -q pillow numpy opencv-python-headless
+          SITE="${{ steps.cfg.outputs.site }}" python3 .github/floorplan/agent.py

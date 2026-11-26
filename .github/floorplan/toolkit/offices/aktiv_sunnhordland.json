@@ -1,0 +1,48 @@
+{
+  "name": "Aktiv Sunnhordland",
+  "canvas": [
+    2576,
+    1821
+  ],
+  "format": "jpg",
+  "cubicasa_footer_fraction": 0.1,
+  "logos": [
+    {
+      "file": "aktiv.png",
+      "box": [
+        2242,
+        73,
+        278,
+        73
+      ]
+    },
+    {
+      "file": "studiovest.png",
+      "box": [
+        31,
+        1725,
+        402,
+        69
+      ]
+    }
+  ],
+  "text_center_x": 1288,
+  "text_color": "#4b281e",
+  "title": {
+    "font": "playfair-bold",
+    "size": 43,
+    "top": 1598
+  },
+  "disclaimer": {
+    "font": "playfair-regular",
+    "size": 23.75,
+    "top": 1677,
+    "line_pitch": 46.5,
+    "lines": [
+      "Tegningen er ikke målestokkholdig",
+      "Megler/selger tar ikke ansvar for evt. feil.",
+      "Plassering av møbler er kun tatt med for å illustrere muligheter."
+    ]
+  },
+  "remove_separator_lines": true
+}

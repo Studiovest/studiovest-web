@@ -38,6 +38,9 @@ if env:
             if cfg.get(k):
                 f.write(f'{k}={cfg[k]}\n')
         f.write(f'CRON_TOKEN={cron_token}\n')
+        for k in ['ANTHROPIC_API_KEY', 'FLOORPLAN_MODEL']:
+            if cfg.get(k):
+                f.write(f'{k}={cfg[k]}\n')
 
 if len(sys.argv) > 2 and sys.argv[1] == 'php':
     keys = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'MAIL_HOST', 'MAIL_PORT', 'MAIL_USER', 'MAIL_PASSWORD', 'MAIL_FROM',

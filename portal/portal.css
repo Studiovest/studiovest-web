@@ -1151,3 +1151,8 @@ details[open].card summary::after{content:" −"}
 .map-sv p{display:flex;gap:6px;align-items:center;justify-content:center;margin:0}
 .seg-mini{display:flex;gap:4px;flex-wrap:wrap}.seg-mini .fbtn{font-size:12px;padding:4px 10px}
 .card-h:has(.seg-mini){flex-wrap:wrap;gap:8px}
+
+.fp-form{display:grid;gap:8px;margin-bottom:12px}.fp-form .btn{justify-self:start}
+.fp-job{border-top:1px solid var(--line);padding:12px 0 4px}
+.fp-files{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:8px 0}
+.fp-files a{display:block;text-decoration:none;color:inherit;font-size:12px}.fp-files img{width:100%;aspect-ratio:2576/1821;object-fit:cover;border:1px solid var(--line);border-radius:8px;display:block;margin-bottom:4px}

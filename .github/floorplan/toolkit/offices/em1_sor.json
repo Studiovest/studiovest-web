@@ -1,0 +1,47 @@
+{
+  "name": "EiendomsMegler 1 Sør",
+  "canvas": [
+    2576,
+    1821
+  ],
+  "format": "jpg",
+  "cubicasa_footer_fraction": 0.1,
+  "logos": [
+    {
+      "file": "em1_sor.png",
+      "box": [
+        2088,
+        62,
+        432,
+        76
+      ]
+    },
+    {
+      "file": "studiovest.png",
+      "box": [
+        31,
+        1725,
+        402,
+        69
+      ]
+    }
+  ],
+  "text_center_x": 1288,
+  "title": {
+    "font": "almarai-bold",
+    "size": 43,
+    "top": 1595
+  },
+  "disclaimer": {
+    "font": "almarai-regular",
+    "size": 28,
+    "top": 1674,
+    "line_pitch": 47,
+    "lines": [
+      "Tegningen er ikke målestokkholdig",
+      "Megler/selger tar ikke ansvar for evt. feil.",
+      "Plassering av møbler er kun tatt med for å illustrere muligheter."
+    ]
+  },
+  "text_color": "#101010"
+}

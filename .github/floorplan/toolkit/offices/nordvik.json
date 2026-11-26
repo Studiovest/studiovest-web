@@ -1,0 +1,48 @@
+{
+  "name": "Nordvik",
+  "canvas": [
+    2576,
+    1821
+  ],
+  "format": "jpg",
+  "cubicasa_footer_fraction": 0.1,
+  "logos": [
+    {
+      "file": "nordvik.png",
+      "box": [
+        2118,
+        48,
+        416,
+        105
+      ]
+    },
+    {
+      "file": "studiovest.png",
+      "box": [
+        31,
+        1725,
+        402,
+        69
+      ]
+    }
+  ],
+  "text_center_x": 1288,
+  "text_color": "#002d32",
+  "title": {
+    "font": "baskerville-bold",
+    "size": 39.5,
+    "top": 1594
+  },
+  "disclaimer": {
+    "font": "baskerville-regular",
+    "size": 22,
+    "top": 1675,
+    "line_pitch": 47,
+    "lines": [
+      "Tegningen er ikke målestokkholdig",
+      "Megler/selger tar ikke ansvar for evt. feil.",
+      "Plassering av møbler er kun tatt med for å illustrere muligheter."
+    ]
+  },
+  "remove_separator_lines": true
+}

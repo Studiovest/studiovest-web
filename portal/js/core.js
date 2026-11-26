@@ -19,6 +19,8 @@
   var API = location.pathname.replace(/\/portal(\/.*)?$/, '') + '/api/';
   var localSave = SV.save, putT = null, busy = false, again = false, netWarned = false;
   SV.live = false; SV.me = null; SV.serverVersion = 0;
+  // Moduler som legger standardverdier i SV.state, registrerer dem her, så de kjøres igjen når dataene fra serveren er lastet.
+  SV.stateInits = []; SV.onState = function (fn) { SV.stateInits.push(fn); fn(); };
   function serverPut() {
     if (busy) { again = true; return; }
     busy = true; again = false;
@@ -59,6 +61,7 @@
           Object.keys(SV.state).forEach(function (k) { delete SV.state[k]; });
           Object.assign(SV.state, JSON.parse(JSON.stringify(DEFAULTS)), st.data || {});
           SV.serverVersion = st.version || 0;
+          SV.stateInits.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
           SV.save = function () { localSave(); clearTimeout(putT); putT = setTimeout(serverPut, 700); };
           SV.reset = SV.logout;
           window.addEventListener('beforeunload', function () { if (putT) { clearTimeout(putT); serverPut(); } });

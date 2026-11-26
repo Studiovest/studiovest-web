@@ -3,12 +3,15 @@
   'use strict';
   var SV = window.SV, D = SV.data, esc = SV.esc, ic = SV.icon, ST = D.stages;
   var S = SV.state;
-  S.mailLog = S.mailLog || [];
-  S.inv = S.inv || { 'B-2604': { sent: true, d: D.W(-4) }, 'B-2601': { sent: true, d: D.W(-7) } };
-  S.approvals = S.approvals || {};
-  S.jobEdit = S.jobEdit || {};
-  S.mailRules = S.mailRules || {};
-  S.delivered = S.delivered || {};
+  SV.onState(function () {
+    S.mailLog = S.mailLog || [];
+    S.inv = S.inv || (SV.live ? {} : { 'B-2604': { sent: true, d: D.W(-4) }, 'B-2601': { sent: true, d: D.W(-7) } });
+    S.approvals = S.approvals || {};
+    S.jobEdit = S.jobEdit || {};
+    S.mailRules = S.mailRules || {};
+    S.delivered = S.delivered || {};
+    S.postponed = S.postponed || {};
+  });
 
   // Utefotografering har egne statuser for oppdrag med «Ekstra utefotografering». De ligger mellom «Fotografering utført» og «Oppdrag levert».
   D.outStages = ['Utefotografering avtalt', 'Utefotografering utført'];
@@ -16,7 +19,6 @@
   SV.stagesFor = function (j) { var L = ST.slice(0, 2).concat(['Utsatt'], ST.slice(2)); return j && SV.hasOut(j) ? L.slice(0, 5).concat(D.outStages, L.slice(5)) : L; };
   SV.stIdx = function (j) { var s = SV.stageOf(j); return D.outStages.indexOf(s) > -1 ? 3 : s === 'Utsatt' ? 1 : ST.indexOf(s); };
   SV.colOf = function (j) { var s = SV.stageOf(j); return D.outStages.indexOf(s) > -1 ? 'Fotografering utført' : s === 'Utsatt' ? 'Kontaktet' : s; };
-  S.postponed = S.postponed || {};
   SV.postInfo = function (j) { return SV.stageOf(j) === 'Utsatt' ? S.postponed[j.id] || { reason: 'Utsatt' } : null; };
   function svc(id) { return SV.find(D.boligServices, id); }
   function office(id) { return SV.find(D.offices, id); }
