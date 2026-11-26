@@ -344,3 +344,4 @@ blockquote.cl svg{width:30px;height:30px;color:var(--acct)}
   .menu{display:flex;flex-direction:column;justify-content:center}
   .menu[hidden]{display:none}
 }
+.packs-cta{margin:4px 0 22px;font-size:17px;font-weight:700;max-width:30em}

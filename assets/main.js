@@ -335,7 +335,7 @@
     G.from('.field', { y: 140, opacity: 0, duration: 1.3, ease: 'expo.out', stagger: 0.12, scrollTrigger: { trigger: '.fields-grid', start: 'top 85%' } });
     G.from('.fields-cta > *', { y: 40, opacity: 0, duration: 1, ease: 'expo.out', stagger: 0.1, scrollTrigger: { trigger: '.fields-cta', start: 'top 90%' } });
     // Timebank: pakkene fra høyre, bildene skaleres inn
-    G.from('.packs li', { x: 80, opacity: 0, duration: 1, ease: 'expo.out', stagger: 0.1, scrollTrigger: { trigger: '.packs', start: 'top 85%' } });
+    G.from('.packs-cta', { x: 80, opacity: 0, duration: 1, ease: 'expo.out', scrollTrigger: { trigger: '.packs-cta', start: 'top 85%' } });
     G.from('.bf img', { scale: 1.3, duration: 1.6, ease: 'expo.out', stagger: 0.15, scrollTrigger: { trigger: '.bank-floats', start: 'top 80%' } });
     // Bunn: kortet løftes opp
     G.from('.foot-card', { y: 160, scale: 0.94, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'top 25%', scrub: 1 } });
