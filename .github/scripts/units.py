@@ -20,7 +20,7 @@ for k, url in sorted(urls.items()):
         if loc(el.tag) not in ('featureMember', 'member'): continue
         f = el[0] if len(el) else el
         if sample and n < 2:
-            print(k, ET.tostring(f, encoding='unicode')[:2500]); n += 1
+            print(k, [(loc(x.tag), (x.text or '').strip()) for x in f.iter() if len(x) == 0 and (x.text or '').strip()][-25:]); n += 1
         aid, units = None, []
         for x in f.iter():
             t = loc(x.tag).lower()
