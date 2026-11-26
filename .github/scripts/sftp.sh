@@ -51,5 +51,6 @@ fi
 echo "== Publiserer =="
 L "mirror -R --parallel=4 --no-perms --exclude-glob api/data/* dist $ROOT"
 L "mkdir -p $ROOT/api/data; put dist/api/data/.htaccess -o $ROOT/api/data/.htaccess"
+[ -f dist/api/data/units.json ] && L "put dist/api/data/units.json -o $ROOT/api/data/units.json"
 date -u > live-marker && L "put live-marker -o $ROOT/.studiovest-live"
 echo "Ferdig."
