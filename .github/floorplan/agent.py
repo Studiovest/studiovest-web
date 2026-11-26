@@ -10,6 +10,28 @@ SITE = os.environ.get('SITE', 'https://studiovest.no').rstrip('/')
 TOKEN = os.environ.get('CRON_TOKEN', '')
 MODEL = os.environ.get('FLOORPLAN_MODEL') or 'claude-sonnet-5-5'
 FAKE = os.environ.get('FP_FAKE')
+CC_KEY = os.environ.get('CUBICASA_API_KEY', '')
+CC_BASE = os.environ.get('CC_BASE', 'https://app.cubi.casa/api/integrate/v3')
+
+
+def cc(path):
+    r = urllib.request.Request(CC_BASE + path, headers={'api-key': CC_KEY, 'Accept': 'application/json'})
+    with urllib.request.urlopen(r, timeout=60) as res:
+        return json.loads(res.read())
+
+
+def download(url, dest):
+    for headers in ({}, {'api-key': CC_KEY}):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=120) as r:
+                open(dest, 'wb').write(r.read()); return dest
+        except urllib.error.HTTPError as e:
+            if e.code not in (401, 403): raise
+    raise RuntimeError('Fikk ikke lastet ned filen fra Cubicasa (ingen tilgang)')
+
+
+def pages(pdf):
+    return int(subprocess.run(['pdfinfo', pdf], capture_output=True, text=True).stdout.split('Pages:')[1].split()[0])
 
 
 def api(a, id=None, data=None, files=None, raw=False):
@@ -71,11 +93,39 @@ TOOLS = [
 
 
 def run(job_id):
-    work = tempfile.mkdtemp(prefix=f'fp{job_id}_'); pdf = os.path.join(work, 'order.pdf'); rendered = {}
-    open(pdf, 'wb').write(api('pdf', job_id, raw=True))
+    work = tempfile.mkdtemp(prefix=f'fp{job_id}_'); rendered = {}; proj = api('project', job_id); order = {}; pdfs = {}
+    oid = proj.get('cubicasa_order_id') or ''
+
+    def get_order():
+        if oid.startswith('portal-'):
+            return {'status': 'Ready', 'files': {'pdf_without_dimensions': 'cubicasa:pdf'}, 'note': 'PDF-en er lastet opp i portalen. PDF med mål finnes ikke.'}
+        o = cc('/orders/' + urllib.parse.quote(oid)); order.update(o); lf = (o.get('delivery_assets') or {}).get('listing_floorplans') or {}
+        files = {}
+        if lf.get('pdf_urls'): files['pdf_without_dimensions'] = 'cubicasa:pdf'
+        if lf.get('pdf_urls_dim'): files['pdf_with_dimensions'] = 'cubicasa:pdf_dim'
+        return {'status': (o.get('info') or {}).get('status'), 'address': (o.get('address') or {}).get('full_address'), 'files': files,
+                'pdf_count': {k: len(lf.get(k) or []) for k in ('pdf_urls', 'pdf_urls_dim')}}
+
+    def get_pdf(alias):
+        if alias in pdfs: return pdfs[alias]
+        dest = os.path.join(work, alias.replace(':', '_') + '.pdf')
+        if oid.startswith('portal-') or alias in ('order.pdf', 'cubicasa:upload'):
+            open(dest, 'wb').write(api('pdf', job_id, raw=True)); pdfs[alias] = dest; return dest
+        if not order: get_order()
+        lf = (order.get('delivery_assets') or {}).get('listing_floorplans') or {}
+        urls = lf.get('pdf_urls_dim' if alias.endswith('_dim') else 'pdf_urls') or []
+        if not urls: raise ValueError('Ordren har ingen slik PDF. Bruk cubicasa:pdf eller cubicasa:pdf_dim fra cubicasa_get_order.')
+        parts = [download(u, os.path.join(work, f'part{i}.pdf')) for i, u in enumerate(urls)]
+        if len(parts) == 1: os.replace(parts[0], dest)
+        else:
+            # én PDF per etasje: slå sammen, og legg siste side til én gang til i stedet for Cubicasas «alle etasjer»-side (toolkit hopper over siste side)
+            extra = [parts[-1]] if all(pages(p) == 1 for p in parts) else []
+            subprocess.run(['pdfunite'] + parts + extra + [dest], check=True)
+        pdfs[alias] = dest; return dest
     system = open(os.path.join(HERE, 'prompt.md'), encoding='utf-8').read() + (
         '\n\n# Teknisk (portalen)\n- project_id er portalens jobbnummer. Bruk `office_key` fra get_project som office i render_floorplans; er den null, har kontoret ingen mal.'
-        '\n- Ordren er Cubicasa-PDF-en Studiovest har lastet opp (uten mål). Bruk `pdf_url` fra cubicasa_get_order.'
+        '\n- PDF-ene oppgis som korte navn: `cubicasa:pdf` (uten mål) og `cubicasa:pdf_dim` (med mål). Send det navnet som pdf_url til render_floorplans.'
+        '\n- Er `first_floor` tom, har ingen satt etasjenavn i portalen. Bestem da navnene ut fra Cubicasas oversikt og innholdet på sidene (kjeller = boder, vaskerom, teknisk rom, ingen kjøkken), og si i oppsummeringen at navnene er valgt av deg.'
         '\n- I save_deliverables og flag_for_review oppgir du filnavnene fra render_floorplans.')
     msgs = [{'role': 'user', 'content': f'Plantegningsordren for prosjekt {job_id} er klar. Lag, sjekk og lever plantegningene.'}]
     tin = tout = 0; log = []; done = False
@@ -90,17 +140,19 @@ def run(job_id):
             try:
                 if inp.get('project_id') not in (None, str(job_id)): raise ValueError(f'Feil prosjekt. Denne jobben er {job_id}.')
                 if name == 'get_project':
-                    out = [{'type': 'text', 'text': json.dumps(api('project', job_id), ensure_ascii=False)}]
+                    out = [{'type': 'text', 'text': json.dumps(proj, ensure_ascii=False)}]
                 elif name == 'cubicasa_get_order':
-                    out = [{'type': 'text', 'text': json.dumps({'status': 'delivered', 'files': [{'type': 'pdf_without_dimensions', 'url': 'order.pdf'}], 'note': 'PDF med mål er ikke lastet opp.'})}]
+                    out = [{'type': 'text', 'text': json.dumps(get_order(), ensure_ascii=False)}]
                 elif name == 'cubicasa_get_overview':
-                    n = int(subprocess.run(['pdfinfo', pdf], capture_output=True, text=True).stdout.split('Pages:')[1].split()[0])
+                    lf = (order.get('delivery_assets') or {}).get('listing_floorplans') or {}
+                    if len(lf.get('pdf_urls') or []) > 1: raise ValueError('Cubicasa leverte én PDF per etasje, så det finnes ingen oversiktsside. Bruk antall PDF-er fra cubicasa_get_order.')
+                    pdf = get_pdf('cubicasa:pdf'); n = pages(pdf)
                     subprocess.run(['pdftoppm', '-f', str(n), '-l', str(n), '-r', '70', '-png', pdf, os.path.join(work, 'overview')], check=True)
                     ov = sorted(f for f in os.listdir(work) if f.startswith('overview'))[-1]
                     out = [{'type': 'text', 'text': f'Siste side (side {n} av {n}):'}, img_block(os.path.join(work, ov), 1400)]
                 elif name == 'render_floorplans':
                     od = os.path.join(work, 'out'); subprocess.run(['rm', '-rf', od])
-                    p = subprocess.run([sys.executable, os.path.join(HERE, 'toolkit', 'floorplan.py'), pdf, '--office', inp['office'], '--first', inp['first'], '--prefix', inp['prefix'], '--json', '--out', od], capture_output=True, text=True)
+                    p = subprocess.run([sys.executable, os.path.join(HERE, 'toolkit', 'floorplan.py'), get_pdf(inp['pdf_url']), '--office', inp['office'], '--first', inp['first'], '--prefix', inp['prefix'], '--json', '--out', od], capture_output=True, text=True)
                     if p.returncode != 0: raise RuntimeError((p.stderr or p.stdout).strip()[-600:])
                     r = json.loads(p.stdout.strip().splitlines()[-1]); rendered = {os.path.basename(f['file']): f for f in r['files']}
                     out = [{'type': 'text', 'text': json.dumps({'office': r['office'], 'floor_pages': r['floor_pages'], 'files': [{'file': k, 'floor': v['floor'], 'page': v['page']} for k, v in rendered.items()], 'log': r.get('log', [])}, ensure_ascii=False)}]
@@ -129,7 +181,18 @@ def run(job_id):
     print(f'Jobb {job_id}: {"ferdig" if done else "ikke ferdig"} · {tin} inn / {tout} ut tokens')
 
 
+def probe():
+    # Viser hvordan Cubicasa-svarene ser ut, uten adresser eller lenker (loggen kan være offentlig).
+    res = cc('/orders?status=Ready&limit=5'); items = res.get('items') or []
+    print('Ferdige ordrer:', len(items), '· flere:', (res.get('pagination') or {}).get('has_more'))
+    for o in items[:3]:
+        a = o.get('address') or {}; d = cc('/orders/' + o['id']); lf = (d.get('delivery_assets') or {}).get('listing_floorplans') or {}
+        print({'status': (o.get('info') or {}).get('status'), 'har_gate': bool(a.get('street')), 'har_nummer': bool(a.get('number')), 'har_full_adresse': bool(a.get('full_address')),
+               'filer': {k: len(v) for k, v in lf.items() if isinstance(v, list)}, 'pdf_vert': urllib.parse.urlparse((lf.get('pdf_urls') or [''])[0]).netloc})
+
+
 if __name__ == '__main__':
+    if '--probe' in sys.argv: probe(); sys.exit()
     ids = [int(x) for x in sys.argv[1:]] or api('pending')['ids']
     for i in ids:
         try: run(i)

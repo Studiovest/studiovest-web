@@ -1,0 +1,19 @@
+# Sjekker at Cubicasa-nøkkelen virker og viser hvordan ordrene ser ut (uten adresser og lenker). Kjøres manuelt.
+name: Cubicasa-test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - id: cfg
+        env:
+          CFG: ${{ secrets.STUDIOVEST_CONFIG }}
+        run: python3 .github/scripts/config.py
+      - run: |
+          if [ -z "$CUBICASA_API_KEY" ]; then echo "::error::CUBICASA_API_KEY mangler i STUDIOVEST_CONFIG"; exit 1; fi
+          python3 .github/floorplan/agent.py --probe

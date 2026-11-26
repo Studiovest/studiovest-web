@@ -6,14 +6,12 @@
 // Agenten (?token=):     GET a=pending · GET a=project&id= · GET a=pdf&id= · POST a=save&id= / a=flag&id= (multipart file, summary/reason) · POST a=usage&id=
 require __DIR__ . '/lib.php';
 require_once __DIR__ . '/agent.php';
+require_once __DIR__ . '/cubicasa.php';
 
 const FP_OFFICE = ['emn' => 'em_norge', 'em1' => 'em1_sor', 'aksun' => 'aktiv_sunnhordland', 'nvhar' => 'nordvik', 'nvsun' => 'nordvik', 'nvhau' => 'nordvik'];
 const FP_STATUS = ['venter', 'kjører', 'levert', 'sjekk', 'feil'];
 
-function fp_tables(): void {
-  $p = db(); $ai = is_sqlite($p) ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT AUTO_INCREMENT PRIMARY KEY'; $tx = is_sqlite($p) ? 'TEXT' : 'LONGTEXT';
-  $p->exec("CREATE TABLE IF NOT EXISTS fp_job (id $ai, tenant_id VARCHAR(40) NOT NULL, job_id VARCHAR(20), status VARCHAR(20), first_floor VARCHAR(120), notes $tx, pdf VARCHAR(190), summary $tx, reason $tx, files $tx, log $tx, tokens_in INT DEFAULT 0, tokens_out INT DEFAULT 0, by_who VARCHAR(190), created_at VARCHAR(25), updated_at VARCHAR(25))");
-}
+function fp_tables(): void { cc_tables(); }
 function fp_dir(int $id): string { $d = __DIR__ . '/data/plans/' . $id; if (!is_dir($d)) mkdir($d, 0750, true); return $d; }
 function fp_row(int $id): array { $s = db()->prepare('SELECT * FROM fp_job WHERE tenant_id=? AND id=?'); $s->execute([SV_TENANT, $id]); $r = $s->fetch(); if (!$r) fail('Fant ikke jobben', 404); return $r; }
 function fp_set(int $id, array $f): void { $f['updated_at'] = now(); db()->prepare('UPDATE fp_job SET ' . implode(', ', array_map(fn($k) => "$k=?", array_keys($f))) . ' WHERE tenant_id=? AND id=?')->execute(array_merge(array_values($f), [SV_TENANT, $id])); }
@@ -60,9 +58,10 @@ if ($tok !== '') {
     $off = (string)($j['office'] ?? ''); $name = AGENT_OFFICES[$off][0] ?? ($off ?: 'ukjent');
     fp_set($id, ['status' => 'kjører']);
     json_out(['ok' => true, 'project_id' => (string)$id, 'portal_job' => $r['job_id'], 'address' => trim(($j['addr'] ?? '') . ', ' . ($j['town'] ?? $j['geo']['poststed'] ?? ''), ', '),
-      'office' => $name, 'office_key' => FP_OFFICE[$off] ?? null, 'first_floor' => $r['first_floor'], 'notes' => (string)$r['notes'],
+      'office' => $name, 'office_key' => FP_OFFICE[$off] ?? null, 'first_floor' => $r['first_floor'] ?: (string)((cc_state()['fpFirst'] ?? [])[$r['job_id']] ?? ''), 'notes' => (string)$r['notes'],
       'address_slug' => fp_slug((string)($j['addr'] ?? 'plantegning'), (string)($j['town'] ?? $j['geo']['poststed'] ?? '')),
-      'cubicasa_order_id' => 'portal-' . $id, 'pdf' => $r['pdf']]);
+      'first_floor_source' => $r['first_floor'] !== '' ? 'satt i portalen' : 'ikke satt (bruk Cubicasas oversikt)',
+      'cubicasa_order_id' => $r['order_id'] ?: 'portal-' . $id, 'uploaded_pdf' => $r['pdf']]);
   }
   if ($a === 'pdf') fp_send($id, (string)$r['pdf']);
   if ($a === 'save' || $a === 'flag') {
@@ -89,8 +88,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     fp_set($id, ['pdf' => $up['name']]); json_out(['ok' => true, 'id' => $id]);
   }
   $b = body();
+  if (($b['a'] ?? '') === 'link') { $id = cc_link((string)$b['order'], (string)$b['job'], $u['email']); json_out(['ok' => true, 'id' => $id]); }
+  if (($b['a'] ?? '') === 'ignore') { cc_tables(); db()->prepare("UPDATE cc_order SET status='ignorert', updated_at=? WHERE tenant_id=? AND order_id=?")->execute([now(), SV_TENANT, (string)$b['order']]); json_out(['ok' => true]); }
   if (($b['a'] ?? '') === 'retry') { fp_row((int)$b['id']); fp_set((int)$b['id'], ['status' => 'venter', 'reason' => null]); json_out(['ok' => true]); }
   fail('Ukjent handling');
 }
+if (($_GET['a'] ?? '') === 'unmatched') { // Cubicasa-ordrer agenten ikke kunne koble sikkert
+  $s = db()->prepare("SELECT order_id, address, status, candidates, created_at FROM cc_order WHERE tenant_id=? AND status IN ('umatchet','flere') ORDER BY created_at DESC LIMIT 30"); $s->execute([SV_TENANT]);
+  json_out(['ok' => true, 'on' => cc_on(), 'orders' => array_map(fn($r) => ['candidates' => json_decode((string)$r['candidates'], true) ?: []] + $r, $s->fetchAll())]);
+}
 $s = db()->prepare('SELECT * FROM fp_job WHERE tenant_id=? AND job_id=? ORDER BY id DESC LIMIT 20'); $s->execute([SV_TENANT, (string)($_GET['job'] ?? '')]);
-json_out(['ok' => true, 'on' => (bool)cfg('ANTHROPIC_API_KEY'), 'jobs' => array_map('fp_public', $s->fetchAll())]);
+json_out(['ok' => true, 'on' => (bool)cfg('ANTHROPIC_API_KEY'), 'cubicasa' => cc_on(), 'jobs' => array_map('fp_public', $s->fetchAll())]);

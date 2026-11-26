@@ -44,11 +44,20 @@ E-postagent (leser bestillinger fra meglere og lager prosjekter):
    ```
    ANTHROPIC_API_KEY=
    ```
+   Bestillinger agenten har registrert, flyttes til mappen «Registrerte bestillinger» i innboksen (lages automatisk). Annet navn: `AGENT_FOLDER=Mappenavn`. Tom verdi slår av flyttingen.
    Valgfritt: `IMAP_USER=` og `IMAP_PASSWORD=` hvis bestillingene kommer til en annen adresse enn `MAIL_USER`, og `AGENT_DOMAINS=fjordmegling.no,em1.no` for meglerdomener som alltid skal leses.
 
 Plantegningsagent (endrer plantegninger ut fra ønsker fra megler, kunde og fotograf):
 
 8. Bruker samme `ANTHROPIC_API_KEY`. Valgfritt: `PLAN_MODEL=` for en annen Claude-modell (standard `claude-sonnet-5-5`).
+
+Plantegninger fra Cubicasa (agenten henter ferdige ordrer og kobler dem til prosjektet med samme adresse):
+
+10. **Cubicasa-nøkkel:** legg til i hemmeligheten:
+    ```
+    CUBICASA_API_KEY=
+    ```
+    Test nøkkelen: Actions → «Cubicasa-test» → Run workflow. Ved første kjøring registreres ordrer som allerede er ferdige, uten å lages på nytt.
 
 Kart med Street View og flyfoto i prosjektene (valgfritt, gratis):
 

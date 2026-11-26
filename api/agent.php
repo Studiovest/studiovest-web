@@ -31,6 +31,7 @@ function agent_tables(): void {
   $p = db(); $ai = is_sqlite($p) ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT AUTO_INCREMENT PRIMARY KEY';
   $tx = is_sqlite($p) ? 'TEXT' : 'LONGTEXT'; $eng = is_sqlite($p) ? '' : ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
   $p->exec("CREATE TABLE IF NOT EXISTS agent_mail (id $ai, tenant_id VARCHAR(40) NOT NULL, uid BIGINT, message_id VARCHAR(255), from_name VARCHAR(190), from_addr VARCHAR(190), subject VARCHAR(255), received VARCHAR(25), body $tx, status VARCHAR(20), job_id VARCHAR(30), data $tx, info VARCHAR(500), tokens_in INT, tokens_out INT, tries INT NOT NULL DEFAULT 0, created_at VARCHAR(25))$eng");
+  try { $p->exec('ALTER TABLE agent_mail ADD COLUMN moved INT NOT NULL DEFAULT 0'); } catch (Throwable $e) {} // finnes fra før
   try { $p->exec('CREATE UNIQUE INDEX ux_agent_mail_mid ON agent_mail (tenant_id, message_id)'); } catch (Throwable $e) {}
 }
 
@@ -65,6 +66,28 @@ final class Imap {
   function select(string $box = 'INBOX'): int { [$ls] = $this->cmd('SELECT ' . $this->q($box)); foreach ($ls as $l) if (preg_match('/UIDVALIDITY (\d+)/i', $l, $m)) return (int)$m[1]; return 0; }
   function search(string $crit): array { [$ls] = $this->cmd('UID SEARCH ' . $crit); foreach ($ls as $l) if (stripos($l, '* SEARCH') === 0) return array_map('intval', array_filter(preg_split('/\s+/', trim(substr($l, 8))))); return []; }
   function fetch(int $uid): ?string { [, $lits] = $this->cmd("UID FETCH $uid (BODY.PEEK[])"); return $lits[0] ?? null; }
+  function caps(): string { [$ls] = $this->cmd('CAPABILITY'); return strtoupper(implode(' ', $ls)); }
+  // Finner mappen (uansett prefiks, f.eks. «INBOX.Registrerte bestillinger»), eller lager den. Returnerer det kodede mappenavnet.
+  function folder(string $name): string {
+    $enc = function_exists('mb_convert_encoding') ? mb_convert_encoding($name, 'UTF7-IMAP', 'UTF-8') : $name;
+    [$ls] = $this->cmd('LIST "" "*"');
+    foreach ($ls as $l) if (preg_match('/^\* LIST \([^)]*\) (?:"(.)"|NIL) (?:"((?:[^"\\\\]|\\\\.)*)"|(\S+))/i', trim($l), $m)) {
+      $full = stripcslashes($m[2] !== '' ? $m[2] : ($m[3] ?? '')); $d = $m[1] ?? '';
+      $last = $d !== '' ? substr($full, (int)strrpos($full, $d) + ($d !== '' && strrpos($full, $d) !== false ? 1 : 0)) : $full;
+      if (strcasecmp($last, $enc) === 0 || strcasecmp($full, $enc) === 0) return $full;
+    }
+    $prefix = '';
+    try { [$ns] = $this->cmd('NAMESPACE'); foreach ($ns as $l) if (preg_match('/^\* NAMESPACE \(\("([^"]*)"/i', $l, $m)) $prefix = $m[1]; } catch (Throwable $e) {}
+    $full = $prefix . $enc; $this->cmd('CREATE ' . $this->q($full)); try { $this->cmd('SUBSCRIBE ' . $this->q($full)); } catch (Throwable $e) {}
+    return $full;
+  }
+  // Flytter e-post (UID-er i valgt mappe) til mappen. Bruker MOVE om serveren kan, ellers COPY + slett.
+  function move(array $uids, string $folder): void {
+    if (!$uids) return; $set = implode(',', array_map('intval', $uids)); $caps = $this->caps();
+    if (strpos($caps, ' MOVE') !== false) { $this->cmd("UID MOVE $set " . $this->q($folder)); return; }
+    $this->cmd("UID COPY $set " . $this->q($folder)); $this->cmd("UID STORE $set +FLAGS.SILENT (\\Deleted)");
+    $this->cmd(strpos($caps, 'UIDPLUS') !== false ? "UID EXPUNGE $set" : 'EXPUNGE');
+  }
   function close(): void { try { $this->cmd('LOGOUT'); } catch (Throwable $e) {} if ($this->fp) fclose($this->fp); }
 }
 
@@ -274,6 +297,16 @@ function agent_run(int $budget = 20, int $max = 8): array {
       if ($used >= $cap) { $p->prepare('UPDATE agent_mail SET status=?, info=? WHERE id=?')->execute(['venter', 'dagsgrense nådd', $mid]); continue; }
       $row = $p->query('SELECT * FROM agent_mail WHERE id=' . $mid)->fetch();
       $log[] = agent_process($row, $used, $m);
+    }
+    // registrerte bestillinger flyttes til egen mappe i innboksen (AGENT_FOLDER, tom = ikke flytt)
+    $box = trim((string)cfg('AGENT_FOLDER', 'Registrerte bestillinger'));
+    if ($box !== '') {
+      $mv = $p->prepare("SELECT id, uid FROM agent_mail WHERE tenant_id=? AND status IN ('opprettet','oppdatert','sjekk') AND moved=0 AND uid IS NOT NULL AND uid > 0 AND created_at >= ?");
+      $mv->execute([SV_TENANT, gmdate('Y-m-d\\TH:i:s\\Z', time() - 14 * 86400)]); $rows = $mv->fetchAll();
+      if ($rows) {
+        try { $im->move(array_column($rows, 'uid'), $im->folder($box)); $p->exec('UPDATE agent_mail SET moved=1 WHERE id IN (' . implode(',', array_map('intval', array_column($rows, 'id'))) . ')'); $log[] = count($rows) . ' flyttet til «' . $box . '»'; }
+        catch (Throwable $e) { $log[] = 'flytting feilet: ' . substr($e->getMessage(), 0, 120); }
+      }
     }
   } finally { $im->close(); }
   return ['ok' => true, 'info' => $log ? implode('; ', $log) : 'ingen nye bestillinger'];

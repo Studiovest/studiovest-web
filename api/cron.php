@@ -12,6 +12,9 @@ if (agent_on()) { try { $r = agent_run(20, 8); $done[] = 'agent: ' . $r['info'];
 // Adresseagent: finner postnummer, kommune og gnr/bnr for nye prosjekter (Kartverket, gratis)
 require_once __DIR__ . '/enrich.php';
 try { $r = enrich_jobs(5); if ($r['n']) $done[] = 'adresse: ' . $r['info']; } catch (Throwable $e) { $done[] = 'adresse feilet: ' . substr($e->getMessage(), 0, 200); }
+// Cubicasa: kobler ferdige plantegningsordrer til prosjekter (plantegningsagenten i GitHub Actions leverer dem)
+require_once __DIR__ . '/cubicasa.php';
+if (cc_on()) { try { $r = cc_sync(); if ($r['ny'] || $r['koblet'] || strpos($r['info'], 'første') === 0) $done[] = 'cubicasa: ' . $r['info']; } catch (Throwable $e) { $done[] = 'cubicasa feilet: ' . substr($e->getMessage(), 0, 200); } }
 // Plantegningsagent: fortsetter forespørsler som gikk tom for tid
 require_once __DIR__ . '/plan.php';
 if (cfg('ANTHROPIC_API_KEY')) { try { $r = plan_continue(2); if ($r['n']) $done[] = 'plantegning: ' . $r['n'] . ' fortsatt'; } catch (Throwable $e) { $done[] = 'plantegning feilet: ' . substr($e->getMessage(), 0, 200); } }

@@ -41,8 +41,24 @@
           '<td>' + SV.chip(t[0], t[1]) + (r.job_id ? '<small><a href="#/bolig/' + esc(r.job_id) + '">Åpne ' + esc(r.job_id) + '</a></small>' : '') + '</td><td class="hide-s small">' + found + '</td>' +
           '<td class="r">' + (!data.demo && (r.status === 'feil' || r.status === 'ikke bestilling' || r.status === 'sjekk') ? '<button class="link small" data-act="agRetry" data-id="' + r.id + '">Les på nytt</button>' : '') + '</td></tr>';
       }).join('') : '<tr><td colspan="6" class="muted" style="padding:24px;text-align:center">Ingen bestillinger ennå. Vanlig e-post som ikke ligner bestillinger, vises ikke her.</td></tr>') + '</tbody></table></div>';
-    return head + (data.demo ? '<p class="small muted" style="margin:-6px 0 14px">Eksempeldata. På studiovest.no vises de ekte e-postene agenten har lest.</p>' : '') + kpi + tbl;
+    var cc = SV.live ? ccCard() : '';
+    return head + cc + (data.demo ? '<p class="small muted" style="margin:-6px 0 14px">Eksempeldata. På studiovest.no vises de ekte e-postene agenten har lest.</p>' : '') + kpi + tbl;
   }, { title: 'E-postagent' });
+  // Cubicasa-ordrer agenten ikke kunne koble sikkert til et prosjekt
+  var CC = null, ccBusy = false;
+  function ccCard() {
+    if (!CC && !ccBusy) { ccBusy = true; fetch(API + 'floorjobs.php?a=unmatched', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) { CC = d; ccBusy = false; SV.render(); }).catch(function () { ccBusy = false; }); }
+    if (!CC || !CC.on || !(CC.orders || []).length) return '';
+    var jobs = SV.jobs().filter(function (j) { return j.addr; });
+    return '<div class="card pad" style="margin-bottom:16px"><p class="eyebrow">' + ic('home') + 'Plantegninger fra Cubicasa</p><h3 class="h3">' + CC.orders.length + ' ordre' + (CC.orders.length > 1 ? 'r' : '') + ' uten sikkert prosjekt</h3><p class="small muted" style="margin:4px 0 10px">Adressen stemte ikke med ett prosjekt. Velg riktig prosjekt, så lager agenten plantegningene.</p>' +
+      CC.orders.map(function (o) { var c = o.candidates || [];
+        return '<div class="row between" style="gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding:10px 0"><div><b>' + esc(o.address || o.order_id) + '</b><small>' + (c.length ? 'Mulige: ' + c.map(function (x) { return esc(x.addr) + (/allerede/.test(x.why) ? ' (har allerede en ordre)' : ''); }).join(', ') : 'Ingen prosjekter med denne adressen') + '</small></div>' +
+          '<div class="row" style="gap:6px;flex-wrap:nowrap"><select class="sel sel-xs" id="cc-' + esc(o.order_id) + '" aria-label="Prosjekt"><option value="">Velg prosjekt</option>' + jobs.map(function (j) { return '<option value="' + esc(j.id) + '"' + (c[0] && c[0].job === j.id ? ' selected' : '') + '>' + esc(j.addr) + (j.town ? ', ' + esc(j.town) : '') + ' (' + esc(j.id) + ')</option>'; }).join('') + '</select>' +
+          '<button class="btn btn-dark btn-s" data-act="ccLink" data-o="' + esc(o.order_id) + '">Koble</button><button class="link small" data-act="ccIgnore" data-o="' + esc(o.order_id) + '">Ignorer</button></div></div>'; }).join('') + '</div>';
+  }
+  function ccPost(b, msg) { return fetch(API + 'floorjobs.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }).then(function (r) { SV.toast(r.ok ? msg : r.error, r.ok ? '' : 'warn'); CC = null; SV.render(); }); }
+  SV.on('ccLink', function (el) { var o = el.getAttribute('data-o'), s = document.getElementById('cc-' + o); if (!s || !s.value) { SV.toast('Velg prosjekt', 'warn'); return; } ccPost({ a: 'link', order: o, job: s.value }, 'Koblet. Agenten lager plantegningene innen 15 minutter.'); });
+  SV.on('ccIgnore', function (el) { ccPost({ a: 'ignore', order: el.getAttribute('data-o') }, 'Ordren er ignorert'); });
   SV.on('mailRun', function (el) {
     el.disabled = true; SV.toast('Sjekker innboksen …');
     fetch(API + 'agentlog.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: 'run' }) })

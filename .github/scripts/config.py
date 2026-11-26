@@ -38,14 +38,14 @@ if env:
             if cfg.get(k):
                 f.write(f'{k}={cfg[k]}\n')
         f.write(f'CRON_TOKEN={cron_token}\n')
-        for k in ['ANTHROPIC_API_KEY', 'FLOORPLAN_MODEL']:
+        for k in ['ANTHROPIC_API_KEY', 'FLOORPLAN_MODEL', 'CUBICASA_API_KEY']:
             if cfg.get(k):
                 f.write(f'{k}={cfg[k]}\n')
 
 if len(sys.argv) > 2 and sys.argv[1] == 'php':
     keys = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'MAIL_HOST', 'MAIL_PORT', 'MAIL_USER', 'MAIL_PASSWORD', 'MAIL_FROM',
             'ADMIN_EMAIL', 'WASABI_KEY', 'WASABI_SECRET', 'WASABI_BUCKET', 'WASABI_REGION',
-            'ANTHROPIC_API_KEY', 'IMAP_HOST', 'IMAP_PORT', 'IMAP_USER', 'IMAP_PASSWORD', 'AGENT_MODEL', 'AGENT_MAX_PER_DAY', 'AGENT_DOMAINS', 'PLAN_MODEL', 'GOOGLE_MAPS_KEY']
+            'ANTHROPIC_API_KEY', 'IMAP_HOST', 'IMAP_PORT', 'IMAP_USER', 'IMAP_PASSWORD', 'AGENT_MODEL', 'AGENT_MAX_PER_DAY', 'AGENT_DOMAINS', 'PLAN_MODEL', 'GOOGLE_MAPS_KEY', 'CUBICASA_API_KEY']
     php = {k: cfg[k] for k in keys if cfg.get(k)}
     php['APP_SECRET'] = app_secret
     php['BASE_URL'] = site

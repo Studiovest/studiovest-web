@@ -194,23 +194,25 @@
   function fpLoad(id) { if (FPB[id]) return; FPB[id] = 1; fetch(API + 'floorjobs.php?job=' + encodeURIComponent(id), { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) { FP[id] = d; FPB[id] = 0; SV.render(); }).catch(function () { FPB[id] = 0; }); }
   var FPT = { venter: ['Venter på agenten', 'sand'], 'kjører': ['Lager plantegninger …', 'sand'], levert: ['Levert', 'ok'], sjekk: ['Må sjekkes', 'bad'], feil: ['Feil', 'bad'] };
   SV.fpCard = function (j) {
-    var form = '<form id="fpF" class="fp-form"><label class="fld"><span>Cubicasa-PDF (uten mål)</span><input class="inp" type="file" name="pdf" accept="application/pdf"' + (SV.live ? '' : ' disabled') + '></label>' +
-      '<label class="fld"><span>Første etasje, eller alle etasjene med komma</span><input class="inp" name="first" list="fpFloors" value="' + (/Leilighet/i.test(j.type || '') ? 'Leilighet' : /Enebolig|Gårdsbruk/.test(j.type || '') ? 'Kjeller' : '1.etasje') + '"><datalist id="fpFloors"><option>Kjeller<option>1.etasje<option>Leilighet<option>1.etasje, 2.etasje, Loft</datalist></label>' +
+    var guess = /Leilighet/i.test(j.type || '') ? 'Leilighet' : '', first = (SV.state.fpFirst || {})[j.id];
+    var floorF = '<label class="fld"><span>Etasjer på plantegningen <span class="muted">(første etasje, eller alle med komma)</span></span><input class="inp" name="first" list="fpFloors" data-change="fpFirst" data-id="' + esc(j.id) + '" value="' + esc(first != null ? first : guess) + '" placeholder="Tomt: agenten bruker Cubicasas navn"><datalist id="fpFloors"><option>Kjeller<option>1.etasje<option>Leilighet<option>1.etasje, 2.etasje, Loft</datalist></label>';
+    var form = '<form id="fpF" class="fp-form">' + floorF +
+      '<details><summary class="small">Last opp Cubicasa-PDF selv</summary><div class="fp-form" style="margin-top:8px"><label class="fld"><span>Cubicasa-PDF (uten mål)</span><input class="inp" type="file" name="pdf" accept="application/pdf"' + (SV.live ? '' : ' disabled') + '></label>' +
       '<label class="fld"><span>Merknad til agenten <span class="muted">(valgfritt)</span></span><input class="inp" name="notes" placeholder="F.eks. bruk PDF-en med mål"></label>' +
-      '<button class="btn btn-dark btn-s" data-act="fpSend" data-id="' + esc(j.id) + '"' + (SV.live ? '' : ' disabled') + '>Lag plantegninger</button></form>';
+      '<button class="btn btn-dark btn-s" data-act="fpSend" data-id="' + esc(j.id) + '"' + (SV.live ? '' : ' disabled') + '>Lag plantegninger</button></div></details></form>';
     var list = '';
     if (SV.live) {
       var d = FP[j.id]; if (!d) fpLoad(j.id);
       list = !d ? '<p class="small muted">Laster …</p>' : (d.jobs || []).map(function (r) {
         var t = FPT[r.status] || [r.status, 'mute'], files = r.files || [];
-        return '<div class="fp-job"><div class="row between" style="gap:8px"><span class="small">' + esc(SV.fdate(r.created_at.slice(0, 10))) + ' · første etasje: ' + esc(r.first_floor) + '</span>' + SV.chip(t[0], t[1]) + '</div>' +
+        return '<div class="fp-job"><div class="row between" style="gap:8px"><span class="small">' + esc(SV.fdate(r.created_at.slice(0, 10))) + ' · ' + (r.order_id ? 'fra Cubicasa' : 'opplastet PDF') + ' · etasjer: ' + esc(r.first_floor || (SV.state.fpFirst || {})[j.id] || 'Cubicasas navn') + '</span>' + SV.chip(t[0], t[1]) + '</div>' +
           (r.summary ? '<p class="small" style="margin-top:6px">' + esc(r.summary) + '</p>' : '') + (r.reason ? '<p class="small" style="margin-top:6px;color:var(--bad)">' + esc(r.reason) + '</p>' : '') +
           (files.length ? '<div class="fp-files">' + files.map(function (f) { var u = API + 'floorjobs.php?a=file&id=' + r.id + '&name=' + encodeURIComponent(f.name); return '<a href="' + u + '" target="_blank" rel="noopener"><img src="' + u + '" alt="' + esc(f.floor || f.name) + '" loading="lazy"><span>' + esc(f.floor || f.name) + '</span></a>'; }).join('') + '</div><p class="small"><a href="' + API + 'floorjobs.php?a=file&id=' + r.id + '&name=' + encodeURIComponent(files[0].name) + '&dl=1">Last ned</a>' + (files.length > 1 ? ' (klikk på hver etasje for de andre)' : '') + '</p>' : '') +
           (r.status === 'sjekk' || r.status === 'feil' ? '<button class="link small" data-act="fpRetry" data-id="' + r.id + '" data-job="' + esc(j.id) + '">Kjør på nytt</button>' : '') +
           '<p class="hint">Kostnad: ' + (r.usd || 0).toFixed(3) + ' $</p></div>';
       }).join('');
     }
-    return '<div class="card"><div class="card-h"><h3>Plantegninger</h3></div><div class="card-b" style="padding-top:0"><p class="small muted" style="margin-bottom:10px">Agenten lager ferdige plantegninger i ' + esc((SV.find(SV.data.offices, j.office) || {}).name || 'kontorets') + ' sin mal, sjekker dem og legger dem her. Den starter innen 15 minutter etter opplasting.' + (SV.live ? '' : ' Fungerer på studiovest.no.') + '</p>' + form + list + '</div></div>';
+    return '<div class="card"><div class="card-h"><h3>Plantegninger</h3></div><div class="card-b" style="padding-top:0"><p class="small muted" style="margin-bottom:10px">Når Cubicasa-ordren med samme adresse (' + esc(j.addr) + ') er klar, henter agenten den, lager plantegningene i ' + esc((SV.find(SV.data.offices, j.office) || {}).name || 'kontorets') + ' sin mal, sjekker dem og legger dem her. Den ser etter nye ordrer hvert 15. minutt.' + (SV.live ? '' : ' Fungerer på studiovest.no.') + '</p>' + form + list + '</div></div>';
   };
   SV.on('fpSend', function (el, ev) {
     if (ev) ev.preventDefault(); var f = document.getElementById('fpF'), id = el.getAttribute('data-id');
@@ -220,6 +222,7 @@
       .then(function (r) { SV.toast(r.ok ? 'Lagt i kø. Agenten starter innen 15 minutter.' : r.error, r.ok ? '' : 'warn'); FPB[id] = 0; FP[id] = null; fpLoad(id); })
       .catch(function () { SV.toast('Opplastingen feilet', 'warn'); el.disabled = false; });
   });
+  SV.on('fpFirst', function (el) { var id = el.getAttribute('data-id'); SV.state.fpFirst = SV.state.fpFirst || {}; SV.state.fpFirst[id] = el.value.trim(); SV.save(); SV.toast(el.value.trim() ? 'Etasjer: ' + el.value.trim() : 'Agenten bruker Cubicasas etasjenavn'); });
   SV.on('fpRetry', function (el) { var job = el.getAttribute('data-job'); post0({ a: 'retry', id: +el.getAttribute('data-id') }).then(function () { FP[job] = null; fpLoad(job); SV.toast('Lagt i kø igjen'); }); });
   function post0(b) { return fetch(API + 'floorjobs.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }); }
 })();
