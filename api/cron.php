@@ -12,6 +12,9 @@ if (agent_on()) { try { $r = agent_run(20, 8); $done[] = 'agent: ' . $r['info'];
 // Adresseagent: finner postnummer, kommune og gnr/bnr for nye prosjekter (Kartverket, gratis)
 require_once __DIR__ . '/enrich.php';
 try { $r = enrich_jobs(5); if ($r['n']) $done[] = 'adresse: ' . $r['info']; } catch (Throwable $e) { $done[] = 'adresse feilet: ' . substr($e->getMessage(), 0, 200); }
+// Plantegningsagent: fortsetter forespørsler som gikk tom for tid
+require_once __DIR__ . '/plan.php';
+if (cfg('ANTHROPIC_API_KEY')) { try { $r = plan_continue(2); if ($r['n']) $done[] = 'plantegning: ' . $r['n'] . ' fortsatt'; } catch (Throwable $e) { $done[] = 'plantegning feilet: ' . substr($e->getMessage(), 0, 200); } }
 $info = implode('; ', $done);
 db()->prepare('INSERT INTO cron_runs (task, ok, info, at) VALUES (?,?,?,?)')->execute(['kvarter', 1, $info, now()]);
 db()->exec('DELETE FROM cron_runs WHERE id < (SELECT m FROM (SELECT MAX(id) - 2000 AS m FROM cron_runs) t)');

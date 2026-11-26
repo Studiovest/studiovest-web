@@ -4,57 +4,38 @@
   'use strict';
   var SV = window.SV, D = SV.data, esc = SV.esc, ic = SV.icon;
 
-  // ---------- modell: én tegning per etasje ----------
-  var FLOORS = {
-    k: { name: 'Kjeller', walls: '<rect x="30" y="30" width="340" height="240"/><path d="M150 30v120M260 30v120M30 150h340M270 150v120"/>', door: '<path d="M150 186a30 30 0 0 1 30 30"/>',
-      rooms: [{ id: 'kr1', name: 'Bod', area: 10, x: 30, y: 30, w: 120, h: 120 }, { id: 'kr2', name: 'Vaskerom', area: 8, x: 150, y: 30, w: 110, h: 120 }, { id: 'kr3', name: 'Teknisk rom', area: 7, x: 260, y: 30, w: 110, h: 120 }, { id: 'kr4', name: 'Gang', area: null, x: 30, y: 150, w: 240, h: 120 }, { id: 'kr5', name: 'Bod', area: 6, x: 270, y: 150, w: 100, h: 120 }] },
-    f1: { name: '1. etasje', walls: '<rect x="30" y="30" width="340" height="240"/><path d="M200 30v120M30 150h230M260 150v120M260 210h110M120 150v120"/>', door: '<path d="M200 70a30 30 0 0 1 30 30"/>',
-      rooms: [{ id: 'r1', name: 'Stue', area: 28, x: 30, y: 30, w: 170, h: 120 }, { id: 'r2', name: 'Kjøkken', area: 12, x: 200, y: 30, w: 170, h: 120 }, { id: 'r3', name: 'Soverom', area: 11, x: 30, y: 150, w: 90, h: 120 }, { id: 'r4', name: 'Soverom', area: 9, x: 120, y: 150, w: 140, h: 120 }, { id: 'r5', name: 'Bad', area: 6, x: 260, y: 150, w: 110, h: 60 }, { id: 'r6', name: 'Gang', area: null, x: 260, y: 210, w: 110, h: 60 }] },
-    f2: { name: '2. etasje', walls: '<rect x="30" y="30" width="340" height="240"/><path d="M180 30v130M30 160h340M140 160v110M230 160v110"/>', door: '<path d="M230 196a28 28 0 0 1 28 28"/>',
-      rooms: [{ id: 'f2r1', name: 'Soverom', area: 13, x: 30, y: 30, w: 150, h: 130 }, { id: 'f2r2', name: 'Soverom', area: 15, x: 180, y: 30, w: 190, h: 130 }, { id: 'f2r3', name: 'Bad', area: 7, x: 30, y: 160, w: 110, h: 110 }, { id: 'f2r4', name: 'Gang', area: null, x: 140, y: 160, w: 90, h: 110 }, { id: 'f2r5', name: 'Loftsstue', area: 16, x: 230, y: 160, w: 140, h: 110 }] }
-  };
+  // ---------- modell: én tegning per etasje (scene i planscene.js) ----------
+  var FLOORS = { k: { name: 'Kjeller' }, f1: { name: '1. etasje' }, f2: { name: '2. etasje' } };
+  // romliste i 400 × 300-flaten (brukes av markeringene og demo-agenten)
+  function roomsOf(sc) {
+    var fit = SV.planFit(sc);
+    return sc.rooms.map(function (r) { var xs = r.polygon.map(function (p) { return p[0]; }), ys = r.polygon.map(function (p) { return p[1]; }), x0 = Math.min.apply(0, xs), y0 = Math.min.apply(0, ys);
+      return { id: r.id, name: r.label, area: r.area || null, x: fit.ox + x0 * fit.s, y: fit.oy + y0 * fit.s, w: (Math.max.apply(0, xs) - x0) * fit.s, h: (Math.max.apply(0, ys) - y0) * fit.s }; });
+  }
   // etasjer per bolig: fra prosjektet, ellers ut fra boligtype
   SV.planFloors = function (j) {
-    var ids = (j && j.floors) || (!j ? ['f1'] : /Enebolig|Gårdsbruk/.test(j.type) ? ['k', 'f1', 'f2'] : /Rekkehus|Fritidsbolig/.test(j.type) ? ['f1', 'f2'] : ['f1']);
-    return ids.map(function (id) { return { id: id, name: FLOORS[id].name }; });
+    var live = j && SV.planLiveData(j), ids = live && Object.keys(live.scenes || {}).length ? Object.keys(live.scenes).sort(function (a, b) { return ['k', 'f1', 'f2', 'f3', 'l'].indexOf(a) - ['k', 'f1', 'f2', 'f3', 'l'].indexOf(b); }) :
+      (j && j.floors) || (!j ? ['f1'] : /Enebolig|Gårdsbruk/.test(j.type) ? ['k', 'f1', 'f2'] : /Rekkehus|Fritidsbolig/.test(j.type) ? ['f1', 'f2'] : ['f1']);
+    return ids.map(function (id) { return { id: id, name: FLOORS[id] ? FLOORS[id].name : (live && live.scenes[id] ? live.scenes[id].scene.floor_title : id) }; });
   };
   SV.planFloorName = function (f) { return FLOORS[f] ? FLOORS[f].name : f; };
   function ver(id) { var v = SV.state.planVer = SV.state.planVer || {}; return v[id]; }
+  // scenen som gjelder: fra serveren (ekte drift) eller demoscenen
+  SV.planScene = function (j, f) { var live = j && SV.planLiveData(j), sc = live && live.scenes && live.scenes[f || 'f1']; return sc ? sc.scene : SV.demoScene(f || 'f1', j ? j.office : 'kmh'); };
   SV.planModel = function (j, f) {
-    var fl = FLOORS[f || 'f1'], v = j && ver(j.id), rooms = fl.rooms.map(function (r) { return Object.assign({}, r, v && v.rooms[r.id]); });
+    var v = j && ver(j.id), rooms = roomsOf(SV.planScene(j, f)).map(function (r) { return Object.assign({}, r, v && v.rooms[r.id]); });
     return { rooms: rooms, v: v ? v.n : 1 };
   };
 
   // ---------- kontorstiler ----------
-  var FILL = { soverom: '#E4E9EE', bad: '#DCEBEF', kjøkken: '#F2E6D3', stue: '#E6ECDF', gang: '#EFEBE5', bod: '#ECE7E0', vaskerom: '#DCEBEF', kontor: '#E8E3EE' };
-  D.planStyles = {
-    fjm: { name: 'Lys nordisk', wall: '#3A3530', ww: 4, label: '#3A3530', font: 'Hanken Grotesk', weight: 500, upper: false, area: true, fill: false, short: false, north: true },
-    kmh: { name: 'Klassisk svart', wall: '#000000', ww: 7, label: '#000000', font: 'Hanken Grotesk', weight: 800, upper: true, area: true, fill: false, short: false, north: false },
-    sue: { name: 'Farget per rom', wall: '#2D2A26', ww: 3, label: '#2D2A26', font: 'Hanken Grotesk', weight: 600, upper: false, area: true, fill: true, short: false, north: true },
-    hbm: { name: 'Minimal med serif', wall: '#161412', ww: 2.5, label: '#161412', font: 'Gloock', weight: 400, upper: false, area: false, fill: false, short: false, north: false }
-  };
-  SV.planStyle = function (office) { return Object.assign({}, D.planStyles[office] || D.planStyles.fjm, (SV.state.planStyle || {})[office]); };
-  function label(r, s) {
-    var n = s.short && r.name.toLowerCase() === 'soverom' ? 'Sov' : r.name;
-    return { n: s.upper ? n.toUpperCase() : n, a: s.area && r.area ? r.area + ' m²' : '' };
-  }
-  function draw(fl, rooms, s, hl) {
-    var fills = s.fill ? rooms.map(function (r) { return '<rect x="' + r.x + '" y="' + r.y + '" width="' + r.w + '" height="' + r.h + '" fill="' + (FILL[r.name.toLowerCase()] || '#F1EEE9') + '" stroke="none"/>'; }).join('') : '';
-    var marks = (hl || []).map(function (id) { var r = rooms.filter(function (x) { return x.id === id; })[0]; return r ? '<rect x="' + (r.x + 4) + '" y="' + (r.y + 4) + '" width="' + (r.w - 8) + '" height="' + (r.h - 8) + '" rx="6" fill="rgba(217,168,102,.28)" stroke="#D9A866" stroke-width="2" stroke-dasharray="5 4"/>' : ''; }).join('');
-    var labels = rooms.map(function (r) {
-      var l = label(r, s), cx = r.x + r.w / 2, cy = r.y + r.h / 2, fs = Math.min(14, Math.max(10, r.w / 8));
-      return '<text x="' + cx + '" y="' + (l.a ? cy - 2 : cy + 4) + '" font-size="' + fs + '" font-weight="' + s.weight + '">' + esc(l.n) + '</text>' + (l.a ? '<text x="' + cx + '" y="' + (cy + fs) + '" font-size="' + (fs - 2) + '" font-weight="400" opacity=".8">' + l.a + '</text>' : '');
-    }).join('');
-    var north = s.north ? '<g transform="translate(386 24)" stroke="none" fill="' + s.label + '"><path d="M0 -10 L5 6 L0 3 L-5 6Z"/><text y="18" font-size="8" text-anchor="middle">N</text></g>' : '';
-    return '<svg viewBox="0 0 400 300" style="position:absolute;inset:0;width:100%;height:100%" fill="none">' + fills + marks +
-      '<g stroke="' + s.wall + '" stroke-width="' + s.ww + '" stroke-linejoin="miter">' + fl.walls + '</g><g stroke="' + s.wall + '" stroke-width="1.5">' + fl.door + '</g>' +
-      '<g font-family="' + s.font + ',sans-serif" fill="' + s.label + '" stroke="none" text-anchor="middle">' + labels + '</g>' + north + '</svg>';
-  }
+  SV.planStyle = function (office) { var k = SV.planStyleKey(office); return Object.assign({ key: k }, SV.planStyles[k]); };
   // SV.planSvg(j) tegner gjeldende versjon i kontorets stil. Uten jobb: standard.
   SV.planSvg = function (j, opts) {
     opts = opts || {};
-    var f = opts.floor || 'f1', s = opts.style || SV.planStyle(j ? j.office : 'kmh'), rooms = opts.rooms || SV.planModel(j, f).rooms;
-    return draw(FLOORS[f], rooms, s, opts.hl);
+    var f = opts.floor || 'f1', sc = opts.scene || SV.planScene(j, f), rooms = opts.rooms || (opts.scene ? null : SV.planModel(j, f).rooms), names = {}, areas = {};
+    if (opts.style) sc = Object.assign({}, sc, { office: opts.style.key || SV.planStyleKey(opts.style) });
+    (rooms || []).forEach(function (r) { names[r.id] = r.name; if (r.area) areas[r.id] = r.area; });
+    return SV.sceneSvg(sc, { names: names, areas: areas, hl: opts.hl, diff: opts.diff, removed: opts.removed, title: opts.title });
   };
 
   // ---------- agenten (demo: regler; ekte: Claude) ----------
@@ -120,23 +101,91 @@
   });
   SV.on('agReject', function (el) { var st = SV.state.agentStats = SV.state.agentStats || { ok: 0, rejected: 0 }; st.rejected++; delete SV.state.agent[el.getAttribute('data-id')]; SV.save(); SV.render(); SV.toast('Forslaget er avvist'); });
 
+  // ---------- ekte drift: plantegningsagenten på serveren (api/planagent.php) ----------
+  var API = location.pathname.replace(/\/portal(\/.*)?$/, '') + '/api/', LIVE = {}, BUSY = {};
+  SV.planLiveData = function (j) {
+    if (!SV.live || !j) return null;
+    if (!LIVE[j.id] && !BUSY[j.id]) { BUSY[j.id] = 1; SV.planReload(j.id); }
+    return LIVE[j.id] || null;
+  };
+  SV.planReload = function (id) {
+    return fetch(API + 'planagent.php?job=' + encodeURIComponent(id), { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); })
+      .then(function (d) { LIVE[id] = d; BUSY[id] = 0; SV.render(); }).catch(function () { BUSY[id] = 0; });
+  };
+  function post(body) { return fetch(API + 'planagent.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
+  // gjør markeringene om til tekst agenten forstår: rom, posisjon i cm og kommentaren
+  function requestText(j, f, m, note) {
+    var sc = SV.planScene(j, f), lines = [];
+    (m ? m.pins.concat(m.texts) : []).filter(function (p) { return p.t; }).forEach(function (p, k) {
+      var cm = SV.planToCm(sc, p.x, p.y), r = SV.planRoomAt(sc, cm);
+      lines.push('Markering ' + (k + 1) + ' ved x=' + cm[0] + ', y=' + cm[1] + ' cm' + (r ? ' (i rommet ' + r.label + ', ' + r.id + ')' : '') + ': «' + p.t + '»');
+    });
+    if (m && m.strokes.length) lines.push('(Personen har også tegnet ' + m.strokes.length + ' strek(er) på plantegningen. Dem kan du ikke se; si fra om det trengs.)');
+    if (note) lines.push('Kommentar til hele plantegningen: «' + note + '»');
+    return lines.join('\n');
+  }
+  function runLive(j) {
+    var src = SV.reviewPlanSrc(j) || { floors: {}, planNote: '' }, live = LIVE[j.id], who = (SV.find(SV.data.team, j.by) || {}).name || j.broker || 'megler', n = 0;
+    SV.planFloors(j).forEach(function (fl) {
+      var m = src.floors[fl.id], one = SV.planFloors(j).length === 1 || (m && (m.pins.length || m.texts.length));
+      var txt = requestText(j, fl.id, m, one || !Object.keys(src.floors).length ? src.planNote : '');
+      if (!txt.trim() || !(live && live.scenes && live.scenes[fl.id])) return;
+      n++; post({ a: 'run', job: j.id, floor: fl.id, text: txt, from: j.broker + ' (megler)' }).then(function (r) { if (!r.ok) SV.toast(r.error || 'Agenten feilet', 'warn'); SV.planReload(j.id); });
+    });
+    SV.toast(n ? 'Plantegningsagenten jobber med ' + n + ' etasje' + (n > 1 ? 'r' : '') + ' …' : 'Plantegningen er ikke lagt inn i portalen ennå. Agenten kan ikke kjøre.', n ? '' : 'warn');
+    return { changes: [], manual: [] };
+  }
+  var demoRun = SV.runAgent;
+  SV.runAgent = function (j) { return SV.live ? runLive(j) : demoRun(j); };
+  var demoCard = SV.agentCard;
+  SV.agentCard = function (j) { return SV.live ? SV.planLiveCard(j) : demoCard(j); };
+  var TONE = { 'kjører': ['Jobber …', 'sand'], venter: ['Fortsetter snart', 'sand'], 'spørsmål': ['Spør om noe', 'bad'], 'til godkjenning': ['Venter på godkjenning', 'bad'], godkjent: ['Publisert', 'ok'], avvist: ['Avvist', 'mute'], svar: ['Ingen endring', 'mute'], feil: ['Feil', 'bad'] };
+  SV.planLiveCard = function (j) {
+    var d = SV.planLiveData(j); if (!d) return '<p class="small muted">Laster plantegningsagenten …</p>';
+    var rows = (d.sessions || []).slice(0, 6), miss = SV.planFloors(j).filter(function (f) { return !(d.scenes || {})[f.id]; });
+    var imp = miss.length ? '<div class="card pad" style="margin-bottom:12px"><p class="small"><b>Plantegningen er ikke lagt inn for ' + miss.map(function (f) { return esc(f.name); }).join(', ') + '.</b> Agenten trenger tegningen som scene (JSON).</p><div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">' +
+      miss.map(function (f) { return '<button class="btn btn-ghost btn-s" data-act="paImport" data-job="' + j.id + '" data-floor="' + f.id + '">Last opp ' + esc(f.name) + '</button>'; }).join('') + '</div></div>' : '';
+    return imp + rows.map(function (r) {
+      var t = TONE[r.status] || [r.status, 'mute'], cmp = '';
+      if (r.status === 'til godkjenning' && r.draft && d.scenes[r.floor]) {
+        var before = d.scenes[r.floor].scene, ids = (before.fixtures || []).map(function (x) { return x.id; }), after = r.draft;
+        var added = (after.fixtures || []).filter(function (x) { return ids.indexOf(x.id) < 0 || JSON.stringify(x) !== JSON.stringify(before.fixtures.filter(function (y) { return y.id === x.id; })[0]); }).map(function (x) { return x.id; });
+        var gone = (before.fixtures || []).filter(function (x) { return !(after.fixtures || []).some(function (y) { return y.id === x.id; }); });
+        var hl = (after.rooms || []).filter(function (x) { var b = before.rooms.filter(function (y) { return y.id === x.id; })[0]; return !b || b.label !== x.label || b.surface !== x.surface; }).map(function (x) { return x.id; });
+        cmp = '<div class="ag-cmp"><figure><figcaption>Nå</figcaption><div class="ag-plan">' + SV.sceneSvg(before, { removed: gone }) + '</div></figure><figure><figcaption>Forslag</figcaption><div class="ag-plan">' + SV.sceneSvg(after, { hl: hl, diff: added }) + '</div></figure></div>';
+      }
+      return '<div class="card pad ag" style="margin-bottom:12px"><div class="row between" style="gap:10px;flex-wrap:wrap;margin-bottom:10px"><div><p class="eyebrow">' + ic('bolt') + 'Plantegningsagent · ' + esc(SV.planFloorName(r.floor)) + ' · ' + esc(SV.fdate(r.created_at.slice(0, 10))) + '</p>' +
+        '<p class="small" style="white-space:pre-line;margin-top:4px">' + esc(r.request) + '</p></div>' + SV.chip(t[0], t[1]) + '</div>' + cmp +
+        (r.summary ? '<p class="small" style="margin-top:10px"><b>Agenten:</b> ' + esc(r.summary) + '</p>' : '') + (r.info ? '<p class="small muted">' + esc(r.info) + '</p>' : '') +
+        (r.status === 'spørsmål' ? '<p class="small" style="margin-top:10px"><b>Spørsmål:</b> ' + esc(r.question) + '</p><div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" id="paq' + r.id + '" placeholder="Svar"><button class="btn btn-dark btn-s" data-act="paAnswer" data-id="' + r.id + '" data-job="' + j.id + '">Send svar</button></div>' : '') +
+        (r.status === 'til godkjenning' ? '<div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn btn-ghost btn-s" data-act="paReject" data-id="' + r.id + '" data-job="' + j.id + '">Avvis</button><button class="btn btn-acc btn-s" data-act="paOk" data-id="' + r.id + '" data-job="' + j.id + '">' + ic('check') + 'Godkjenn og publiser</button></div>' : '') +
+        '<p class="hint" style="margin-top:8px">Kostnad: ' + (r.usd || 0).toFixed(3) + ' $</p></div>';
+    }).join('');
+  };
+  function act(a, extra) { return function (el) { el.disabled = true; var body = Object.assign({ a: a, id: +el.getAttribute('data-id') }, extra ? extra(el) : {}), job = el.getAttribute('data-job');
+    post(body).then(function (r) { SV.toast(r.ok ? (a === 'approve' ? 'Publisert som versjon ' + r.version : a === 'reject' ? 'Forslaget er avvist' : 'Svar sendt') : r.error || 'Feil', r.ok ? '' : 'warn'); SV.planReload(job); }); }; }
+  SV.on('paOk', act('approve'));
+  SV.on('paReject', act('reject'));
+  SV.on('paAnswer', act('answer', function (el) { var i = document.getElementById('paq' + el.getAttribute('data-id')); return { text: i ? i.value : '' }; }));
+  // legge inn plantegning (scene-JSON) for en etasje
+  SV.on('paImport', function (el) {
+    var job = el.getAttribute('data-job'), floor = el.getAttribute('data-floor'), inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+    inp.onchange = function () { var fr = new FileReader(); fr.onload = function () { var sc; try { sc = JSON.parse(fr.result); } catch (e) { SV.toast('Ikke gyldig JSON', 'warn'); return; }
+      post({ a: 'save', job: job, floor: floor, scene: sc }).then(function (r) { SV.toast(r.ok ? 'Plantegningen er lagt inn (versjon ' + r.version + ')' : r.error, r.ok ? '' : 'warn'); SV.planReload(job); }); }; fr.readAsText(inp.files[0]); };
+    inp.click();
+  });
+
   // ---------- innstillinger: stiler og agent ----------
   SV.planSettings = function () {
     var ag = SV.state.agentCfg = SV.state.agentCfg || { approve: true, run: 'ved nytt ønske' }, st = SV.state.agentStats || { ok: 0, rejected: 0 };
-    var cards = D.offices.map(function (o) {
-      var s = SV.planStyle(o.id), f = function (k, lab) { return '<label class="opt nobox" style="padding:6px 0"><input type="checkbox" data-change="psSet" data-o="' + o.id + '" data-k="' + k + '"' + (s[k] ? ' checked' : '') + '><b>' + lab + '</b></label>'; };
-      return '<div class="card pad"><p class="eyebrow">' + esc(o.name) + '</p><h3 class="h3" style="margin-bottom:10px">' + esc(s.name) + '</h3><div class="ag-plan" style="margin-bottom:12px">' + SV.planSvg(null, { style: s }) + '</div>' +
-        '<div class="g2" style="gap:8px"><label class="fld"><span>Veggtykkelse</span><input class="inp" type="range" min="2" max="8" step=".5" value="' + s.ww + '" data-change="psSet" data-o="' + o.id + '" data-k="ww"></label><label class="fld"><span>Skrift</span><select class="sel" data-change="psSet" data-o="' + o.id + '" data-k="font"><option' + (s.font === 'Hanken Grotesk' ? ' selected' : '') + '>Hanken Grotesk</option><option' + (s.font === 'Gloock' ? ' selected' : '') + '>Gloock</option></select></label></div>' +
-        '<div class="g2" style="gap:0 12px">' + f('upper', 'Store bokstaver') + f('area', 'Vis m²') + f('fill', 'Farge per rom') + f('north', 'Nordpil') + '</div></div>';
+    var cards = Object.keys(SV.planStyles).map(function (k) {
+      var s = SV.planStyles[k], sw = function (c, l) { return '<span class="ps-sw"><i style="background:' + c + '"></i>' + l + '</span>'; };
+      return '<div class="card pad"><p class="eyebrow">' + esc(s.name) + '</p><div class="ag-plan" style="margin:10px 0 12px">' + SV.sceneSvg(SV.demoScene('f1', k), { title: true }) + '</div>' +
+        '<div class="ps-row">' + sw(s.wall, 'Vegger') + sw(s.room, 'Rom') + sw(s.wet, 'Våtrom') + sw(s.outdoor, 'Ute') + '</div><p class="small muted" style="margin-top:8px">Romnavn: ' + esc(s.font.split(',')[0].replace(/"/g, '')) + ' · Tittel: ' + esc(s.title.split(',')[0].replace(/"/g, '')) + (s.bug ? ' · Gul strek fra Cubicasa fjernes alltid' : '') + '</p></div>';
     }).join('');
-    return '<div class="card pad ag" style="margin-bottom:18px"><div class="row between" style="gap:14px;flex-wrap:wrap"><div><p class="eyebrow">' + ic('bolt') + 'Plantegningsagent</p><h3 class="h3">Leser endringsønsker og lager forslag</h3><p class="small muted" style="margin-top:4px;max-width:620px">Når megler eller kunde sender endringer på plantegningen, lager agenten en ny versjon i kontorets stil. Den publiseres bare når du godkjenner. Bildekommentarer går alltid til deg.</p></div>' +
+    return '<div class="card pad ag" style="margin-bottom:18px"><div class="row between" style="gap:14px;flex-wrap:wrap"><div><p class="eyebrow">' + ic('bolt') + 'Plantegningsagent</p><h3 class="h3">Leser endringsønsker og lager forslag</h3><p class="small muted" style="margin-top:4px;max-width:620px">Når megler, kunde eller fotograf ber om endringer på plantegningen, endrer agenten tegningen (rom, dører, vinduer og inventar) og tegner den i kontorets husstil. Den kan stille ett spørsmål om noe er uklart, og den nekter endringer som ville gitt et feil bilde av boligen. Ingenting publiseres før du godkjenner.</p></div>' +
       '<dl class="kv small" style="min-width:220px"><dt>Kjører</dt><dd>Ved nytt endringsønske</dd><dt>Godkjenning</dt><dd><label class="opt nobox" style="padding:0"><input type="checkbox" data-change="agApprove"' + (ag.approve ? ' checked' : '') + '><b>Alltid krev min godkjenning</b></label></dd><dt>Så langt</dt><dd>' + st.ok + ' godkjent · ' + st.rejected + ' avvist</dd></dl></div></div>' +
-      '<div class="g2">' + cards + '</div><p class="hint">Stilen følger meglerkontoret. Agenten får stilen og plantegningsfilen, og leverer i samme stil.</p>';
+      '<div class="g2">' + cards + '</div><p class="hint">Husstilen er fast per meglerkontor og kan ikke endres av agenten. Rammen (logoer, tittel og ansvarsfraskrivelse) følger kontorets mal.</p>';
   };
-  SV.on('psSet', function (el) {
-    var o = el.getAttribute('data-o'), k = el.getAttribute('data-k'), all = SV.state.planStyle = SV.state.planStyle || {}, s = all[o] = all[o] || {};
-    s[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? parseFloat(el.value) : el.value; SV.save();
-    var y = window.scrollY; SV.render(); window.scrollTo(0, y);
-  });
   SV.on('agApprove', function (el) { SV.state.agentCfg.approve = el.checked; SV.save(); SV.toast(el.checked ? 'Du godkjenner alle forslag før de publiseres' : 'Agenten publiserer selv · du får varsel', el.checked ? '' : 'warn'); });
 })();

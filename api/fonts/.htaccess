@@ -1,0 +1,3 @@
+<FilesMatch "\.ttf$">
+  Require all denied
+</FilesMatch>

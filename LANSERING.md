@@ -46,6 +46,19 @@ E-postagent (leser bestillinger fra meglere og lager prosjekter):
    ```
    Valgfritt: `IMAP_USER=` og `IMAP_PASSWORD=` hvis bestillingene kommer til en annen adresse enn `MAIL_USER`, og `AGENT_DOMAINS=fjordmegling.no,em1.no` for meglerdomener som alltid skal leses.
 
+Plantegningsagent (endrer plantegninger ut fra ønsker fra megler, kunde og fotograf):
+
+8. Bruker samme `ANTHROPIC_API_KEY`. Valgfritt: `PLAN_MODEL=` for en annen Claude-modell (standard `claude-sonnet-5-5`).
+
+Kart med Street View og flyfoto i prosjektene (valgfritt, gratis):
+
+9. **Google-nøkkel:** console.cloud.google.com → lag prosjekt → legg inn betalingskort (Google krever det, men Maps Embed API koster ingenting) → APIs & Services → Library → aktiver **Maps Embed API** → Credentials → Create credentials → API key.
+   Begrens nøkkelen: Application restrictions = Websites, legg til `https://studiovest.no/*`. API restrictions = Maps Embed API. Legg til i hemmeligheten:
+   ```
+   GOOGLE_MAPS_KEY=
+   ```
+   Uten nøkkel vises kartet med eiendomsgrenser likevel, og Street View åpnes i en ny fane.
+
 ## Det som skjer automatisk
 
 | Steg | Hvordan |

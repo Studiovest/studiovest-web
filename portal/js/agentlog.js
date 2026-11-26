@@ -24,7 +24,7 @@
     load();
     var head = SV.head({ eyebrow: 'Leser innboksen hvert 15. minutt', a: 'E-postagent', b: 'bestillinger fra meglere',
       lead: 'Agenten leser ny e-post, finner bestillinger og lager prosjektet i Bolig. Er noe uklart, får prosjektet merket «Sjekk bestillingen».',
-      actions: SV.live && data && data.on ? '<button class="btn btn-dark btn-s" data-act="agRun">' + ic('mail') + 'Sjekk innboksen nå</button>' : '' });
+      actions: SV.live && data && data.on ? '<button class="btn btn-dark btn-s" data-act="mailRun">' + ic('mail') + 'Sjekk innboksen nå</button>' : '' });
     if (err) return head + '<p class="empty">' + esc(err) + '</p>';
     if (!data) return head + '<p class="empty">Laster …</p>';
     if (!data.on) return head + '<div class="card pad"><h3 class="h3">Agenten er ikke slått på</h3><p class="small" style="margin-top:8px">Legg linjen <code>ANTHROPIC_API_KEY=…</code> i GitHub-hemmeligheten STUDIOVEST_CONFIG. Den starter av seg selv ved neste publisering.</p></div>';
@@ -43,7 +43,7 @@
       }).join('') : '<tr><td colspan="6" class="muted" style="padding:24px;text-align:center">Ingen bestillinger ennå. Vanlig e-post som ikke ligner bestillinger, vises ikke her.</td></tr>') + '</tbody></table></div>';
     return head + (data.demo ? '<p class="small muted" style="margin:-6px 0 14px">Eksempeldata. På studiovest.no vises de ekte e-postene agenten har lest.</p>' : '') + kpi + tbl;
   }, { title: 'E-postagent' });
-  SV.on('agRun', function (el) {
+  SV.on('mailRun', function (el) {
     el.disabled = true; SV.toast('Sjekker innboksen …');
     fetch(API + 'agentlog.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: 'run' }) })
       .then(function (r) { return r.json(); }).then(function (j) { SV.toast(j.info || j.error || 'Ferdig'); if (/opprettet|sjekk/.test(j.info || '')) setTimeout(function () { location.reload(); }, 1200); else load(true); })
