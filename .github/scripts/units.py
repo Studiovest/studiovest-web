@@ -19,8 +19,8 @@ for k, url in sorted(urls.items()):
     for ev, el in ET.iterparse(z.open(name), events=('end',)):
         if loc(el.tag) not in ('featureMember', 'member'): continue
         f = el[0] if len(el) else el
-        if sample and n < 2:
-            print(k, [(loc(x.tag), (x.text or '').strip()) for x in f.iter() if len(x) == 0 and (x.text or '').strip()][-25:]); n += 1
+        if sample and n < 2 and any(re.search('etasje|bruksenhetsnummer|lopenummer', loc(x.tag), re.I) for x in f.iter()):
+            print(k, [(loc(x.tag), (x.text or '').strip()) for x in f.iter() if len(x) == 0 and (x.text or '').strip()][:4] + [(loc(x.tag), (x.text or '').strip()) for x in f.iter() if re.search('etasje|bruksenhet|lopenummer|adresseId|adressetekst|nummer$', loc(x.tag), re.I)]); n += 1
         aid, units = None, []
         for x in f.iter():
             t = loc(x.tag).lower()
