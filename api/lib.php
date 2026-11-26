@@ -110,6 +110,16 @@ function state_mutate(callable $fn, string $scope = 'studio', string $by = 'agen
 // Claude-nøkkel per agent (egen nøkkel gir egen kostnadsoversikt i Claude Console). Faller tilbake på ANTHROPIC_API_KEY.
 function claude_key(string $agent): string { return (string)(cfg('CLAUDE_KEY_' . $agent) ?: cfg('ANTHROPIC_API_KEY', '')); }
 
+// Agentene kan slås av og på i portalen (Agenter). Lagres i sv_meta som JSON. Standard: på.
+const AGENT_IDS = ['email', 'address', 'cubicasa', 'floorplan', 'floorplan_edit'];
+function agent_cfg(): array { $c = json_decode((string)(get_meta('agent_cfg') ?? ''), true); return is_array($c) ? $c : []; }
+function agent_enabled(string $id): bool { return (agent_cfg()[$id]['on'] ?? true) !== false; }
+function agent_set(string $id, array $f): void { $c = agent_cfg(); $c[$id] = array_merge($c[$id] ?? [], $f); set_meta('agent_cfg', json_encode($c, JSON_UNESCAPED_UNICODE)); }
+// Siste kjøring per agent (vises på Agenter-siden)
+function agent_ran(string $id, string $info, bool $ok = true): void { set_meta('ran_' . $id, json_encode(['at' => now(), 'info' => mb_substr($info, 0, 300), 'ok' => $ok], JSON_UNESCAPED_UNICODE)); }
+// Estimert pris per million tokens (USD). Kan justeres i oppsettet.
+function claude_usd(int $in, int $out): float { return round(($in * (float)cfg('CLAUDE_PRICE_IN', 3) + $out * (float)cfg('CLAUDE_PRICE_OUT', 15)) / 1e6, 3); }
+
 // ---------- innlogging ----------
 function start_session(): void {
   if (session_status() === PHP_SESSION_ACTIVE) return;

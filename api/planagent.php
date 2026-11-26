@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       json_out(['ok' => true, 'version' => plan_put((string)$b['job'], (string)$b['floor'], $sc, $by), 'warnings' => plan_check($sc)]);
     }
     if (!$on) fail('Agenten er ikke slått på (mangler CLAUDE_KEY_FLOORPLAN_EDIT)');
+    if (in_array($a, ['run', 'answer'], true) && !agent_enabled('floorplan_edit')) fail('Plantegningsredigeringen er slått av under Agenter');
     if ($a === 'run') json_out(['ok' => true] + plan_request((string)$b['job'], (string)$b['floor'], trim((string)$b['text']), (string)($b['from'] ?? $by)));
     if ($a === 'answer') json_out(['ok' => true] + plan_answer((int)$b['id'], trim((string)$b['text'])));
     if ($a === 'approve') json_out(['ok' => true] + plan_approve((int)$b['id'], $by));

@@ -1156,3 +1156,11 @@ details[open].card summary::after{content:" −"}
 .fp-job{border-top:1px solid var(--line);padding:12px 0 4px}
 .fp-files{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:8px 0}
 .fp-files a{display:block;text-decoration:none;color:inherit;font-size:12px}.fp-files img{width:100%;aspect-ratio:2576/1821;object-fit:cover;border:1px solid var(--line);border-radius:8px;display:block;margin-bottom:4px}
+
+/* Agenter */
+.ag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:16px}
+.ag-card.off{opacity:.72}
+.ag-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));gap:8px}
+.ag-stats div{background:var(--bg2,#f4efe8);border-radius:10px;padding:8px 10px}.ag-stats b{display:block;font-size:18px}.ag-stats span{font-size:11.5px;color:var(--mute,#6e665d)}
+.ag-bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin:6px 0 2px}.ag-bar i{display:block;height:100%;background:var(--ok)}
+.ag-recent{margin-top:10px}.ag-recent ul{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px}.ag-recent li{line-height:1.5}

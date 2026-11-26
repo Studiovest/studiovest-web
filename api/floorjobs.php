@@ -49,6 +49,7 @@ if ($tok !== '') {
   if (!hash_equals(substr(hash('sha256', app_secret() . '|cron'), 0, 32), $tok)) fail('Ingen tilgang', 403);
   $a = (string)($_GET['a'] ?? ''); $id = (int)($_GET['id'] ?? 0);
   if ($a === 'pending') {
+    if (!agent_enabled('floorplan')) json_out(['ok' => true, 'ids' => [], 'info' => 'plantegningsagenten er slått av']);
     $s = db()->prepare("SELECT id FROM fp_job WHERE tenant_id=? AND (status='venter' OR (status='kjører' AND updated_at < ?)) ORDER BY id LIMIT 5");
     $s->execute([SV_TENANT, gmdate('Y-m-d\TH:i:s\Z', time() - 1800)]); json_out(['ok' => true, 'ids' => array_map('intval', $s->fetchAll(PDO::FETCH_COLUMN))]);
   }
@@ -71,7 +72,7 @@ if ($tok !== '') {
     if (isset($_POST['done'])) { $f['status'] = $a === 'save' ? 'levert' : 'sjekk'; if ($a === 'save') $f['summary'] = (string)($_POST['summary'] ?? ''); else $f['reason'] = (string)($_POST['reason'] ?? ''); }
     fp_set($id, $f); json_out(['ok' => true, 'files' => count($files)]);
   }
-  if ($a === 'usage') { $b = body(); fp_set($id, ['tokens_in' => (int)($b['in'] ?? 0), 'tokens_out' => (int)($b['out'] ?? 0), 'log' => substr((string)($b['log'] ?? ''), 0, 20000)] + (!empty($b['error']) ? ['status' => 'feil', 'reason' => substr((string)$b['error'], 0, 500)] : [])); json_out(['ok' => true]); }
+  if ($a === 'usage') { $b = body(); agent_ran('floorplan', !empty($b['error']) ? (string)$b['error'] : 'jobb ' . $id . ' ferdig', empty($b['error'])); fp_set($id, ['tokens_in' => (int)($b['in'] ?? 0), 'tokens_out' => (int)($b['out'] ?? 0), 'log' => substr((string)($b['log'] ?? ''), 0, 20000)] + (!empty($b['error']) ? ['status' => 'feil', 'reason' => substr((string)$b['error'], 0, 500)] : [])); json_out(['ok' => true]); }
   fail('Ukjent handling');
 }
 

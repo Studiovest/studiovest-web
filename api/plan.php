@@ -308,7 +308,7 @@ function plan_from_mail(string $job, string $text, string $floorHint, string $fr
   if (!$pick) $pick = $floors; // etasjen er ikke nevnt: agenten ser på alle og lar være å endre der ønsket ikke passer
   $note = count($pick) > 1 ? "\n\n(Etasjen er ikke nevnt i e-posten. Gjelder ikke ønsket denne etasjen, gjør ingen endringer og si det kort.)" : '';
   $ids = []; foreach ($pick as $f) $ids[] = plan_queue($job, $f, $text . $note, $from);
-  plan_step($ids[0], 20); // første etasje med en gang; resten fortsetter i neste kjøring
+  if (agent_enabled('floorplan_edit')) plan_step($ids[0], 20); // første etasje med en gang; resten fortsetter i neste kjøring
   return ['ids' => $ids, 'manual' => false];
 }
 function plan_answer(int $id, string $answer): array {
