@@ -350,7 +350,9 @@
     if (!g) return '<dt>Adresse</dt><dd><span class="small muted">Ikke slått opp</span> <button class="link small" data-act="geoFind" data-id="' + j.id + '">Finn postnr. og gnr/bnr</button></dd>';
     if (g.status === 'velg') return '<dt>Adresse</dt><dd><span class="small" style="color:var(--bad)">Flere treff – velg riktig:</span><div class="geo-opts">' + g.options.map(function (o, k) { return '<button class="geo-opt" data-act="geoPick" data-id="' + j.id + '" data-k="' + k + '">' + geoTxt(o) + '</button>'; }).join('') + '</div><button class="link small" data-act="geoClear" data-id="' + j.id + '">Ingen av disse</button></dd>';
     if (g.status === 'ingen') return '<dt>Adresse</dt><dd><span class="small muted">Fant ikke adressen hos Kartverket</span> <button class="link small" data-act="geoFind" data-id="' + j.id + '">Prøv igjen</button></dd>';
-    return '<dt>Adresse</dt><dd>' + geoTxt(g) + (g.lat ? ' <a class="small" target="_blank" rel="noopener" href="https://norgeskart.no/#!?zoom=17&lat=' + g.lat + '&lon=' + g.lon + '&project=norgeskart&layers=1002&markerLat=' + g.lat + '&markerLon=' + g.lon + '&sok=">Kart</a>' : '') + '</dd>';
+    var extra = (g.bygg ? '<br><span class="small">' + esc(g.bygg) + (g.byggSikker === false ? ' <span class="muted">(nærmeste bygning)</span>' : '') + '</span>' : g.bygg === undefined && SV.live ? '<br><span class="small muted">Bygningstype hentes …</span>' : '') +
+      (g.units && g.units.length ? '<br><label class="small">Leilighet <select class="sel sel-xs" data-change="geoUnit" data-id="' + j.id + '" aria-label="Leilighetsnummer"><option value="">Velg (' + g.units.length + ')</option>' + g.units.map(function (u) { return '<option' + (g.unit === u ? ' selected' : '') + '>' + esc(u) + '</option>'; }).join('') + '</select></label>' : '');
+    return '<dt>Adresse</dt><dd>' + geoTxt(g) + extra + (g.lat ? ' <a class="small" target="_blank" rel="noopener" href="https://norgeskart.no/#!?zoom=17&lat=' + g.lat + '&lon=' + g.lon + '&project=norgeskart&layers=1002&markerLat=' + g.lat + '&markerLon=' + g.lon + '&sok=">Kart</a>' : '') + '</dd>';
   };
   function setGeo(id, g) {
     var nj = (S.newJobs || []).filter(function (x) { return x.id === id; })[0];
@@ -358,7 +360,7 @@
     SV.save(); SV.render();
   }
   function pack(a) { var t = function (s) { return String(s || '').toLowerCase().replace(/(^|[\s-])\S/g, function (c) { return c.toUpperCase(); }); };
-    return { addr: a.adressetekst, postnr: a.postnummer, poststed: t(a.poststed), kommune: t(a.kommunenavn), knr: a.kommunenummer, gnr: a.gardsnummer, bnr: a.bruksnummer, lat: a.representasjonspunkt && a.representasjonspunkt.lat, lon: a.representasjonspunkt && a.representasjonspunkt.lon }; }
+    return { id: String(a.adresseid || ''), addr: a.adressetekst, postnr: a.postnummer, poststed: t(a.poststed), kommune: t(a.kommunenavn), knr: a.kommunenummer, gnr: a.gardsnummer, bnr: a.bruksnummer, lat: a.representasjonspunkt && a.representasjonspunkt.lat, lon: a.representasjonspunkt && a.representasjonspunkt.lon }; }
   var AREAS = ['stord', 'fitjar', 'bømlo', 'kvinnherad', 'tysnes', 'sveio', 'haugesund', 'karmøy', 'tysvær', 'bokn', 'vindafjord', 'etne', 'ullensvang', 'kvam', 'eidfjord', 'ulvik'];
   SV.on('geoFind', function (el) {
     var id = el.getAttribute('data-id'), j = SV.find(SV.jobs(), id); if (!j) return;
@@ -376,6 +378,7 @@
     }).catch(function () { el.disabled = false; el.textContent = 'Finn postnr. og gnr/bnr'; SV.toast('Fikk ikke kontakt med Kartverket', 'warn'); });
   });
   SV.on('geoPick', function (el) { var id = el.getAttribute('data-id'), g = SV.geo(SV.find(SV.jobs(), id)), o = g && g.options[+el.getAttribute('data-k')]; if (o) { setGeo(id, Object.assign({}, o, { status: 'ok' })); SV.toast('Adresse valgt'); } });
+  SV.on('geoUnit', function (el) { var id = el.getAttribute('data-id'), g = Object.assign({}, SV.geo(SV.find(SV.jobs(), id)), { unit: el.value }); setGeo(id, g); SV.toast(el.value ? 'Leilighet ' + el.value : 'Leilighet fjernet'); });
   SV.on('geoClear', function (el) { setGeo(el.getAttribute('data-id'), { status: 'ingen' }); });
 
   // ---------- e-postvarsler ----------

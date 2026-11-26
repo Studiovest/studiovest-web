@@ -4,3 +4,4 @@ backup/
 api/config.php
 api/data/*
 !api/data/.htaccess
+!api/data/units.json
