@@ -34,7 +34,8 @@ function geo_lookup(string $addr, string $town, array $areas): array {
   $hits = array_values(array_filter($hits, fn($a) => strpos(norm_addr((string)$a['adressetekst']), norm_addr($addr)) === 0 || norm_addr((string)$a['adressetekst']) === norm_addr($addr)));
   $pick = [];
   if ($town !== '') $pick = array_values(array_filter($hits, fn($a) => in_array($low($town), [$low($a['poststed'] ?? ''), $low($a['kommunenavn'] ?? '')], true) || (preg_match('/^\d{4}$/', $town) && $a['postnummer'] === $town)));
-  if (!$pick) { $ar = array_map($low, $areas); $pick = array_values(array_filter($hits, fn($a) => in_array($low($a['kommunenavn'] ?? ''), $ar, true))); }
+  // kontorets vanlige kommuner først, så hele arbeidsområdet (kontorene tar av og til oppdrag utenfor sitt område)
+  foreach ([$areas, SV_WORK_AREA] as $set) { if ($pick) break; $ar = array_map($low, $set); $pick = array_values(array_filter($hits, fn($a) => in_array($low($a['kommunenavn'] ?? ''), $ar, true))); }
   if (!$pick && $town === '' && count($hits) <= 3) $pick = $hits;
   // Nøyaktig treff foretrekkes framfor «Haugen 23B» når e-posten sier «Haugen 23»
   $exact = array_values(array_filter($pick, fn($a) => norm_addr((string)$a['adressetekst']) === norm_addr($addr)));

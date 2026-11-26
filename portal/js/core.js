@@ -16,7 +16,9 @@
   // På GitHub Pages / localhost kjører portalen som demo (lagring i nettleseren). På studiovest.no kreves innlogging,
   // og alt lagres på serveren (api/state.php) med versjon, så to enheter ikke overskriver hverandre.
   var DEFAULTS = JSON.parse(JSON.stringify({ stage: {}, newJobs: [], cart: [], paid: [], favs: {}, comments: [], autos: {}, consents: {}, approved: {}, postStatus: {}, retake: false, deleteReq: false, read: false }));
-  var API = location.pathname.replace(/\/portal(\/.*)?$/, '') + '/api/';
+  // API-adresse: på portal.studiovest.no ligger API-et på studiovest.no/api (samme nettsted, så innloggingen følger med); ellers ved siden av /portal/.
+  SV.apiBase = /^portal\./.test(location.hostname) ? location.protocol + '//' + location.hostname.replace(/^portal\./, '') + '/api/' : location.pathname.replace(/\/portal(\/.*)?$/, '').replace(/\/$/, '') + '/api/';
+  var API = SV.apiBase;
   var localSave = SV.save, putT = null, busy = false, again = false, netWarned = false;
   SV.live = false; SV.me = null; SV.serverVersion = 0;
   // Moduler som legger standardverdier i SV.state, registrerer dem her, så de kjøres igjen når dataene fra serveren er lastet.
@@ -24,7 +26,7 @@
   function serverPut() {
     if (busy) { again = true; return; }
     busy = true; again = false;
-    fetch(API + 'state.php', { method: 'PUT', credentials: 'same-origin', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: SV.state, version: SV.serverVersion }) })
+    fetch(API + 'state.php', { method: 'PUT', credentials: 'include', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: SV.state, version: SV.serverVersion }) })
       .then(function (r) { return r.json().then(function (j) { return { st: r.status, j: j }; }); })
       .then(function (x) {
         busy = false; netWarned = false;
@@ -43,21 +45,21 @@
       '<button class="btn btn-acc" style="width:100%;justify-content:center;margin-top:6px">Send innloggingslenke</button><p class="small" id="loginMsg" style="margin-top:12px" role="status"></p></form></main>';
     document.getElementById('loginF').addEventListener('submit', function (e) {
       e.preventDefault(); var f = e.target, msg = document.getElementById('loginMsg'), b = f.querySelector('button'); b.disabled = true;
-      fetch(API + 'auth.php?a=request', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: f.email.value }) })
+      fetch(API + 'auth.php?a=request', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: f.email.value }) })
         .then(function (r) { return r.json(); }).then(function (j) { msg.textContent = j.ok ? 'Sjekk e-posten din. Lenken virker i 15 minutter.' : (j.error || 'Noe gikk galt'); b.disabled = false; })
         .catch(function () { msg.textContent = 'Får ikke kontakt med serveren.'; b.disabled = false; });
     });
   }
-  SV.logout = function () { fetch(API + 'auth.php?a=logout', { credentials: 'same-origin' }).then(function () { location.reload(); }); };
+  SV.logout = function () { fetch(API + 'auth.php?a=logout', { credentials: 'include' }).then(function () { location.reload(); }); };
   SV.boot = function (start) {
     var demo = /github\.io$|^localhost$|^127\./.test(location.hostname) && !/[?&]api=1/.test(location.search);
     if (demo || location.protocol === 'file:') return start();
-    fetch(API + 'auth.php?a=me', { credentials: 'same-origin', cache: 'no-store' })
+    fetch(API + 'auth.php?a=me', { credentials: 'include', cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('ingen server'); return r.json(); })
       .then(function (me) {
         if (!me.user) return loginScreen();
         SV.me = me.user; SV.live = true;
-        return fetch(API + 'state.php', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (st) {
+        return fetch(API + 'state.php', { credentials: 'include', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (st) {
           Object.keys(SV.state).forEach(function (k) { delete SV.state[k]; });
           Object.assign(SV.state, JSON.parse(JSON.stringify(DEFAULTS)), st.data || {});
           SV.serverVersion = st.version || 0;

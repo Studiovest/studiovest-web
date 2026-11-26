@@ -23,4 +23,8 @@ cat > dist/sitemap.xml <<S
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>$SITE/</loc><lastmod>$(date -u +%F)</lastmod></url></urlset>
 S
-echo "dist klar: $(du -sh dist | cut -f1)"
+# portal.studiovest.no: portalen i roten av underdomenet, med assets ved siden av (portalen bruker ../assets/)
+rm -rf dist-portal && mkdir dist-portal && cp -r dist/portal/. dist-portal/ && cp -r dist/assets dist-portal/assets
+printf 'User-agent: *\nDisallow: /\n' > dist-portal/robots.txt
+printf 'RewriteEngine On\nRewriteCond %%{HTTPS} off\nRewriteRule ^ https://%%{HTTP_HOST}%%{REQUEST_URI} [L,R=301]\nOptions -Indexes\n' > dist-portal/.htaccess
+echo "dist klar: $(du -sh dist | cut -f1) · portal: $(du -sh dist-portal | cut -f1)"

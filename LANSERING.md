@@ -72,6 +72,15 @@ Kart med Street View og flyfoto i prosjektene (valgfritt, gratis):
    ```
    Uten nøkkel vises kartet med eiendomsgrenser likevel, og Street View åpnes i en ny fane.
 
+Portalen på portal.studiovest.no (gjøres ved lansering):
+
+11. one.com: Kontrollpanel → Avanserte innstillinger → Underdomener → legg til `portal`. Claude finner mappen og legger inn i hemmeligheten:
+    ```
+    PORTAL_URL=https://portal.studiovest.no
+    PORTAL_DIR=<mappen for underdomenet>
+    ```
+    API-et blir på studiovest.no/api. studiovest.no/portal/ sendes videre til portal.studiovest.no.
+
 ## Det som skjer automatisk
 
 | Steg | Hvordan |

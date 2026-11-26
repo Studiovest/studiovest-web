@@ -21,6 +21,15 @@ function json_out($data, int $code = 200): void {
 }
 function fail(string $msg, int $code = 400): void { json_out(['ok' => false, 'error' => $msg], $code); }
 function body(): array { $b = json_decode(file_get_contents('php://input') ?: '[]', true); return is_array($b) ? $b : []; }
+// Portalen ligger på portal.studiovest.no (PORTAL_URL). API-et blir på studiovest.no/api og svarer portalen med CORS.
+function portal_url(): string { return rtrim((string)(cfg('PORTAL_URL') ?: base_url() . '/portal'), '/'); }
+function cors(): void {
+  $o = $_SERVER['HTTP_ORIGIN'] ?? ''; if ($o === '') return;
+  $ok = array_filter([parse_url(portal_url(), PHP_URL_SCHEME) . '://' . parse_url(portal_url(), PHP_URL_HOST), base_url()]);
+  if (!in_array(rtrim($o, '/'), $ok, true)) return;
+  header('Access-Control-Allow-Origin: ' . $o); header('Access-Control-Allow-Credentials: true'); header('Vary: Origin');
+  if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') { header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS'); header('Access-Control-Allow-Headers: Content-Type'); header('Access-Control-Max-Age: 86400'); http_response_code(204); exit; }
+}
 function base_url(): string { $u = cfg('BASE_URL'); if ($u) return rtrim($u, '/'); $h = $_SERVER['HTTP_HOST'] ?? 'studiovest.no'; return 'https://' . $h; }
 
 // ---------- database ----------
@@ -194,9 +203,11 @@ function s3_setup(): array {
     $xml = '<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><LocationConstraint>' . $region . '</LocationConstraint></CreateBucketConfiguration>';
     $r = s3_request('PUT', $b, '', $xml); if ($r['code'] >= 300) return ['ok' => false, 'info' => 'Kunne ikke opprette bøtte: HTTP ' . $r['code'] . ' ' . substr(strip_tags($r['body']), 0, 160)];
   } elseif ($head['code'] >= 300) return ['ok' => false, 'info' => 'Wasabi svarte HTTP ' . $head['code'] . ($head['err'] ? ' (' . $head['err'] . ')' : '') . '. Sjekk nøkkel, region og bøttenavn.'];
-  $origins = array_unique(array_filter([base_url(), 'https://studiovest.no', 'https://www.studiovest.no', 'https://studiovest.github.io']));
+  $origins = array_unique(array_filter([base_url(), parse_url(portal_url(), PHP_URL_SCHEME) . '://' . parse_url(portal_url(), PHP_URL_HOST), 'https://portal.studiovest.no', 'https://studiovest.no', 'https://www.studiovest.no', 'https://studiovest.github.io']));
   $xml = '<CORSConfiguration><CORSRule>' . implode('', array_map(fn($o) => "<AllowedOrigin>$o</AllowedOrigin>", $origins)) . '<AllowedMethod>GET</AllowedMethod><AllowedMethod>PUT</AllowedMethod><AllowedMethod>HEAD</AllowedMethod><AllowedHeader>*</AllowedHeader><ExposeHeader>ETag</ExposeHeader><MaxAgeSeconds>3600</MaxAgeSeconds></CORSRule></CORSConfiguration>';
   $r = s3_request('PUT', $b, 'cors=', $xml, ['content-md5' => base64_encode(md5($xml, true)), 'content-type' => 'application/xml']);
   if ($r['code'] >= 300) return ['ok' => false, 'info' => 'Bøtta finnes, men CORS feilet: HTTP ' . $r['code']];
   return ['ok' => true, 'info' => 'Bøtte og CORS klar'];
 }
+
+cors();

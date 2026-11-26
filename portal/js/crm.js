@@ -363,7 +363,8 @@
   }
   function pack(a) { var t = function (s) { return String(s || '').toLowerCase().replace(/(^|[\s-])\S/g, function (c) { return c.toUpperCase(); }); };
     return { id: String(a.adresseid || ''), addr: a.adressetekst, postnr: a.postnummer, poststed: t(a.poststed), kommune: t(a.kommunenavn), knr: a.kommunenummer, gnr: a.gardsnummer, bnr: a.bruksnummer, lat: a.representasjonspunkt && a.representasjonspunkt.lat, lon: a.representasjonspunkt && a.representasjonspunkt.lon }; }
-  var AREAS = ['stord', 'fitjar', 'bømlo', 'kvinnherad', 'tysnes', 'sveio', 'haugesund', 'karmøy', 'tysvær', 'bokn', 'vindafjord', 'etne', 'ullensvang', 'kvam', 'eidfjord', 'ulvik'];
+  // hele arbeidsområdet: Bokn i sør, Bergen/Norheimsund i nord, Eidfjord i øst
+  var AREAS = ['stord', 'fitjar', 'bømlo', 'kvinnherad', 'tysnes', 'sveio', 'haugesund', 'karmøy', 'tysvær', 'bokn', 'vindafjord', 'etne', 'ullensvang', 'kvam', 'eidfjord', 'ulvik', 'austevoll', 'bjørnafjorden', 'samnanger', 'bergen'];
   SV.on('geoFind', function (el) {
     var id = el.getAttribute('data-id'), j = SV.find(SV.jobs(), id); if (!j) return;
     el.disabled = true; el.textContent = 'Søker …';
@@ -373,6 +374,7 @@
       var hits = (d.adresser || []).filter(function (a) { return norm(a.adressetekst).indexOf(norm(j.addr)) === 0; });
       var pick = town ? hits.filter(function (a) { return [a.poststed, a.kommunenavn].map(function (x) { return String(x).toLowerCase(); }).indexOf(town) > -1 || a.postnummer === town; }) : [];
       if (!pick.length) pick = hits.filter(function (a) { return areas.indexOf(String(a.kommunenavn).toLowerCase()) > -1; });
+      if (!pick.length) pick = hits.filter(function (a) { return AREAS.indexOf(String(a.kommunenavn).toLowerCase()) > -1; });
       var ex = pick.filter(function (a) { return norm(a.adressetekst) === norm(j.addr); }); if (ex.length === 1) pick = ex;
       if (pick.length === 1) { setGeo(id, Object.assign(pack(pick[0]), { status: 'ok' })); SV.toast('Adresse funnet'); }
       else if (pick.length) { setGeo(id, { status: 'velg', options: pick.slice(0, 8).map(pack) }); SV.toast(pick.length + ' treff – velg riktig'); }

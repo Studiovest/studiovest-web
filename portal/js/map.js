@@ -4,9 +4,9 @@
 (function () {
   'use strict';
   var SV = window.SV, esc = SV.esc, ic = SV.icon;
-  var API = location.pathname.replace(/\/portal(\/.*)?$/, '') + '/api/', KEY = null, keyAsked = false, leaflet = null, MAPS = {};
+  var API = SV.apiBase, KEY = null, keyAsked = false, leaflet = null, MAPS = {};
   var DEMO_PT = { lat: 59.7795, lon: 5.4997, demo: true }; // Leirvik sentrum, bare for eksempeldata
-  function gkey() { if (SV.live && !keyAsked) { keyAsked = true; fetch(API + 'public.php', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) { if (d.gmaps) { KEY = d.gmaps; SV.render(); } }).catch(function () {}); } return KEY; }
+  function gkey() { if (SV.live && !keyAsked) { keyAsked = true; fetch(API + 'public.php', { credentials: 'include' }).then(function (r) { return r.json(); }).then(function (d) { if (d.gmaps) { KEY = d.gmaps; SV.render(); } }).catch(function () {}); } return KEY; }
   function loadLeaflet() {
     if (leaflet) return leaflet;
     leaflet = new Promise(function (ok, no) {

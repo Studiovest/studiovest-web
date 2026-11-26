@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var SV = window.SV, esc = SV.esc, ic = SV.icon;
-  var API = location.pathname.replace(/\/portal(\/.*)?$/, '') + '/api/';
+  var API = SV.apiBase;
   var data = null, loading = false, err = '';
   var TONE = { opprettet: ['Prosjekt laget', 'ok'], sjekk: ['Sjekk bestillingen', 'bad'], 'ikke bestilling': ['Ikke en bestilling', 'mute'], oppdatert: ['Prosjekt oppdatert', 'ok'], plantegning: ['Plantegningsendring', 'ok'], feil: ['Feil', 'bad'], venter: ['Venter (dagsgrense)', 'sand'], leser: ['Leser …', 'sand'] };
   var DEMO = { on: true, demo: true, month: { emails: 214, usd: 0.94 }, geo: { n: 31, ok: 27 }, last_run: null, rows: [
@@ -15,7 +15,7 @@
     if (!SV.live) { data = DEMO; return; }
     if (loading || (data && !force)) return;
     loading = true; err = '';
-    fetch(API + 'agentlog.php', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); })
+    fetch(API + 'agentlog.php', { credentials: 'include', cache: 'no-store' }).then(function (r) { return r.json(); })
       .then(function (j) { data = j; loading = false; if (/^#\/agent/.test(location.hash)) SV.render(); })
       .catch(function () { loading = false; err = 'Fikk ikke kontakt med serveren.'; SV.render(); });
   }
@@ -47,7 +47,7 @@
   // Cubicasa-ordrer agenten ikke kunne koble sikkert til et prosjekt
   var CC = null, ccBusy = false;
   function ccCard() {
-    if (!CC && !ccBusy) { ccBusy = true; fetch(API + 'floorjobs.php?a=unmatched', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) { CC = d; ccBusy = false; SV.render(); }).catch(function () { ccBusy = false; }); }
+    if (!CC && !ccBusy) { ccBusy = true; fetch(API + 'floorjobs.php?a=unmatched', { credentials: 'include', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) { CC = d; ccBusy = false; SV.render(); }).catch(function () { ccBusy = false; }); }
     if (!CC || !CC.on || !(CC.orders || []).length) return '';
     var jobs = SV.jobs().filter(function (j) { return j.addr; });
     return '<div class="card pad" style="margin-bottom:16px"><p class="eyebrow">' + ic('home') + 'Plantegninger fra Cubicasa</p><h3 class="h3">' + CC.orders.length + ' ordre' + (CC.orders.length > 1 ? 'r' : '') + ' uten sikkert prosjekt</h3><p class="small muted" style="margin:4px 0 10px">Adressen stemte ikke med ett prosjekt. Velg riktig prosjekt, så lager agenten plantegningene.</p>' +
@@ -56,18 +56,18 @@
           '<div class="row" style="gap:6px;flex-wrap:nowrap"><select class="sel sel-xs" id="cc-' + esc(o.order_id) + '" aria-label="Prosjekt"><option value="">Velg prosjekt</option>' + jobs.map(function (j) { return '<option value="' + esc(j.id) + '"' + (c[0] && c[0].job === j.id ? ' selected' : '') + '>' + esc(j.addr) + (j.town ? ', ' + esc(j.town) : '') + ' (' + esc(j.id) + ')</option>'; }).join('') + '</select>' +
           '<button class="btn btn-dark btn-s" data-act="ccLink" data-o="' + esc(o.order_id) + '">Koble</button><button class="link small" data-act="ccIgnore" data-o="' + esc(o.order_id) + '">Ignorer</button></div></div>'; }).join('') + '</div>';
   }
-  function ccPost(b, msg) { return fetch(API + 'floorjobs.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }).then(function (r) { SV.toast(r.ok ? msg : r.error, r.ok ? '' : 'warn'); CC = null; SV.render(); }); }
+  function ccPost(b, msg) { return fetch(API + 'floorjobs.php', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }).then(function (r) { SV.toast(r.ok ? msg : r.error, r.ok ? '' : 'warn'); CC = null; SV.render(); }); }
   SV.on('ccLink', function (el) { var o = el.getAttribute('data-o'), s = document.getElementById('cc-' + o); if (!s || !s.value) { SV.toast('Velg prosjekt', 'warn'); return; } ccPost({ a: 'link', order: o, job: s.value }, 'Koblet. Agenten lager plantegningene innen 30 minutter.'); });
   SV.on('ccIgnore', function (el) { ccPost({ a: 'ignore', order: el.getAttribute('data-o') }, 'Ordren er ignorert'); });
   SV.on('mailRun', function (el) {
     el.disabled = true; SV.toast('Sjekker innboksen …');
-    fetch(API + 'agentlog.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: 'run' }) })
+    fetch(API + 'agentlog.php', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: 'run' }) })
       .then(function (r) { return r.json(); }).then(function (j) { SV.toast(j.info || j.error || 'Ferdig'); if (/opprettet|sjekk/.test(j.info || '')) setTimeout(function () { location.reload(); }, 1200); else load(true); })
       .catch(function () { SV.toast('Fikk ikke kontakt med serveren', 'warn'); el.disabled = false; });
   });
   SV.on('agRetry', function (el) {
     el.disabled = true;
-    fetch(API + 'agentlog.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: 'retry', id: +el.getAttribute('data-id') }) })
+    fetch(API + 'agentlog.php', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: 'retry', id: +el.getAttribute('data-id') }) })
       .then(function (r) { return r.json(); }).then(function (j) { SV.toast(j.info || j.error || 'Ferdig'); if (/opprettet|sjekk/.test(j.info || '')) setTimeout(function () { location.reload(); }, 1200); else load(true); })
       .catch(function () { SV.toast('Fikk ikke kontakt med serveren', 'warn'); el.disabled = false; });
   });

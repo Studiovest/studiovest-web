@@ -23,6 +23,8 @@ const AGENT_OFFICES = [
   'nvhau' => ['Nordvik Haugesund', 'kunde', ['Haugesund', 'Karmøy', 'Tysvær', 'Sveio', 'Bokn', 'Vindafjord', 'Etne']],
   'aksun' => ['Aktiv Sunnhordland', 'kontor', SV_SUNN],
 ];
+// Hele arbeidsområdet: fra Bokn i sør til Bergen/Norheimsund i nord og Eidfjord i øst. Brukes når kontorets vanlige kommuner ikke gir treff.
+const SV_WORK_AREA = ['Bokn', 'Haugesund', 'Karmøy', 'Tysvær', 'Sveio', 'Vindafjord', 'Etne', 'Stord', 'Fitjar', 'Bømlo', 'Kvinnherad', 'Tysnes', 'Austevoll', 'Bjørnafjorden', 'Samnanger', 'Bergen', 'Kvam', 'Ullensvang', 'Eidfjord', 'Ulvik'];
 function office_areas(string $id): array { return AGENT_OFFICES[$id][2] ?? array_values(array_unique(array_merge(SV_SUNN, ['Haugesund', 'Ullensvang', 'Kvam', 'Etne', 'Vindafjord']))); }
 
 function agent_on(): bool { return claude_key('EMAIL') !== '' || cfg('AGENT_FAKE'); }

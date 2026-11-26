@@ -52,5 +52,14 @@ echo "== Publiserer =="
 L "mirror -R --parallel=4 --no-perms --exclude-glob api/data/* dist $ROOT"
 L "mkdir -p $ROOT/api/data; put dist/api/data/.htaccess -o $ROOT/api/data/.htaccess"
 [ -f dist/api/data/units.json ] && L "put dist/api/data/units.json -o $ROOT/api/data/units.json"
+# portal.studiovest.no: one.com lager en egen mappe for underdomenet (PORTAL_DIR i oppsettet)
+if [ -n "${PORTAL_DIR:-}" ]; then
+  echo "== Portal til $PORTAL_DIR =="; L "mirror -R --parallel=4 --no-perms dist-portal $PORTAL_DIR"
+  # gamle adresser studiovest.no/portal/ sendes videre, med mindre underdomenet ER den mappen
+  if [ "${PORTAL_DIR%/}" != "$ROOT/portal" ] && [ "${PORTAL_DIR%/}" != "portal" ]; then
+    printf 'RewriteEngine On\nRewriteRule ^(.*)$ %s/$1 [L,R=301]\n' "${PORTAL_URL:-https://portal.studiovest.no}" > portal-redirect.htaccess
+    L "put portal-redirect.htaccess -o $ROOT/portal/.htaccess"
+  fi
+fi
 date -u > live-marker && L "put live-marker -o $ROOT/.studiovest-live"
 echo "Ferdig."

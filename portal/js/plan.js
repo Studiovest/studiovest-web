@@ -102,17 +102,17 @@
   SV.on('agReject', function (el) { var st = SV.state.agentStats = SV.state.agentStats || { ok: 0, rejected: 0 }; st.rejected++; delete SV.state.agent[el.getAttribute('data-id')]; SV.save(); SV.render(); SV.toast('Forslaget er avvist'); });
 
   // ---------- ekte drift: plantegningsagenten på serveren (api/planagent.php) ----------
-  var API = location.pathname.replace(/\/portal(\/.*)?$/, '') + '/api/', LIVE = {}, BUSY = {};
+  var API = SV.apiBase, LIVE = {}, BUSY = {};
   SV.planLiveData = function (j) {
     if (!SV.live || !j) return null;
     if (!LIVE[j.id] && !BUSY[j.id]) { BUSY[j.id] = 1; SV.planReload(j.id); }
     return LIVE[j.id] || null;
   };
   SV.planReload = function (id) {
-    return fetch(API + 'planagent.php?job=' + encodeURIComponent(id), { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); })
+    return fetch(API + 'planagent.php?job=' + encodeURIComponent(id), { credentials: 'include', cache: 'no-store' }).then(function (r) { return r.json(); })
       .then(function (d) { LIVE[id] = d; BUSY[id] = 0; SV.render(); }).catch(function () { BUSY[id] = 0; });
   };
-  function post(body) { return fetch(API + 'planagent.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
+  function post(body) { return fetch(API + 'planagent.php', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
   // gjør markeringene om til tekst agenten forstår: rom, posisjon i cm og kommentaren
   function requestText(j, f, m, note) {
     var sc = SV.planScene(j, f), lines = [];
@@ -196,7 +196,7 @@
 
   // ---------- ferdige plantegninger (Cubicasa-PDF → kontorets mal), api/floorjobs.php ----------
   var FP = {}, FPB = {};
-  function fpLoad(id) { if (FPB[id]) return; FPB[id] = 1; fetch(API + 'floorjobs.php?job=' + encodeURIComponent(id), { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) { FP[id] = d; FPB[id] = 0; SV.render(); }).catch(function () { FPB[id] = 0; }); }
+  function fpLoad(id) { if (FPB[id]) return; FPB[id] = 1; fetch(API + 'floorjobs.php?job=' + encodeURIComponent(id), { credentials: 'include', cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) { FP[id] = d; FPB[id] = 0; SV.render(); }).catch(function () { FPB[id] = 0; }); }
   var FPT = { venter: ['Venter på agenten', 'sand'], 'kjører': ['Lager plantegninger …', 'sand'], levert: ['Levert', 'ok'], sjekk: ['Må sjekkes', 'bad'], feil: ['Feil', 'bad'] };
   SV.fpCard = function (j) {
     var guess = /Leilighet/i.test(j.type || '') ? 'Leilighet' : '', first = (SV.state.fpFirst || {})[j.id];
@@ -223,11 +223,11 @@
     if (ev) ev.preventDefault(); var f = document.getElementById('fpF'), id = el.getAttribute('data-id');
     if (!f.pdf.files.length) { SV.toast('Velg Cubicasa-PDF-en', 'warn'); return; }
     var fd = new FormData(f); fd.append('job', id); el.disabled = true; el.textContent = 'Laster opp …';
-    fetch(API + 'floorjobs.php', { method: 'POST', credentials: 'same-origin', body: fd }).then(function (r) { return r.json(); })
+    fetch(API + 'floorjobs.php', { method: 'POST', credentials: 'include', body: fd }).then(function (r) { return r.json(); })
       .then(function (r) { SV.toast(r.ok ? 'Lagt i kø. Agenten starter innen 30 minutter.' : r.error, r.ok ? '' : 'warn'); FPB[id] = 0; FP[id] = null; fpLoad(id); })
       .catch(function () { SV.toast('Opplastingen feilet', 'warn'); el.disabled = false; });
   });
   SV.on('fpFirst', function (el) { var id = el.getAttribute('data-id'); SV.state.fpFirst = SV.state.fpFirst || {}; SV.state.fpFirst[id] = el.value.trim(); SV.save(); SV.toast(el.value.trim() ? 'Etasjer: ' + el.value.trim() : 'Agenten bruker Cubicasas etasjenavn'); });
   SV.on('fpRetry', function (el) { var job = el.getAttribute('data-job'); post0({ a: 'retry', id: +el.getAttribute('data-id') }).then(function () { FP[job] = null; fpLoad(job); SV.toast('Lagt i kø igjen'); }); });
-  function post0(b) { return fetch(API + 'floorjobs.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }); }
+  function post0(b) { return fetch(API + 'floorjobs.php', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }); }
 })();

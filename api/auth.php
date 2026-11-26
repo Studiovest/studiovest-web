@@ -25,10 +25,10 @@ if ($a === 'request') {
 if ($a === 'verify') {
   $tok = (string)($_GET['t'] ?? '');
   $s = db()->prepare('SELECT user_id, expires, used FROM login_tokens WHERE hash=?'); $s->execute([hash('sha256', $tok)]); $r = $s->fetch();
-  if (!$r || $r['used'] || $r['expires'] < time()) { header('Location: ' . base_url() . '/portal/?login=utlopt'); exit; }
+  if (!$r || $r['used'] || $r['expires'] < time()) { header('Location: ' . portal_url() . '/?login=utlopt'); exit; }
   db()->prepare('UPDATE login_tokens SET used=1 WHERE hash=?')->execute([hash('sha256', $tok)]);
   db()->prepare('UPDATE users SET last_login=? WHERE id=?')->execute([now(), $r['user_id']]);
   start_session(); session_regenerate_id(true); $_SESSION['uid'] = (int)$r['user_id'];
-  header('Location: ' . base_url() . '/portal/'); exit;
+  header('Location: ' . portal_url() . '/'); exit;
 }
 fail('Ukjent handling', 404);

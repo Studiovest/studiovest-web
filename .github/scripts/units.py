@@ -2,7 +2,7 @@
 """Henter Kartverkets åpne «Matrikkelen Adresse Leilighetsnivå» for kommunene Studiovest dekker,
 og lager api/data/units.json: adresseId -> liste med bruksenhetsnummer (H0101, H0201 …). Kjøres månedlig av units.yml."""
 import io, json, re, sys, urllib.request, zipfile, xml.etree.ElementTree as ET
-KOMMUNER = ['4611', '4612', '4613', '4614', '4615', '4616', '4617', '4618', '4619', '4620', '4622', '1106', '1145', '1146', '1149', '1160']
+KOMMUNER = ['4611', '4612', '4613', '4614', '4615', '4616', '4617', '4618', '4619', '4620', '4622', '1106', '1145', '1146', '1149', '1160', '4601', '4623', '4624', '4627']  # + Bergen, Samnanger, Bjørnafjorden, Austevoll
 FEED = 'https://nedlasting.geonorge.no/geonorge/ATOM-feeds/MatrikkelenAdresseLeilighetsniva_AtomFeedGML.xml'
 sample = '--sample' in sys.argv
 feed = urllib.request.urlopen(FEED, timeout=60).read().decode()
