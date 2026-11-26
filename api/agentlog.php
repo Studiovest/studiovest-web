@@ -20,5 +20,7 @@ foreach ($out as &$r) { $r['data'] = $r['data'] ? json_decode($r['data'], true) 
 $m = db()->prepare("SELECT COALESCE(SUM(tokens_in),0) i, COALESCE(SUM(tokens_out),0) o, COUNT(*) n FROM agent_mail WHERE tenant_id=? AND created_at >= ?");
 $m->execute([$u['tenant_id'], gmdate('Y-m-01')]); $mo = $m->fetch();
 $seen = db()->prepare('SELECT COUNT(*) FROM agent_mail WHERE tenant_id=? AND created_at >= ?'); $seen->execute([$u['tenant_id'], gmdate('Y-m-01')]);
-json_out(['ok' => true, 'on' => true, 'rows' => $out, 'month' => ['emails' => (int)$seen->fetchColumn(), 'tokens_in' => (int)$mo['i'], 'tokens_out' => (int)$mo['o'],
+require_once __DIR__ . '/enrich.php'; enrich_tables();
+$g = db()->prepare("SELECT COUNT(*) n, COALESCE(SUM(CASE WHEN status='ok' THEN 1 ELSE 0 END),0) ok FROM geo_log WHERE tenant_id=? AND at >= ?"); $g->execute([$u['tenant_id'], gmdate('Y-m-01')]); $geo = $g->fetch();
+json_out(['ok' => true, 'on' => true, 'rows' => $out, 'geo' => ['n' => (int)$geo['n'], 'ok' => (int)$geo['ok']], 'month' => ['emails' => (int)$seen->fetchColumn(), 'tokens_in' => (int)$mo['i'], 'tokens_out' => (int)$mo['o'],
   'usd' => round(((int)$mo['i'] * 2 + (int)$mo['o'] * 10) / 1e6, 2)], 'last_run' => db()->query('SELECT at FROM cron_runs ORDER BY id DESC LIMIT 1')->fetchColumn() ?: null]);

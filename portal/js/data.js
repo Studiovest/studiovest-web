@@ -57,8 +57,16 @@
     { id: 'fjm', name: 'Fjordmegling Stord', town: 'Leirvik', agreement: 'Listepris', invoice: 'Samlefaktura til kontoret, EHF', brokers: ['Kari Lunde', 'Jonas Myklebust', 'Sigrid Tveit'], ytd: 312400 },
     { id: 'kmh', name: 'Kystmegleren Haugesund', town: 'Haugesund', agreement: 'Listepris', invoice: 'Per oppdrag, til megler', brokers: ['Eirik Sæther', 'Line Hovda'], ytd: 188900 },
     { id: 'sue', name: 'Sunnhordland Eiendom', town: 'Husnes', agreement: 'Listepris', invoice: 'Samlefaktura månedlig', brokers: ['Tone Rydland', 'Martin Opsal'], ytd: 241300 },
-    { id: 'hbm', name: 'Hardanger Boligmegling', town: 'Rosendal', agreement: 'Listepris', invoice: 'Per oppdrag', brokers: ['Ole Bjørkås'], ytd: 64200 }
+    { id: 'hbm', name: 'Hardanger Boligmegling', town: 'Rosendal', agreement: 'Listepris', invoice: 'Per oppdrag', brokers: ['Ole Bjørkås'], ytd: 64200 },
+    // Ekte meglerkontor. bill = hvem fakturaen går til som standard ('kontor' | 'kunde'). areas = kommuner kontoret dekker (brukes til å finne riktig adresse).
+    { id: 'emn', real: true, name: 'Eiendomsmegler Norge', town: '', bill: 'kunde', areas: ['Stord', 'Fitjar', 'Bømlo', 'Kvinnherad', 'Tysnes', 'Sveio'], agreement: 'Listepris', invoice: 'Faktura direkte til kunde', brokers: [], ytd: 0 },
+    { id: 'em1', real: true, name: 'Eiendomsmegler 1', town: '', bill: 'kontor', areas: ['Stord', 'Fitjar', 'Bømlo', 'Kvinnherad', 'Tysnes', 'Sveio'], agreement: 'Listepris', invoice: 'Faktura til meglerkontoret', brokers: [], ytd: 0 },
+    { id: 'nvhar', real: true, name: 'Nordvik Hardanger', town: '', bill: 'kunde', areas: ['Ullensvang', 'Kvam', 'Eidfjord', 'Ulvik', 'Kvinnherad'], agreement: 'Listepris', invoice: 'Faktura direkte til kunde', brokers: [], ytd: 0 },
+    { id: 'nvsun', real: true, name: 'Nordvik Sunnhordland', town: '', bill: 'kontor', areas: ['Stord', 'Fitjar', 'Bømlo', 'Kvinnherad', 'Tysnes', 'Sveio'], agreement: 'Listepris', invoice: 'Faktura til meglerkontoret', brokers: [], ytd: 0 },
+    { id: 'nvhau', real: true, name: 'Nordvik Haugesund', town: '', bill: 'kunde', areas: ['Haugesund', 'Karmøy', 'Tysvær', 'Sveio', 'Bokn', 'Vindafjord', 'Etne'], agreement: 'Listepris', invoice: 'Faktura direkte til kunde', brokers: [], ytd: 0 },
+    { id: 'aksun', real: true, name: 'Aktiv Sunnhordland', town: '', bill: 'kontor', areas: ['Stord', 'Fitjar', 'Bømlo', 'Kvinnherad', 'Tysnes', 'Sveio'], agreement: 'Listepris', invoice: 'Faktura til meglerkontoret', brokers: [], ytd: 0 }
   ];
+  offices.forEach(function (o) { if (!o.bill) o.bill = /kunde/i.test(o.invoice) ? 'kunde' : 'kontor'; });
 
   var stages = ['Opprettet', 'Kontaktet', 'Fotografering avtalt', 'Fotografering utført', 'Oppdrag levert', 'Godkjent'];
 

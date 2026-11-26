@@ -9,6 +9,13 @@
     return D.boligJobs.concat(SV.state.newJobs).map(function (j) { var x = t[j.id] ? Object.assign({}, j, { date: t[j.id][0], time: t[j.id][1], wish: '' }) : j; if (e[j.id]) x = Object.assign({}, x, e[j.id]); if (dl[j.id] && !x.delivered) x = Object.assign({}, x, { delivered: dl[j.id] }); if (j.id in o) x = Object.assign({}, x, o[j.id] ? { date2: o[j.id][0], time2: o[j.id][1] } : { date2: null, time2: null }); return x; });
   };
   SV.stageOf = function (j) { return SV.state.stage[j.id] || j.stage; };
+  // Faktura til meglerkontoret eller direkte til kunden. Standard per kontor (office.bill), kan overstyres per oppdrag.
+  SV.billDefault = function (officeId) { var o = SV.find(D.offices, officeId); return (o && o.bill) || 'kontor'; };
+  SV.billTo = function (j) { var b = (SV.state.billTo || {})[j.id]; return b || j.billTo || SV.billDefault(j.office); };
+  SV.billLabel = function (b) { return b === 'kunde' ? 'Kunde direkte' : 'Meglerkontoret'; };
+  SV.billPick = function (name, val, def) {
+    return '<div class="fld"><span>Faktura til</span><div class="seg2" role="radiogroup" aria-label="Faktura til">' + [['kontor', 'Meglerkontoret'], ['kunde', 'Kunde direkte']].map(function (x) { return '<label><input type="radio" name="' + name + '" value="' + x[0] + '"' + (val === x[0] ? ' checked' : '') + '><span>' + x[1] + (def === x[0] ? ' <em>standard</em>' : '') + '</span></label>'; }).join('') + '</div></div>';
+  };
   // Forventet levering: valgfri, settes av studio. { d: 'YYYY-MM-DD', t: 'HH:MM' | '' }
   SV.eta = function (j) { var e = (SV.state.eta || {})[j.id]; return e === null ? null : e || j.eta || null; };
   SV.etaTxt = function (j, short) { var e = SV.eta(j); if (!e || SV.stIdx(j) >= 4) return ''; return (short ? 'Levering ' : 'Forventet levering ') + SV.fdate(e.d, true) + (e.t ? ' kl. ' + e.t : ''); };
@@ -286,7 +293,7 @@
       '<form id="order" class="g21" onsubmit="return false"><div class="stack">' +
         '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Boligen</h3><div class="g2"><label class="fld sugg"><span>Adresse</span><input class="inp" name="addr" required autocomplete="off" placeholder="Begynn å skrive …" data-input="addrSugg" data-target="o"><span class="sugg-list" id="sugg-o"></span></label><label class="fld"><span>Sted</span><input class="inp" name="town"></label><label class="fld"><span>Oppdragsnummer</span><input class="inp" name="nr"></label><label class="fld"><span>Boligtype</span><select class="sel" name="type"><option>Enebolig</option><option selected>Leilighet</option><option>Rekkehus</option><option>Fritidsbolig</option><option>Gårdsbruk</option><option>Næring</option></select></label></div></div>' +
         '<div class="card pad"><div class="row between" style="margin-bottom:4px"><h3 class="h3">Tjenester</h3><button type="button" class="link small" data-act="usePkg">Bruk standardpakken</button></div>' + Object.keys(groups).map(function (g) { return '<p class="eyebrow" style="margin:14px 0 8px">' + g + '</p><div class="opts">' + groups[g].map(function (s) { return SV.svcOpt(s, 's', p.indexOf(s.id) > -1, DISC, 'orderCalc', true); }).join('') + '</div>'; }).join('') + '</div>' +
-        '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Selger og tilgang</h3><div class="g2"><label class="fld"><span>Selgers navn</span><input class="inp" name="seller" placeholder="Navn"></label><label class="fld"><span>Mobil</span><input class="inp" name="phone" inputmode="tel" placeholder="8 siffer"></label><label class="fld"><span>Tilgang</span><select class="sel" name="access"><option>Selger hjemme</option><option>Nøkkel hos megler</option><option>Nøkkelboks</option></select></label><label class="fld"><span>Notat til fotografen</span><input class="inp" name="note" placeholder="F.eks. katt i huset, parkering bak"></label></div></div>' +
+        '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Selger og tilgang</h3><div class="g2"><label class="fld"><span>Selgers navn</span><input class="inp" name="seller" placeholder="Navn"></label><label class="fld"><span>Mobil</span><input class="inp" name="phone" inputmode="tel" placeholder="8 siffer"></label><label class="fld"><span>Tilgang</span><select class="sel" name="access"><option>Selger hjemme</option><option>Nøkkel hos megler</option><option>Nøkkelboks</option></select></label><label class="fld"><span>Notat til fotografen</span><input class="inp" name="note" placeholder="F.eks. katt i huset, parkering bak"></label></div>' + SV.billPick('bill', SV.billDefault('fjm'), SV.billDefault('fjm')) + '</div>' +
       '</div><aside><div class="card pad" style="position:sticky;top:60px"><h3 class="h3">Oppsummering</h3><div id="sum"></div><button class="btn btn-acc" style="width:100%;margin-top:16px" data-act="orderSend">' + ic('check') + 'Send bestilling</button><p class="hint" style="text-align:center">Bekreftelse på e-post med en gang.</p></div></aside></form>';
   }, { title: 'Bestill' });
   function orderVals() {
@@ -305,7 +312,7 @@
   SV.on('orderSend', function () {
     var v = orderVals();
     var f = v.f;
-    var id = newJob({ addr: f.addr.value.trim() || 'Uten adresse', town: f.town.value.trim(), nr: f.nr.value || '–', stage: 'Opprettet', date: D.W(3), time: '10:00', services: v.sel, qty: v.qty, seller: f.seller.value || 'Selger', phone: f.phone.value || '–', access: f.access.value, type: f.type.value, wish: '' });
+    var bsel = f.querySelector('[name=bill]:checked'), id = newJob({ billTo: bsel ? bsel.value : SV.billDefault('fjm'), addr: f.addr.value.trim() || 'Uten adresse', town: f.town.value.trim(), nr: f.nr.value || '–', stage: 'Opprettet', date: D.W(3), time: '10:00', services: v.sel, qty: v.qty, seller: f.seller.value || 'Selger', phone: f.phone.value || '–', access: f.access.value, type: f.type.value, wish: '' });
     SV.go('#/kunde/megler/' + id); SV.toast('Bestilling sendt · Studiovest avtaler tid med selger');
   });
 

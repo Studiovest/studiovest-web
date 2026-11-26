@@ -82,6 +82,22 @@ function set_meta(string $k, string $v, ?PDO $p = null): void {
 }
 function now(): string { return gmdate('Y-m-d\TH:i:s\Z'); }
 
+// Leser portalens data (app_state), lar $fn endre den, og lagrer med versjonssjekk. Prøver på nytt hvis noen lagret samtidig.
+// $fn(array &$state): mixed. Returnerer det $fn returnerer. Returner null fra $fn for å avbryte uten å lagre.
+function state_mutate(callable $fn, string $scope = 'studio', string $by = 'agent') {
+  $p = db();
+  for ($try = 0; $try < 6; $try++) {
+    $s = $p->prepare('SELECT data, version FROM app_state WHERE tenant_id=? AND scope=?'); $s->execute([SV_TENANT, $scope]); $row = $s->fetch();
+    $state = $row ? (json_decode((string)$row['data'], true) ?: []) : [];
+    $res = $fn($state); if ($res === null) return null;
+    $json = json_encode($state, JSON_UNESCAPED_UNICODE);
+    if ($row) { $u = $p->prepare('UPDATE app_state SET data=?, version=version+1, updated_at=?, updated_by=? WHERE tenant_id=? AND scope=? AND version=?'); $u->execute([$json, now(), $by, SV_TENANT, $scope, (int)$row['version']]); if ($u->rowCount()) return $res; }
+    else { try { $p->prepare('INSERT INTO app_state (tenant_id, scope, data, version, updated_at, updated_by) VALUES (?,?,?,?,?,?)')->execute([SV_TENANT, $scope, $json, 1, now(), $by]); return $res; } catch (Throwable $e) {} }
+    usleep(200000);
+  }
+  throw new Exception('Kunne ikke lagre (for mange samtidige endringer)');
+}
+
 // ---------- innlogging ----------
 function start_session(): void {
   if (session_status() === PHP_SESSION_ACTIVE) return;

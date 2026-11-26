@@ -134,6 +134,9 @@
     var nr = /oppdrag(?:snr|snummer)?\.?\s*:?\s*([\w-]{4,})/i.exec(body); if (nr) o.nr = nr[1];
     var ty = /(enebolig|leilighet|rekkehus|fritidsbolig|hytte|gårdsbruk)/.exec(low); if (ty) o.type = ty[1] === 'hytte' ? 'Fritidsbolig' : ty[1].charAt(0).toUpperCase() + ty[1].slice(1);
     var vis = /[Vv]isning.{0,80}?(?=\.\s+[A-ZÆØÅ]|\.?\s*$)/.exec(body); if (vis) o.note = vis[0];
+    // faktura til kunde eller kontor (unntak fra kontorets standard)
+    var fk = /faktur\w*[^.\n]{0,60}/i.exec(txt);
+    if (fk) { if (/kunde|selger|direkte|privat|kjøper|eier/i.test(fk[0])) o.billTo = 'kunde'; else if (/kontor|oss|megler|firma|meg\b/i.test(fk[0])) o.billTo = 'kontor'; }
     return o;
   };
   SV.on('mxOrder', function (el) {

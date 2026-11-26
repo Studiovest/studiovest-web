@@ -9,6 +9,9 @@ if (s3_on() && get_meta('s3_setup') !== 'ok') { $r = s3_setup(); set_meta('s3_se
 // E-postagent: les nye bestillinger fra meglere og lag prosjekter (krever ANTHROPIC_API_KEY)
 require_once __DIR__ . '/agent.php';
 if (agent_on()) { try { $r = agent_run(20, 8); $done[] = 'agent: ' . $r['info']; } catch (Throwable $e) { $done[] = 'agent feilet: ' . substr($e->getMessage(), 0, 200); } }
+// Adresseagent: finner postnummer, kommune og gnr/bnr for nye prosjekter (Kartverket, gratis)
+require_once __DIR__ . '/enrich.php';
+try { $r = enrich_jobs(5); if ($r['n']) $done[] = 'adresse: ' . $r['info']; } catch (Throwable $e) { $done[] = 'adresse feilet: ' . substr($e->getMessage(), 0, 200); }
 $info = implode('; ', $done);
 db()->prepare('INSERT INTO cron_runs (task, ok, info, at) VALUES (?,?,?,?)')->execute(['kvarter', 1, $info, now()]);
 db()->exec('DELETE FROM cron_runs WHERE id < (SELECT m FROM (SELECT MAX(id) - 2000 AS m FROM cron_runs) t)');

@@ -13,6 +13,18 @@ const AGENT_SERVICES = [
   'kv' => 'Kveldsbilde redigert fra dagbilde (per bilde)', 'ex' => 'Ekspress, levert innen 24 timer',
 ];
 
+// Meglerkontor: id, navn, hvem fakturaen går til som standard, og kommuner de dekker (for adressesøk).
+const SV_SUNN = ['Stord', 'Fitjar', 'Bømlo', 'Kvinnherad', 'Tysnes', 'Sveio'];
+const AGENT_OFFICES = [
+  'emn' => ['Eiendomsmegler Norge', 'kunde', SV_SUNN],
+  'em1' => ['Eiendomsmegler 1', 'kontor', SV_SUNN],
+  'nvhar' => ['Nordvik Hardanger', 'kunde', ['Ullensvang', 'Kvam', 'Eidfjord', 'Ulvik', 'Kvinnherad']],
+  'nvsun' => ['Nordvik Sunnhordland', 'kontor', SV_SUNN],
+  'nvhau' => ['Nordvik Haugesund', 'kunde', ['Haugesund', 'Karmøy', 'Tysvær', 'Sveio', 'Bokn', 'Vindafjord', 'Etne']],
+  'aksun' => ['Aktiv Sunnhordland', 'kontor', SV_SUNN],
+];
+function office_areas(string $id): array { return AGENT_OFFICES[$id][2] ?? array_values(array_unique(array_merge(SV_SUNN, ['Haugesund', 'Ullensvang', 'Kvam', 'Etne', 'Vindafjord']))); }
+
 function agent_on(): bool { return (bool)cfg('ANTHROPIC_API_KEY') || cfg('AGENT_FAKE'); }
 
 function agent_tables(): void {
@@ -127,6 +139,9 @@ function agent_prompt(): string {
     "Regler: Ingen pakke nevnt → la services være tom (ikke gjett). «N kveldsbilder» → kv med qty N. «virtuell møblering av N bilder» → vm med qty N. «haster»/«ekspress»/«i morgen tidlig» → ex.\n" .
     "Adresse: bare gate og nummer i addr; sted/poststed i town. Selger er boligeieren, ikke megleren. Megleren er avsenderen hvis ingenting annet står.\n" .
     "Ønsket tidspunkt, nøkkel, visning og annet nyttig går i note, kort. Sett missing til felter som mangler og som trengs (f.eks. addr, seller_phone, services).\n" .
+    "Meglerkontor (office_id) – velg ut fra avsenderens signatur, e-postdomene eller tekst. Tom hvis ukjent:\n" . implode('', array_map(fn($k, $o) => "- $k: {$o[0]} (faktura til " . ($o[1] === 'kunde' ? 'kunden direkte' : 'meglerkontoret') . " som standard)\n", array_keys(AGENT_OFFICES), AGENT_OFFICES)) .
+    "invoice_to: sett bare hvis e-posten sier noe om hvem fakturaen skal til (f.eks. «faktura direkte til selger/kunde» → kunde, «fakturer oss/kontoret» → kontor). Ellers ukjent.\n" .
+    "Endring av tidligere bestilling (f.eks. «fakturaen for Haugen 23 skal likevel til kunden», ny telefon, ekstra kveldsbilder): sett is_update=true og update_ref til adressen eller oppdragsnummeret den gjelder, og fyll bare inn feltene som endres.\n" .
     "confidence: høy hvis det tydelig er en bestilling med adresse; lav hvis usikker. Ikke finn på noe som ikke står i e-posten.";
 }
 function agent_tool(): array {
@@ -140,6 +155,10 @@ function agent_tool(): array {
       'qty' => ['type' => 'object', 'description' => 'Antall for vm og kv, f.eks. {"kv":3}', 'additionalProperties' => ['type' => 'integer']],
       'seller' => $s, 'seller_email' => $s, 'seller_phone' => $s, 'access' => ['type' => 'string', 'description' => 'Nøkkel/tilgang'],
       'note' => $s, 'missing' => ['type' => 'array', 'items' => $s],
+      'office_id' => ['type' => 'string', 'enum' => array_merge([''], array_keys(AGENT_OFFICES))],
+      'invoice_to' => ['type' => 'string', 'enum' => ['kontor', 'kunde', 'ukjent']],
+      'is_update' => ['type' => 'boolean', 'description' => 'Endrer en bestilling som allerede er sendt'],
+      'update_ref' => ['type' => 'string', 'description' => 'Adresse eller oppdragsnummer for bestillingen som endres'],
     ]]];
 }
 function agent_extract(array $m): array {
@@ -160,12 +179,34 @@ function agent_extract(array $m): array {
 
 // ---------------- prosjekt i portalen ----------------
 function add_weekdays(int $n): string { $t = time(); while ($n > 0) { $t += 86400; $w = (int)date('N', $t); if ($w < 6) $n--; } return date('Y-m-d', $t); }
+function norm_addr(string $a): string { return preg_replace('/[^a-z0-9æøå]/u', '', mb_strtolower($a)); }
+// Finn et eksisterende prosjekt ut fra adresse eller oppdragsnummer (for endringer på e-post).
+function find_job(array $jobs, string $ref): ?int {
+  $r = norm_addr($ref); if ($r === '') return null;
+  foreach (array_reverse($jobs, true) as $i => $j) { $a = norm_addr((string)($j['addr'] ?? '')); $n = norm_addr((string)($j['nr'] ?? ''));
+    if (($a !== '' && (strpos($r, $a) === 0 || strpos($a, $r) === 0)) || ($n !== '' && strlen($n) > 3 && $n === $r)) return $i; }
+  return null;
+}
+// Endring på e-post: oppdaterer feltene som er oppgitt. Returnerer prosjekt-id, eller null hvis prosjektet ikke finnes.
+function agent_update_job(array $d, array $m, int $mailId): ?string {
+  return state_mutate(function (array &$st) use ($d, $m, $mailId) {
+    $jobs = $st['newJobs'] ?? []; $i = find_job($jobs, (string)($d['update_ref'] ?? $d['addr'] ?? $d['nr'] ?? '')); if ($i === null) return null;
+    $j = &$st['newJobs'][$i]; $ch = [];
+    if (in_array($d['invoice_to'] ?? '', ['kontor', 'kunde'], true)) { $j['billTo'] = $d['invoice_to']; $st['billTo'][$j['id']] = $d['invoice_to']; $ch[] = 'faktura til ' . $d['invoice_to']; }
+    foreach (['seller' => 'seller', 'seller_email' => 'email', 'seller_phone' => 'phone', 'access' => 'access', 'type' => 'type', 'nr' => 'nr'] as $from => $to)
+      if (!empty($d[$from])) { $j[$to] = trim((string)$d[$from]); $ch[] = $to; }
+    $svc = array_values(array_intersect((array)($d['services'] ?? []), array_keys(AGENT_SERVICES)));
+    if ($svc) { $j['services'] = array_values(array_unique(array_merge((array)($j['services'] ?? []), $svc))); $ch[] = 'tjenester'; }
+    foreach ((array)($d['qty'] ?? []) as $q => $v) if (in_array($q, ['vm', 'kv'], true) && (int)$v > 0) { $j['qty'] = (array)($j['qty'] ?? []); $j['qty'][$q] = (int)$v; }
+    if (!empty($d['note'])) { $j['wish'] = trim(((string)($j['wish'] ?? '')) . ' ' . trim((string)$d['note'])); $ch[] = 'notat'; }
+    $j['agentLog'][] = ['mail' => $mailId, 'at' => now(), 'from' => $m['from_name'], 'subject' => $m['subject'], 'changes' => $ch];
+    return (string)$j['id'];
+  });
+}
 function agent_create_job(array $d, array $m, int $mailId): string {
-  $p = db(); $covers = ['bolig-stue.jpg', 'bolig-kjokken.jpg', 'bolig-tomannsbolig.jpg', 'bolig-loft.jpg'];
-  for ($try = 0; $try < 5; $try++) {
-    $s = $p->prepare('SELECT data, version FROM app_state WHERE tenant_id=? AND scope=?'); $s->execute([SV_TENANT, 'studio']); $row = $s->fetch();
-    $state = $row ? (json_decode((string)$row['data'], true) ?: []) : [];
-    $jobs = $state['newJobs'] ?? []; $n = count($jobs);
+  $covers = ['bolig-stue.jpg', 'bolig-kjokken.jpg', 'bolig-tomannsbolig.jpg', 'bolig-loft.jpg'];
+  return state_mutate(function (array &$st) use ($d, $m, $mailId, $covers) {
+    $jobs = $st['newJobs'] ?? []; $n = count($jobs);
     foreach ($jobs as $j) if (($j['agent']['mail'] ?? null) === $mailId) return (string)$j['id']; // allerede laget
     $ids = array_column($jobs, 'id'); $k = $n; do { $id = 'B-' . (2620 + $k++); } while (in_array($id, $ids, true));
     $svc = array_values(array_intersect((array)($d['services'] ?? []), array_keys(AGENT_SERVICES)));
@@ -173,20 +214,18 @@ function agent_create_job(array $d, array $m, int $mailId): string {
     $missing = array_values(array_filter((array)($d['missing'] ?? [])));
     if (empty($d['addr'])) $missing[] = 'adresse';
     if (!$svc) $missing[] = 'pakke';
+    $off = isset(AGENT_OFFICES[$d['office_id'] ?? '']) ? $d['office_id'] : '';
+    if (!$off) $missing[] = 'meglerkontor';
+    $bill = in_array($d['invoice_to'] ?? '', ['kontor', 'kunde'], true) ? $d['invoice_to'] : ($off ? AGENT_OFFICES[$off][1] : 'kontor');
     $check = ($d['confidence'] ?? 'lav') !== 'høy' || $missing;
-    $job = ['id' => $id, 'addr' => trim((string)($d['addr'] ?? '')) ?: 'Uten adresse', 'town' => trim((string)($d['town'] ?? '')), 'office' => '', 'broker' => trim((string)($d['broker'] ?? $m['from_name'])),
+    $st['newJobs'][] = ['id' => $id, 'addr' => trim((string)($d['addr'] ?? '')) ?: 'Uten adresse', 'town' => trim((string)($d['town'] ?? '')), 'office' => $off, 'billTo' => $bill, 'broker' => trim((string)($d['broker'] ?? $m['from_name'])),
       'nr' => trim((string)($d['nr'] ?? '')) ?: '–', 'stage' => 'Opprettet', 'date' => add_weekdays(3), 'time' => '10:00', 'services' => $svc, 'qty' => (object)$qty,
       'seller' => trim((string)($d['seller'] ?? '')) ?: 'Kunde', 'email' => trim((string)($d['seller_email'] ?? '')), 'phone' => trim((string)($d['seller_phone'] ?? '')) ?: '–',
       'access' => trim((string)($d['access'] ?? '')), 'type' => trim((string)($d['type'] ?? '')), 'cover' => '../assets/photos/' . $covers[$n % 4], 'by' => 'ak',
       'wish' => trim((string)($d['note'] ?? '')), 'created' => date('Y-m-d'), 'source' => 'e-post',
-      'agent' => ['mail' => $mailId, 'status' => $check ? 'sjekk' : 'ok', 'missing' => array_values(array_unique($missing)), 'from' => $m['from_name'] . ' <' . $m['from_addr'] . '>', 'subject' => $m['subject'], 'office' => trim((string)($d['office'] ?? '')), 'at' => now()]];
-    $state['newJobs'] = array_merge($jobs, [$job]);
-    $json = json_encode($state, JSON_UNESCAPED_UNICODE);
-    if ($row) { $u = $p->prepare('UPDATE app_state SET data=?, version=version+1, updated_at=?, updated_by=? WHERE tenant_id=? AND scope=? AND version=?'); $u->execute([$json, now(), 'agent', SV_TENANT, 'studio', (int)$row['version']]); if ($u->rowCount()) return $id; }
-    else { try { $p->prepare('INSERT INTO app_state (tenant_id, scope, data, version, updated_at, updated_by) VALUES (?,?,?,?,?,?)')->execute([SV_TENANT, 'studio', $json, 1, now(), 'agent']); return $id; } catch (Throwable $e) {} }
-    usleep(200000); // noen lagret samtidig: prøv igjen med fersk versjon
-  }
-  throw new Exception('Kunne ikke lagre prosjektet (for mange samtidige endringer)');
+      'agent' => ['mail' => $mailId, 'status' => $check ? 'sjekk' : 'ok', 'missing' => array_values(array_unique($missing)), 'from' => $m['from_name'] . ' <' . $m['from_addr'] . '>', 'subject' => $m['subject'], 'office' => trim((string)($d['office'] ?? '')), 'billNote' => in_array($d['invoice_to'] ?? '', ['kontor', 'kunde'], true) ? 'Oppgitt i e-posten' : '', 'at' => now()]];
+    return $id;
+  });
 }
 
 // Leser én lagret e-post med Claude og lager prosjekt. Brukes for nye e-poster og ved nytt forsøk.
@@ -196,7 +235,8 @@ function agent_process(array $row, int &$used, ?array $m = null): string {
   try {
     $r = agent_extract($m); $used++; $d = (array)$r['data'];
     $status = 'ikke bestilling'; $job = null;
-    if (!empty($d['is_order'])) { $job = agent_create_job($d, $m, $mid); $status = (($d['confidence'] ?? '') === 'høy' && !empty($d['addr']) && !empty($d['services'])) ? 'opprettet' : 'sjekk'; }
+    if (!empty($d['is_update'])) { $job = agent_update_job($d, $m, $mid); if ($job) $status = 'oppdatert'; }
+    if (!$job && (!empty($d['is_order']) || !empty($d['is_update']))) { $job = agent_create_job($d, $m, $mid); $status = (($d['confidence'] ?? '') === 'høy' && !empty($d['addr']) && !empty($d['services']) && isset(AGENT_OFFICES[$d['office_id'] ?? ''])) ? 'opprettet' : 'sjekk'; }
     $p->prepare('UPDATE agent_mail SET status=?, job_id=?, data=?, info=?, tokens_in=?, tokens_out=? WHERE id=?')->execute([$status, $job, json_encode($d, JSON_UNESCAPED_UNICODE), '', $r['in'], $r['out'], $mid]);
     return $status . ($job ? " $job" : '') . ': ' . mb_substr((string)$m['subject'], 0, 60);
   } catch (Throwable $e) { $p->prepare('UPDATE agent_mail SET status=?, info=? WHERE id=?')->execute(['feil', substr($e->getMessage(), 0, 480), $mid]); return 'feil: ' . $e->getMessage(); }

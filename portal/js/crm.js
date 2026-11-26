@@ -119,7 +119,7 @@
         '<td class="hide-s small" style="max-width:180px">' + SV.svcShort(j) + '<small>' + SV.kr(total(j)) + '</small></td>' +
         '<td>' + tm + '</td>' +
         '<td><select class="sel crm-st crm-' + i + '" data-change="crmStage" data-id="' + j.id + '" aria-label="Status for ' + esc(j.addr) + '">' + SV.stagesFor(j).map(function (s) { return '<option' + (s === SV.stageOf(j) ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' + (ap ? '<small>av ' + esc(ap.by) + '</small>' : '') + (SV.reviewCount(j) ? '<small><a href="#/bolig/' + j.id + '" style="color:var(--brown);font-weight:700">' + SV.reviewCount(j) + (SV.reviewCount(j) === 1 ? ' endringsønske' : ' endringsønsker') + '</a></small>' : '') + '</td>' +
-        '<td class="r"><label class="sw" title="Faktura sendt"><input type="checkbox" data-change="crmInv" data-id="' + j.id + '"' + (inv.sent ? ' checked' : '') + ' aria-label="Faktura sendt for ' + esc(j.addr) + '"><span></span></label>' + (inv.sent && inv.d ? '<small>' + SV.fdate(inv.d) + '</small>' : '') + '</td></tr>';
+        '<td class="r"><label class="sw" title="Faktura sendt"><input type="checkbox" data-change="crmInv" data-id="' + j.id + '"' + (inv.sent ? ' checked' : '') + ' aria-label="Faktura sendt for ' + esc(j.addr) + '"><span></span></label><small>' + (SV.billTo(j) === 'kunde' ? 'Til kunde' : 'Til kontor') + (inv.sent && inv.d ? ' · ' + SV.fdate(inv.d) : '') + '</small></td></tr>';
     }).join('');
     return stats + '<div class="row between" style="margin-bottom:10px;gap:10px;flex-wrap:wrap">' + pills + '<label class="search" style="flex:1 1 220px;max-width:320px;margin:0">' + ic('search') + '<input id="crmQ" placeholder="Søk adresse, megler, kunde" value="' + esc(q) + '" data-input="crmQ" aria-label="Søk i prosjekter"></label></div>' +
       '<div class="card tbl-w"><table class="tbl crm"><thead><tr><th>Prosjekt</th><th class="hide-s">Megler</th><th class="hide-s">Kunde</th><th class="hide-s">Produkter</th><th>Fotografering</th><th>Status</th><th class="r">Faktura <span title="Bare du ser dette">' + ic('lock') + '</span></th></tr></thead><tbody>' +
@@ -231,7 +231,8 @@
       '<form id="npF" onsubmit="return false" style="margin-top:14px"><div class="callout" id="npSrc" hidden></div><p class="small muted" style="margin-bottom:6px">Ingen felt er påkrevd. Fyll inn det du vet.</p>' +
       '<p class="eyebrow" style="margin:6px 0 8px">Boligen</p><div class="g2"><label class="fld"><span>Adresse</span><input class="inp" name="addr" required placeholder="Gate og nummer"></label><label class="fld"><span>Sted</span><input class="inp" name="town" placeholder="F.eks. Leirvik"></label>' +
       '<label class="fld"><span>Boligtype</span><select class="sel" name="type"><option>Enebolig</option><option>Leilighet</option><option>Rekkehus</option><option>Fritidsbolig</option><option>Gårdsbruk</option><option>Tomt</option></select></label><label class="fld"><span>Oppdragsnummer</span><input class="inp" name="nr" placeholder="Fra megler"></label></div>' +
-      '<p class="eyebrow" style="margin:14px 0 8px">Megler</p><div class="g2"><label class="fld"><span>Meglerkontor</span><select class="sel" name="office" data-change="npOffice">' + D.offices.map(function (o) { return '<option value="' + o.id + '">' + esc(o.name) + '</option>'; }).join('') + '</select></label><label class="fld"><span>Megler</span><select class="sel" name="broker" id="npBroker">' + D.offices[0].brokers.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join('') + '</select></label></div>' +
+      '<p class="eyebrow" style="margin:14px 0 8px">Megler</p><div class="g2"><label class="fld"><span>Meglerkontor</span><select class="sel" name="office" data-change="npOffice">' + D.offices.map(function (o) { return '<option value="' + o.id + '">' + esc(o.name) + '</option>'; }).join('') + '</select></label><label class="fld"><span>Megler</span><input class="inp" name="broker" list="npBroker" placeholder="Navn" value="' + esc(D.offices[0].brokers[0] || '') + '"><datalist id="npBroker">' + D.offices[0].brokers.map(function (b) { return '<option value="' + esc(b) + '">'; }).join('') + '</datalist></label></div>' +
+      '<div id="npBill">' + SV.billPick('bill', SV.billDefault(D.offices[0].id), SV.billDefault(D.offices[0].id)) + '</div>' +
       '<p class="eyebrow" style="margin:14px 0 8px">Produkter</p>' + Object.keys(groups).map(function (g) { return '<p class="small muted" style="margin:8px 0 6px;font-weight:650">' + esc(g) + '</p><div class="opts" style="margin-bottom:8px">' + groups[g].map(function (s) { return SV.svcOpt(s, 's', s.id === 'f30' || s.id === 'p2', 1, 'npSum', false); }).join('') + '</div>'; }).join('') +
       '<p class="small" style="margin:4px 0 0">Sum inkl. mva: <b id="npSum" class="num"></b> </p>' +
       '<p class="eyebrow" style="margin:16px 0 8px">Kunde (selger)</p><div class="g2"><label class="fld"><span>Navn</span><input class="inp" name="seller" placeholder="Navn"></label><label class="fld"><span>E-post</span><input class="inp" type="email" name="email" placeholder="navn@epost.no" autocomplete="off"></label><label class="fld"><span>Mobil</span><input class="inp" name="phone" inputmode="tel" placeholder="8 siffer"></label><label class="fld"><span>Tilgang</span><select class="sel" name="access"><option>Selger hjemme</option><option>Nøkkel hos megler</option><option>Nøkkelboks</option></select></label></div>' +
@@ -247,12 +248,13 @@
   function npSum() { var v = npVals(), n = document.getElementById('npSum'), o = document.getElementById('npOut'); if (o) o.hidden = v.sel.indexOf('ut') < 0; var dr = SV.driveFor({ on: v.f.drOn && v.f.drOn.checked, km: v.f.drKm ? v.f.drKm.value.replace(/\D/g, '') : 0 }), dw = document.getElementById('npDr'); if (dw) dw.hidden = !(v.f.drOn && v.f.drOn.checked);
     if (n) n.textContent = SV.kr(v.sel.reduce(function (a, id) { return a + svc(id).price * (v.qty[id] || 1); }, 0) + dr.kr) + (dr.charged ? ' (inkl. kjøring ' + SV.kr(dr.kr) + ')' : ''); }
   SV.on('npSum', npSum);
-  SV.on('npOffice', function (el) { var o = office(el.value); document.getElementById('npBroker').innerHTML = o.brokers.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join(''); });
+  SV.on('npOffice', function (el) { var o = office(el.value); document.getElementById('npBroker').innerHTML = o.brokers.map(function (b) { return '<option value="' + esc(b) + '">'; }).join(''); var bi = el.form && el.form.broker; if (bi && o.brokers.indexOf(bi.value) < 0) bi.value = o.brokers[0] || ''; var bw = document.getElementById('npBill'); if (bw) bw.innerHTML = SV.billPick('bill', SV.billDefault(el.value), SV.billDefault(el.value)); });
   function npFill(pre) {
     var f = document.getElementById('npF'); if (!f) return;
     ['addr', 'town', 'type', 'nr', 'seller', 'email', 'phone', 'note'].forEach(function (k) { if (pre[k] && f[k]) f[k].value = pre[k]; });
     if (pre.office) { f.office.value = pre.office; SV.acts.npOffice(f.office); }
     if (pre.broker) f.broker.value = pre.broker;
+    if (pre.billTo) { var br = f.querySelector('[name=bill][value=' + pre.billTo + ']'); if (br) br.checked = true; }
     if (pre.services) { [].forEach.call(f.querySelectorAll('input[name=foto],input[name=s]'), function (x) { x.checked = pre.services.indexOf(x.value) > -1; }); Object.keys(pre.qty || {}).forEach(function (k) { var q = f.querySelector('[name=q_' + k + ']'); if (q) q.value = pre.qty[k]; }); }
     var note = document.getElementById('npSrc'); if (note && pre.src) note.innerHTML = ic('mail') + '<span>' + esc(pre.src) + '. Sjekk feltene: alt kan endres, og ingenting er påkrevd.</span>';
     if (note && pre.src) note.hidden = false;
@@ -264,7 +266,7 @@
     var v = npVals(), f = v.f;
     if (f.email.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.value.trim())) { SV.toast('Sjekk e-postadressen', 'warn'); f.email.focus(); return; }
     var timed = f.d.value && f.t.value, n = S.newJobs.length, id = 'B-' + (2620 + n);
-    var j = { id: id, addr: f.addr.value.trim() || 'Uten adresse', town: f.town.value.trim(), office: f.office.value, broker: f.broker.value, nr: f.nr.value.trim() || '–', stage: 'Opprettet', date: timed ? f.d.value : D.W(3), time: timed ? f.t.value : '10:00', services: v.sel, qty: v.qty, seller: f.seller.value.trim() || 'Kunde', email: f.email.value.trim(), phone: f.phone.value.trim() || '–', access: f.access.value, type: f.type.value, cover: [D.img.stue, D.img.kjokken, D.img.tomanns, D.img.loft][n % 4], by: 'ak', wish: f.note.value.trim(), created: today() };
+    var bsel = f.querySelector('[name=bill]:checked'), j = { id: id, billTo: bsel ? bsel.value : SV.billDefault(f.office.value), addr: f.addr.value.trim() || 'Uten adresse', town: f.town.value.trim(), office: f.office.value, broker: f.broker.value, nr: f.nr.value.trim() || '–', stage: 'Opprettet', date: timed ? f.d.value : D.W(3), time: timed ? f.t.value : '10:00', services: v.sel, qty: v.qty, seller: f.seller.value.trim() || 'Kunde', email: f.email.value.trim(), phone: f.phone.value.trim() || '–', access: f.access.value, type: f.type.value, cover: [D.img.stue, D.img.kjokken, D.img.tomanns, D.img.loft][n % 4], by: 'ak', wish: f.note.value.trim(), created: today() };
     if (v.sel.indexOf('ut') > -1 && f.d2.value && f.t2.value) { j.date2 = f.d2.value; j.time2 = f.t2.value; }
     if (S.npPre && S.npPre.thread) { j.source = 'e-post'; j.mailThread = S.npPre.thread; }
     S.newJobs.push(j);
@@ -318,6 +320,7 @@
     if (el.getAttribute('data-clear')) S.eta[id] = null; else { if (!f.d.value) { SV.toast('Velg en dato, eller trykk Fjern', 'warn'); return; } S.eta[id] = { d: f.d.value, t: f.t.value || '' }; }
     SV.save(); SV.close(); SV.render(); SV.toast(S.eta[id] ? 'Forventet levering: ' + SV.fdate(S.eta[id].d, true) + (S.eta[id].t ? ' kl. ' + S.eta[id].t : '') : 'Forventet levering fjernet');
   });
+  SV.on('billSet', function (el) { var id = el.getAttribute('data-id'); S.billTo = S.billTo || {}; S.billTo[id] = el.value; SV.save(); SV.toast('Faktura til: ' + SV.billLabel(el.value)); SV.render(); });
   SV.agentCheck = function (j) { return !!(j.agent && j.agent.status === 'sjekk'); };
   SV.on('agentSeen', function (el, ev) { if (ev) ev.preventDefault(); var j = (S.newJobs || []).filter(function (x) { return x.id === el.getAttribute('data-id'); })[0]; if (!j || !j.agent) return; j.agent.status = 'ok'; SV.save(); SV.render(); SV.toast('Markert som sjekket'); });
   SV.crmCard = function (j) {
@@ -328,6 +331,9 @@
       (SV.hasOut(j) ? '<dt>Utefoto</dt><dd>' + (j.date2 ? SV.outWhen(j) + ' <button class="link small" data-act="crmTime" data-id="' + j.id + '">Endre</button>' : '<button class="btn btn-ghost btn-xs" data-act="crmTime" data-id="' + j.id + '">' + ic('cal') + 'Sett tid</button>') + '</dd>' : '') +
       '<dt>Levering</dt><dd>' + (i >= 4 ? (j.delivered ? 'Levert ' + SV.fdate(j.delivered) : 'Levert') : SV.eta(j) ? SV.fdate(SV.eta(j).d, true) + (SV.eta(j).t ? ' kl. ' + SV.eta(j).t : '') + ' <button class="link small" data-act="crmEta" data-id="' + j.id + '">Endre</button>' : '<button class="btn btn-ghost btn-xs" data-act="crmEta" data-id="' + j.id + '">' + ic('cal') + 'Sett forventet levering</button>') + '</dd>' +
       (j.agent ? '<dt>Fra e-post</dt><dd>' + esc(j.agent.subject || '') + '<br><span class="small muted">' + esc(j.agent.from || '') + (j.agent.office ? ' · ' + esc(j.agent.office) : '') + '</span>' + (SV.agentCheck(j) ? '<br><span class="small" style="color:var(--bad)">Sjekk: ' + esc((j.agent.missing || []).join(', ') || 'usikker tolkning') + '</span> <button class="btn btn-ghost btn-xs" data-act="agentSeen" data-id="' + j.id + '">' + ic('check') + 'Sjekket</button>' : '') + '</dd>' : '') +
+      SV.geoRow(j) +
+      (j.agentLog && j.agentLog.length ? '<dt>Endret på e-post</dt><dd>' + j.agentLog.slice(-3).map(function (l) { return '<span class="small">' + SV.fdate(l.at.slice(0, 10)) + ': ' + esc((l.changes || []).join(', ') || 'ingen endring') + '</span><br><span class="small muted">' + esc(l.from || '') + '</span>'; }).join('<br>') + '</dd>' : '') +
+      '<dt>Faktura til</dt><dd><select class="sel sel-xs" data-change="billSet" data-id="' + j.id + '" aria-label="Faktura til">' + ['kontor', 'kunde'].map(function (b) { return '<option value="' + b + '"' + (SV.billTo(j) === b ? ' selected' : '') + '>' + SV.billLabel(b) + (SV.billDefault(j.office) === b ? ' (standard)' : '') + '</option>'; }).join('') + '</select></dd>' +
       '<dt>Kunde</dt><dd>' + esc(j.seller) + '<br><span class="small muted">' + (j.email ? esc(j.email) : 'Ingen e-post') + ' · ' + esc(j.phone) + '</span> <button class="link small" data-act="crmEdit" data-id="' + j.id + '">Endre</button></dd>' +
       '<dt>Megler</dt><dd>' + esc(j.broker) + '<br><span class="small muted">' + esc(brokerMail(j)) + '</span></dd>' +
       '<dt>Godkjent</dt><dd>' + (ap ? SV.fdate(ap.d) + ' av ' + esc(ap.by) : i === 4 ? 'Venter på megler eller kunde <button class="btn btn-ghost btn-xs" style="margin-top:6px" data-act="crmApprove" data-id="' + j.id + '" data-by="Studiovest">' + ic('check') + 'Godkjenn selv</button>' : '–') + '</dd></dl>' +
@@ -335,6 +341,42 @@
       '<p class="eyebrow" style="margin:16px 0 6px">E-post sendt</p>' + (log.length ? '<ul class="feed small">' + log.slice(0, 6).map(function (m) { return '<li>' + ic('mail') + '<span><b>' + esc(m.subj) + '</b><br><span class="muted">' + esc(m.to) + (m.later ? ' · planlagt ' + esc(m.later) : '') + '</span></span><time>' + esc(m.t) + '</time></li>'; }).join('') + '</ul>' : '<p class="small muted">Ingen ennå. E-post sendes når status endres.</p>') +
       '</div></div>';
   };
+
+  // ---------- adresse (adresseagenten, Kartverket) ----------
+  SV.geo = function (j) { return (S.geo || {})[j.id] || j.geo || null; };
+  function geoTxt(g) { return esc(g.addr) + ', ' + esc(g.postnr) + ' ' + esc(g.poststed) + '<br><span class="small muted">' + esc(g.kommune) + (g.gnr ? ' · gnr. ' + g.gnr + ' bnr. ' + g.bnr : '') + '</span>'; }
+  SV.geoRow = function (j) {
+    var g = SV.geo(j);
+    if (!g) return '<dt>Adresse</dt><dd><span class="small muted">Ikke slått opp</span> <button class="link small" data-act="geoFind" data-id="' + j.id + '">Finn postnr. og gnr/bnr</button></dd>';
+    if (g.status === 'velg') return '<dt>Adresse</dt><dd><span class="small" style="color:var(--bad)">Flere treff – velg riktig:</span><div class="geo-opts">' + g.options.map(function (o, k) { return '<button class="geo-opt" data-act="geoPick" data-id="' + j.id + '" data-k="' + k + '">' + geoTxt(o) + '</button>'; }).join('') + '</div><button class="link small" data-act="geoClear" data-id="' + j.id + '">Ingen av disse</button></dd>';
+    if (g.status === 'ingen') return '<dt>Adresse</dt><dd><span class="small muted">Fant ikke adressen hos Kartverket</span> <button class="link small" data-act="geoFind" data-id="' + j.id + '">Prøv igjen</button></dd>';
+    return '<dt>Adresse</dt><dd>' + geoTxt(g) + (g.lat ? ' <a class="small" target="_blank" rel="noopener" href="https://norgeskart.no/#!?zoom=17&lat=' + g.lat + '&lon=' + g.lon + '&project=norgeskart&layers=1002&markerLat=' + g.lat + '&markerLon=' + g.lon + '&sok=">Kart</a>' : '') + '</dd>';
+  };
+  function setGeo(id, g) {
+    var nj = (S.newJobs || []).filter(function (x) { return x.id === id; })[0];
+    if (nj) { nj.geo = g; if (g.status === 'ok') { if (!nj.town) nj.town = g.poststed; } } else { S.geo = S.geo || {}; S.geo[id] = g; }
+    SV.save(); SV.render();
+  }
+  function pack(a) { var t = function (s) { return String(s || '').toLowerCase().replace(/(^|[\s-])\S/g, function (c) { return c.toUpperCase(); }); };
+    return { addr: a.adressetekst, postnr: a.postnummer, poststed: t(a.poststed), kommune: t(a.kommunenavn), knr: a.kommunenummer, gnr: a.gardsnummer, bnr: a.bruksnummer, lat: a.representasjonspunkt && a.representasjonspunkt.lat, lon: a.representasjonspunkt && a.representasjonspunkt.lon }; }
+  var AREAS = ['stord', 'fitjar', 'bømlo', 'kvinnherad', 'tysnes', 'sveio', 'haugesund', 'karmøy', 'tysvær', 'bokn', 'vindafjord', 'etne', 'ullensvang', 'kvam', 'eidfjord', 'ulvik'];
+  SV.on('geoFind', function (el) {
+    var id = el.getAttribute('data-id'), j = SV.find(SV.jobs(), id); if (!j) return;
+    el.disabled = true; el.textContent = 'Søker …';
+    var o = SV.find(SV.data.offices, j.office), areas = (o && o.areas && o.areas.length ? o.areas : AREAS).map(function (a) { return a.toLowerCase(); }), town = (j.town || '').toLowerCase().trim();
+    var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9æøå]/g, ''); };
+    fetch('https://ws.geonorge.no/adresser/v1/sok?treffPerSide=200&utkoordsys=4258&sok=' + encodeURIComponent(j.addr)).then(function (r) { return r.json(); }).then(function (d) {
+      var hits = (d.adresser || []).filter(function (a) { return norm(a.adressetekst).indexOf(norm(j.addr)) === 0; });
+      var pick = town ? hits.filter(function (a) { return [a.poststed, a.kommunenavn].map(function (x) { return String(x).toLowerCase(); }).indexOf(town) > -1 || a.postnummer === town; }) : [];
+      if (!pick.length) pick = hits.filter(function (a) { return areas.indexOf(String(a.kommunenavn).toLowerCase()) > -1; });
+      var ex = pick.filter(function (a) { return norm(a.adressetekst) === norm(j.addr); }); if (ex.length === 1) pick = ex;
+      if (pick.length === 1) { setGeo(id, Object.assign(pack(pick[0]), { status: 'ok' })); SV.toast('Adresse funnet'); }
+      else if (pick.length) { setGeo(id, { status: 'velg', options: pick.slice(0, 8).map(pack) }); SV.toast(pick.length + ' treff – velg riktig'); }
+      else { setGeo(id, { status: 'ingen' }); SV.toast('Fant ikke adressen', 'warn'); }
+    }).catch(function () { el.disabled = false; el.textContent = 'Finn postnr. og gnr/bnr'; SV.toast('Fikk ikke kontakt med Kartverket', 'warn'); });
+  });
+  SV.on('geoPick', function (el) { var id = el.getAttribute('data-id'), g = SV.geo(SV.find(SV.jobs(), id)), o = g && g.options[+el.getAttribute('data-k')]; if (o) { setGeo(id, Object.assign({}, o, { status: 'ok' })); SV.toast('Adresse valgt'); } });
+  SV.on('geoClear', function (el) { setGeo(el.getAttribute('data-id'), { status: 'ingen' }); });
 
   // ---------- e-postvarsler ----------
   SV.crmMails = function () {
