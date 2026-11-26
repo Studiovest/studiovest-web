@@ -2,7 +2,7 @@
 """Plantegningsagenten (leveranse). Kjøres i GitHub Actions av «Portal-jobber» når portalen har plantegningsjobber som venter.
 Henter jobben fra api/floorjobs.php, lar Claude styre verktøyene i prompt.md, kjører toolkit/floorplan.py og leverer JPG-ene til prosjektet.
 
-Miljø: SITE (https://studiovest.no), CRON_TOKEN, ANTHROPIC_API_KEY, valgfritt FLOORPLAN_MODEL. Tester: FP_FAKE=fil med ferdige svar."""
+Miljø: SITE (https://studiovest.no), CRON_TOKEN, CLAUDE_KEY_FLOORPLAN (eller ANTHROPIC_API_KEY), valgfritt FLOORPLAN_MODEL. Tester: FP_FAKE=fil med ferdige svar."""
 import base64, io, json, os, subprocess, sys, tempfile, time, urllib.parse, urllib.request, uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -61,7 +61,7 @@ def claude(system, tools, messages, step):
     for attempt in range(3):
         try:
             r = urllib.request.Request('https://api.anthropic.com/v1/messages', data=json.dumps(req).encode(),
-                                       headers={'content-type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': os.environ['ANTHROPIC_API_KEY']})
+                                       headers={'content-type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': os.environ.get('CLAUDE_KEY_FLOORPLAN') or os.environ['ANTHROPIC_API_KEY']})
             with urllib.request.urlopen(r, timeout=180) as res:
                 return json.loads(res.read())
         except urllib.error.HTTPError as e:

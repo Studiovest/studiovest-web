@@ -98,4 +98,4 @@ if (($_GET['a'] ?? '') === 'unmatched') { // Cubicasa-ordrer agenten ikke kunne 
   json_out(['ok' => true, 'on' => cc_on(), 'orders' => array_map(fn($r) => ['candidates' => json_decode((string)$r['candidates'], true) ?: []] + $r, $s->fetchAll())]);
 }
 $s = db()->prepare('SELECT * FROM fp_job WHERE tenant_id=? AND job_id=? ORDER BY id DESC LIMIT 20'); $s->execute([SV_TENANT, (string)($_GET['job'] ?? '')]);
-json_out(['ok' => true, 'on' => (bool)cfg('ANTHROPIC_API_KEY'), 'cubicasa' => cc_on(), 'jobs' => array_map('fp_public', $s->fetchAll())]);
+json_out(['ok' => true, 'on' => claude_key('FLOORPLAN') !== '', 'cubicasa' => cc_on(), 'jobs' => array_map('fp_public', $s->fetchAll())]);

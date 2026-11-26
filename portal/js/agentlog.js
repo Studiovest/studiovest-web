@@ -27,7 +27,7 @@
       actions: SV.live && data && data.on ? '<button class="btn btn-dark btn-s" data-act="mailRun">' + ic('mail') + 'Sjekk innboksen nå</button>' : '' });
     if (err) return head + '<p class="empty">' + esc(err) + '</p>';
     if (!data) return head + '<p class="empty">Laster …</p>';
-    if (!data.on) return head + '<div class="card pad"><h3 class="h3">Agenten er ikke slått på</h3><p class="small" style="margin-top:8px">Legg linjen <code>ANTHROPIC_API_KEY=…</code> i GitHub-hemmeligheten STUDIOVEST_CONFIG. Den starter av seg selv ved neste publisering.</p></div>';
+    if (!data.on) return head + '<div class="card pad"><h3 class="h3">Agenten er ikke slått på</h3><p class="small" style="margin-top:8px">Legg linjen <code>CLAUDE_KEY_EMAIL=…</code> i GitHub-hemmeligheten STUDIOVEST_CONFIG. Den starter av seg selv ved neste publisering.</p></div>';
     var rows = data.rows || [], open = rows.filter(function (r) { return r.status === 'sjekk' || r.status === 'feil'; }).length;
     var kpi = '<div class="g4"><div class="card stat"><p class="k">' + ic('mail') + 'Lest denne måneden</p><p class="v">' + (data.month ? data.month.emails : 0) + '</p><p class="s">e-poster i innboksen</p></div>' +
       '<div class="card stat"><p class="k">' + ic('check') + 'Prosjekter laget</p><p class="v">' + rows.filter(function (r) { return r.job_id && r.status !== 'oppdatert'; }).length + '</p><p class="s">siste 100 e-poster</p></div>' +

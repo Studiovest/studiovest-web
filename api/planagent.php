@@ -4,7 +4,7 @@
 // POST {a:'run', job, floor, text, from} · {a:'answer', id, text} · {a:'approve', id} · {a:'reject', id} · {a:'save', job, floor, scene}
 require __DIR__ . '/plan.php';
 $u = require_user(); plan_tables(); @set_time_limit(120);
-$on = (bool)cfg('ANTHROPIC_API_KEY') || (bool)cfg('PLAN_FAKE');
+$on = claude_key('FLOORPLAN_EDIT') !== '' || (bool)cfg('PLAN_FAKE');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $b = body(); $a = (string)($b['a'] ?? ''); $by = (string)($u['name'] ?: $u['email']);
   try {
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if (!in_array($sc['office'] ?? '', PLAN_OFFICES, true)) fail('Ukjent kontorstil (office)');
       json_out(['ok' => true, 'version' => plan_put((string)$b['job'], (string)$b['floor'], $sc, $by), 'warnings' => plan_check($sc)]);
     }
-    if (!$on) fail('Agenten er ikke slått på (mangler ANTHROPIC_API_KEY)');
+    if (!$on) fail('Agenten er ikke slått på (mangler CLAUDE_KEY_FLOORPLAN_EDIT)');
     if ($a === 'run') json_out(['ok' => true] + plan_request((string)$b['job'], (string)$b['floor'], trim((string)$b['text']), (string)($b['from'] ?? $by)));
     if ($a === 'answer') json_out(['ok' => true] + plan_answer((int)$b['id'], trim((string)$b['text'])));
     if ($a === 'approve') json_out(['ok' => true] + plan_approve((int)$b['id'], $by));

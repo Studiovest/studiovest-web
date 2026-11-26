@@ -98,6 +98,9 @@ function state_mutate(callable $fn, string $scope = 'studio', string $by = 'agen
   throw new Exception('Kunne ikke lagre (for mange samtidige endringer)');
 }
 
+// Claude-nøkkel per agent (egen nøkkel gir egen kostnadsoversikt i Claude Console). Faller tilbake på ANTHROPIC_API_KEY.
+function claude_key(string $agent): string { return (string)(cfg('CLAUDE_KEY_' . $agent) ?: cfg('ANTHROPIC_API_KEY', '')); }
+
 // ---------- innlogging ----------
 function start_session(): void {
   if (session_status() === PHP_SESSION_ACTIVE) return;

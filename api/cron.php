@@ -17,7 +17,7 @@ require_once __DIR__ . '/cubicasa.php';
 if (cc_on()) { try { $r = cc_sync(); if ($r['ny'] || $r['koblet'] || strpos($r['info'], 'første') === 0) $done[] = 'cubicasa: ' . $r['info']; } catch (Throwable $e) { $done[] = 'cubicasa feilet: ' . substr($e->getMessage(), 0, 200); } }
 // Plantegningsagent: fortsetter forespørsler som gikk tom for tid
 require_once __DIR__ . '/plan.php';
-if (cfg('ANTHROPIC_API_KEY')) { try { $r = plan_continue(2); if ($r['n']) $done[] = 'plantegning: ' . $r['n'] . ' fortsatt'; } catch (Throwable $e) { $done[] = 'plantegning feilet: ' . substr($e->getMessage(), 0, 200); } }
+if (claude_key('FLOORPLAN_EDIT') !== '') { try { $r = plan_continue(2); if ($r['n']) $done[] = 'plantegning: ' . $r['n'] . ' fortsatt'; } catch (Throwable $e) { $done[] = 'plantegning feilet: ' . substr($e->getMessage(), 0, 200); } }
 $info = implode('; ', $done);
 db()->prepare('INSERT INTO cron_runs (task, ok, info, at) VALUES (?,?,?,?)')->execute(['kvarter', 1, $info, now()]);
 db()->exec('DELETE FROM cron_runs WHERE id < (SELECT m FROM (SELECT MAX(id) - 2000 AS m FROM cron_runs) t)');

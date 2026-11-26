@@ -41,15 +41,19 @@ Senere, når du vil lagre bilder:
 E-postagent (leser bestillinger fra meglere og lager prosjekter):
 
 7. **Claude API-nøkkel:** console.anthropic.com → API Keys → Create key. Sett gjerne en månedlig grense under Limits (f.eks. 10 $). Legg til i hemmeligheten:
+   Én nøkkel per agent, så du ser kostnaden for hver i Claude Console:
    ```
-   ANTHROPIC_API_KEY=
+   CLAUDE_KEY_EMAIL=
+   CLAUDE_KEY_FLOORPLAN=
+   CLAUDE_KEY_FLOORPLAN_EDIT=
    ```
+   EMAIL = e-postagenten, FLOORPLAN = plantegningsagenten (levering), FLOORPLAN_EDIT = agenten som endrer plantegninger. Adresseagenten bruker ikke Claude. `ANTHROPIC_API_KEY=` brukes for de agentene som ikke har egen nøkkel.
    Bestillinger agenten har registrert, flyttes til mappen «Registrerte bestillinger» i innboksen (lages automatisk). Annet navn: `AGENT_FOLDER=Mappenavn`. Tom verdi slår av flyttingen.
    Valgfritt: `IMAP_USER=` og `IMAP_PASSWORD=` hvis bestillingene kommer til en annen adresse enn `MAIL_USER`, og `AGENT_DOMAINS=fjordmegling.no,em1.no` for meglerdomener som alltid skal leses.
 
 Plantegningsagent (endrer plantegninger ut fra ønsker fra megler, kunde og fotograf):
 
-8. Bruker samme `ANTHROPIC_API_KEY`. Valgfritt: `PLAN_MODEL=` for en annen Claude-modell (standard `claude-sonnet-5-5`).
+8. Bruker `CLAUDE_KEY_FLOORPLAN_EDIT` (se punkt 7). Valgfritt: `PLAN_MODEL=` for en annen Claude-modell (standard `claude-sonnet-5-5`).
 
 Plantegninger fra Cubicasa (agenten henter ferdige ordrer og kobler dem til prosjektet med samme adresse):
 

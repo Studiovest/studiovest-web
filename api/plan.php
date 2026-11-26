@@ -263,7 +263,7 @@ function plan_claude(array $messages): array {
   $req = ['model' => (string)cfg('PLAN_MODEL', 'claude-sonnet-5-5'), 'max_tokens' => 4096, 'system' => plan_system(), 'tools' => plan_tools(), 'messages' => $messages];
   $c = curl_init('https://api.anthropic.com/v1/messages');
   curl_setopt_array($c, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 90, CURLOPT_POSTFIELDS => json_encode($req, JSON_UNESCAPED_UNICODE),
-    CURLOPT_HTTPHEADER => ['content-type: application/json', 'anthropic-version: 2023-06-01', 'x-api-key: ' . cfg('ANTHROPIC_API_KEY')]]);
+    CURLOPT_HTTPHEADER => ['content-type: application/json', 'anthropic-version: 2023-06-01', 'x-api-key: ' . claude_key('FLOORPLAN_EDIT')]]);
   $res = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); curl_close($c); $j = json_decode((string)$res, true);
   if ($code !== 200 || !is_array($j)) throw new Exception('Claude API: HTTP ' . $code . ' ' . substr((string)($j['error']['message'] ?? $res), 0, 200));
   return $j;

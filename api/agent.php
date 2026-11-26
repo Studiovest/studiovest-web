@@ -25,7 +25,7 @@ const AGENT_OFFICES = [
 ];
 function office_areas(string $id): array { return AGENT_OFFICES[$id][2] ?? array_values(array_unique(array_merge(SV_SUNN, ['Haugesund', 'Ullensvang', 'Kvam', 'Etne', 'Vindafjord']))); }
 
-function agent_on(): bool { return (bool)cfg('ANTHROPIC_API_KEY') || cfg('AGENT_FAKE'); }
+function agent_on(): bool { return claude_key('EMAIL') !== '' || cfg('AGENT_FAKE'); }
 
 function agent_tables(): void {
   $p = db(); $ai = is_sqlite($p) ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT AUTO_INCREMENT PRIMARY KEY';
@@ -192,7 +192,7 @@ function agent_extract(array $m): array {
     'messages' => [['role' => 'user', 'content' => $user]]];
   $c = curl_init('https://api.anthropic.com/v1/messages');
   curl_setopt_array($c, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 45, CURLOPT_POSTFIELDS => json_encode($req, JSON_UNESCAPED_UNICODE),
-    CURLOPT_HTTPHEADER => ['content-type: application/json', 'anthropic-version: 2023-06-01', 'x-api-key: ' . cfg('ANTHROPIC_API_KEY')]]);
+    CURLOPT_HTTPHEADER => ['content-type: application/json', 'anthropic-version: 2023-06-01', 'x-api-key: ' . claude_key('EMAIL')]]);
   $res = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); $err = curl_error($c); curl_close($c);
   $j = json_decode((string)$res, true);
   if ($code !== 200 || !is_array($j)) throw new Exception('Claude API: HTTP ' . $code . ' ' . ($err ?: substr((string)($j['error']['message'] ?? $res), 0, 200)));
@@ -267,7 +267,7 @@ function agent_process(array $row, int &$used, ?array $m = null): string {
 
 // ---------------- én kjøring ----------------
 function agent_run(int $budget = 20, int $max = 8): array {
-  if (!agent_on()) return ['ok' => true, 'info' => 'agent av (mangler ANTHROPIC_API_KEY)'];
+  if (!agent_on()) return ['ok' => true, 'info' => 'agent av (mangler CLAUDE_KEY_EMAIL)'];
   agent_tables(); $t0 = time(); $p = db(); $log = [];
   $user = (string)cfg('IMAP_USER', cfg('MAIL_USER', '')); $pass = (string)cfg('IMAP_PASSWORD', cfg('MAIL_PASSWORD', ''));
   if (!$user || !$pass) return ['ok' => false, 'info' => 'mangler IMAP-bruker/passord'];
