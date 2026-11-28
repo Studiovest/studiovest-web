@@ -38,19 +38,19 @@
       ph.map(function (p, n) {
         var mine = (x.notes[p.i] || []).length, c = mine + (sent[p.i] || 0);
         return '<figure class="gi rv-gi" data-act="rvPhoto" data-id="' + j.id + '" data-i="' + p.i + '" data-n="' + (n + 1) + '" data-by="' + esc(by) + '" tabindex="0" role="button" aria-label="Kommenter bilde ' + (n + 1) + ', ' + esc(p.name) + '">' + SV.pic(p.src, p.pos) +
-          '<span class="gi-n">' + String(n + 1).padStart(2, '0') + ' ' + esc(p.name) + '</span>' + (p.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : '') +
+          '<span class="gi-n">' + esc((p.file || (n + 1) + '.jpg').replace('.jpg', '')) + ' ' + esc(p.name) + '</span>' + (p.mark ? '<span class="gi-tag">' + SV.chip('Markert', 'bad') + '</span>' : p.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : '') +
           (c ? '<span class="rv-badge' + (mine ? ' draft' : '') + '">' + ic('chat') + c + '</span>' : '<span class="rv-add">' + ic('chat') + 'Kommenter</span>') + '</figure>';
       }).join('') + '</div>';
   };
   SV.on('rvPhoto', function (el) {
     var j = job(el.getAttribute('data-id')), i = +el.getAttribute('data-i'), by = el.getAttribute('data-by'), p = SV.boligPhotos(j).filter(function (q) { return q.i === i; })[0], mine = dr(j.id, by).notes[i] || [];
     var earlier = []; R(j.id).requests.forEach(function (q) { q.items.forEach(function (it) { if (it.i === i) earlier.push({ t: it.t, by: q.by, st: q.status }); }); });
-    SV.modal('<figure style="margin:0"><img src="' + p.src + '" alt="" style="width:100%;border-radius:10px;max-height:56vh;object-fit:cover;object-position:' + p.pos + '"></figure>' +
+    SV.modal('<figure style="margin:0"><img src="' + p.src + '" alt="" style="width:100%;border-radius:10px;max-height:56vh;object-fit:contain;background:#111"></figure>' +
       '<div class="row between" style="margin:12px 0 6px"><b>' + el.getAttribute('data-n') + '. ' + esc(p.name) + '</b><span class="small muted">Foto: Studiovest</span></div>' +
       (earlier.length ? '<ul class="rv-notes">' + earlier.map(function (n) { return '<li><span>' + esc(n.t) + '<small>' + esc(n.by) + ' · ' + (n.st === 'rettet' ? 'rettet' : 'sendt') + '</small></span></li>'; }).join('') + '</ul>' : '') +
       (mine.length ? '<ul class="rv-notes" style="margin-top:8px">' + mine.map(function (n, k) { return '<li class="draft"><span>' + esc(n.t) + '<small>Ikke sendt ennå</small></span><button class="link small" data-act="rvDel" data-id="' + j.id + '" data-i="' + i + '" data-k="' + k + '" data-by="' + esc(by) + '">Fjern</button></li>'; }).join('') + '</ul>' : '') +
       '<label class="fld" style="margin-top:8px"><span>Hva bør endres?</span><textarea class="txt" id="rvTxt" rows="3" placeholder="F.eks. fjern ledningen over benken, eller rett opp skjeve linjer"></textarea></label>' +
-      '<div class="row" style="justify-content:flex-end"><button class="btn btn-dark" data-act="rvSave" data-id="' + j.id + '" data-i="' + i + '" data-by="' + esc(by) + '">' + ic('chat') + 'Lagre kommentar</button></div>', { wide: true, after: function () { var t = document.getElementById('rvTxt'); if (t) t.focus(); } });
+      '<div class="row" style="justify-content:flex-end;gap:8px">' + (SV.markBtn ? SV.markBtn(j, i, by) : '') + '<button class="btn btn-dark" data-act="rvSave" data-id="' + j.id + '" data-i="' + i + '" data-by="' + esc(by) + '">' + ic('chat') + 'Lagre kommentar</button></div>', { wide: true, after: function () { var t = document.getElementById('rvTxt'); if (t) t.focus(); } });
   });
   SV.on('rvSave', function (el) {
     var t = document.getElementById('rvTxt').value.trim(); if (!t) { SV.toast('Skriv hva som bør endres', 'warn'); return; }

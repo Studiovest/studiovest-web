@@ -61,7 +61,8 @@
     }
     var ord = (SV.state.order || {})[j.id];
     if (ord) out = ord.map(function (i) { return out[i]; }).filter(Boolean).concat(out.filter(function (x) { return ord.indexOf(x.i) < 0; }));
-    return out;
+    out.forEach(function (x, k) { x.file = (k + 1) + '.jpg'; }); // leveres som 1.jpg … N.jpg
+    return SV.withMarks ? SV.withMarks(j, out) : out;
   }
   SV.boligPhotos = photos;
   function license(j) {
@@ -140,7 +141,7 @@
       (lic ? '<div class="callout sage">' + ic('shield') + '<span><b>Bildelisens:</b> ' + lic.text + ' Kreditering: «Foto: Studiovest».</span></div>' : '') +
       cost(j) + (i >= 4 ? '<div class="card pad"><h3 class="h3">Omtale</h3><p class="small muted" style="margin:6px 0 12px">Sendes automatisk 7 dager etter levering, eller nå.</p><button class="btn btn-ghost btn-s" data-act="review">' + ic('star') + 'Be om omtale på Google</button></div>' : '') + '</div></div>';
     var gal = '<div class="row between" style="margin-bottom:12px"><p class="small muted">' + ph.length + ' bilder · klikk for å velge omslag og rekkefølge</p><button class="btn btn-ghost btn-xs" data-act="dummy">' + ic('upload') + 'Last opp redigerte</button></div><div class="gal">' +
-      ph.map(function (x) { return '<figure class="gi" data-act="lightbox" data-src="' + x.src + '" data-pos="' + x.pos + '" data-name="' + esc(x.name) + '">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + String(x.i + 1).padStart(2, '0') + ' ' + esc(x.name) + '</span>' + (x.i === 0 ? '<span class="gi-tag">' + SV.chip('Omslag', 'sand') + '</span>' : x.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : '') + '</figure>'; }).join('') + '</div>';
+      ph.map(function (x, n) { return '<figure class="gi' + (x.mark ? ' gi-mark' : '') + '" data-act="lightbox" data-src="' + x.src + '" data-pos="' + x.pos + '" data-name="' + esc(x.name) + '" data-file="' + esc(x.file) + '" data-id="' + esc(j.id) + '" data-i="' + x.i + '" data-by="Studiovest">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + esc(x.file.replace('.jpg', '')) + ' ' + esc(x.name) + '</span>' + (x.mark ? '<span class="gi-tag">' + SV.chip('Markert', 'bad') + '</span>' : n === 0 ? '<span class="gi-tag">' + SV.chip('Omslag', 'sand') + '</span>' : x.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : '') + '</figure>'; }).join('') + '</div>';
     var lev = '<div class="g3">' + [['Finn og nett', 'Web-optimalisert, sRGB, liggende og stående', 'down'], ['Trykk', 'Full oppløsning for prospekt og skilt', 'file'], ['SoMe', '4:5 og 9:16, klar til Instagram og Facebook', 'grid'], ['Plantegning', 'PDF og PNG, 2D' + (j.services.indexOf('p3') > -1 ? ' + 3D' : ''), 'plan'], ['Video', j.services.indexOf('vi') > -1 || j.services.indexOf('re') > -1 ? 'MP4 liggende og stående' : 'Ikke bestilt', 'video'], ['Boligside', 'Egen side med bilder, video og plantegning', 'link']].map(function (x) { return '<div class="card pad"><p class="row">' + ic(x[2]) + '<b>' + x[0] + '</b></p><p class="small muted" style="margin-top:6px">' + x[1] + '</p></div>'; }).join('') + '</div>' +
       '<p class="hint" style="margin-top:12px">Alle formatene lages automatisk fra de redigerte filene når oppdraget settes til Levert.</p>';
     return '<p class="small" style="margin-bottom:14px"><a href="#/bolig" class="muted">' + '← Bolig</a></p>' +
@@ -195,8 +196,10 @@
   }
 
   SV.on('lightbox', function (el) {
-    SV.modal('<figure style="margin:0"><img src="' + el.getAttribute('data-src') + '" alt="" style="width:100%;border-radius:10px;max-height:70vh;object-fit:cover;object-position:' + el.getAttribute('data-pos') + '"><figcaption class="row between" style="margin-top:12px"><b>' + esc(el.getAttribute('data-name')) + '</b><span class="small muted">Foto: Studiovest</span></figcaption></figure>', { wide: true });
-  });
+    var id = el.getAttribute('data-id'), jj = id && SV.find(SV.jobs(), id), ii = el.getAttribute('data-i'), file = el.getAttribute('data-file');
+    var acts = jj && ii != null && SV.markBtn ? SV.markBtn(jj, +ii, el.getAttribute('data-by')) + '<a class="btn btn-ghost btn-s" href="' + el.getAttribute('data-src') + '" download="' + esc(file || 'bilde.jpg') + '">' + ic('down') + 'Last ned ' + esc(file || '') + '</a>' : '';
+    SV.modal('<figure style="margin:0"><img src="' + el.getAttribute('data-src') + '" alt="" style="width:100%;border-radius:10px;max-height:70vh;object-fit:contain;background:#111"><figcaption class="row between" style="margin-top:12px;gap:10px;flex-wrap:wrap"><span><b>' + esc(el.getAttribute('data-name')) + '</b>' + (file ? ' <span class="small muted">' + esc(file) + '</span>' : '') + '<br><span class="small muted">Foto: Studiovest</span></span><span class="row" style="gap:6px">' + acts + '</span></figcaption></figure>', { wide: true });
+  });;
 
 
   // ---------- kostnad per oppdrag ----------
@@ -332,7 +335,7 @@
     }
     var by = j.broker + ' (megler)', live = st === 'Oppdrag levert';
     var gal = live ? SV.reviewGallery(j, by) : '<p class="small muted" style="margin-bottom:10px">' + ph.length + ' bilder</p><div class="gal big">' +
-      ph.map(function (x, n) { return '<figure class="gi" data-act="lightbox" data-src="' + x.src + '" data-pos="' + x.pos + '" data-name="' + esc(x.name) + '">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + String(n + 1).padStart(2, '0') + ' ' + esc(x.name) + '</span>' + (x.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : '') + '</figure>'; }).join('') + '</div>';
+      ph.map(function (x) { return '<figure class="gi' + (x.mark ? ' gi-mark' : '') + '" data-act="lightbox" data-src="' + x.src + '" data-pos="' + x.pos + '" data-name="' + esc(x.name) + '" data-file="' + esc(x.file) + '" data-id="' + esc(j.id) + '" data-i="' + x.i + '" data-by="' + esc(by) + '">' + SV.pic(x.src, x.pos) + '<span class="gi-n">' + esc(x.file.replace('.jpg', '')) + ' ' + esc(x.name) + '</span>' + (x.mark ? '<span class="gi-tag">' + SV.chip('Markert', 'bad') + '</span>' : x.ill ? '<span class="gi-tag">' + SV.chip('Illustrasjon', 'brown') + '</span>' : '') + '</figure>'; }).join('') + '</div>';
     var plan = '<div class="sec">' + SV.reviewPlan(j, by, live) + '</div>';
     var extras = '<div class="g2 sec">' +
       (j.services.indexOf('vi') > -1 || j.services.indexOf('re') > -1 ? '<div class="card pad"><h3 class="h3" style="margin-bottom:12px">Video</h3><div class="vp">' + SV.pic(j.cover) + '<button class="vp-play" data-act="dummy" aria-label="Spill av">' + ic('play') + '</button></div><p class="small muted" style="margin-top:10px">Liggende 16:9 og stående 9:16 · MP4</p></div>' : '') +
